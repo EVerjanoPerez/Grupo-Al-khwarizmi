@@ -1,0 +1,19 @@
+@startuml
+skinparam actorstyle awesome
+actor :administrador: as admin
+actor :usuario: as usuario
+
+usecase (Generar Factura) as generarFactura
+usecase (Iniciar Sesión) as login
+note right of login : Estar registrado
+usecase (Generar Factura en Papel) as facturaPapel
+usecase (Estar registrado) as registrado
+
+usuario -- login
+admin -- login
+admin -- generarFactura
+generarFactura ..> login : <<include>>
+usuario--  generarFactura
+generarFactura ..|> facturaPapel : <<extends>>
+login ..> registrado: <<dependency>>
+@enduml
