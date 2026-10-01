@@ -2,7 +2,7 @@
 
 ---
 
-Juan Carlos Aguilera, Wail Amchi, Álvaro Nieto, Alexandru Olsanchi, Marcondes Sánchez, Esperanza Verjano, Francisco de la Torre.
+Juan Carlos Aguilera, Wail Amchi, Álvaro Nieto, Alexandru Olsanchi, Marcondes Sánchez, Esperanza Verjano Pérez, Francisco de la Torre.
 
 ---
 
