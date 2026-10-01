@@ -6,7 +6,7 @@ Cronograma de las tareas del proyecto. Las fechas límite coinciden con las reun
 |---|---|---|---|---|---|
 | 1 | Revisión de requisitos funcionales | Equipo 1 (Francis, Álvaro, Juan) | 30/09/2026 | 07/10/2026 | Pendiente |
 | 2 | Revisión de requisitos no funcionales | Equipo 2 (Marcondes, Esperanza) | 30/09/2026 | 07/10/2026 | Acabado |
-| 3 | Realización de los casos de uso | Por asignar | 30/09/2026 | 07/10/2026 | Pendiente |
+| 3 | Realización de los casos de uso | Equipo 1 y Equipo 2 | 30/09/2026 | 07/10/2026 | Pendiente |
 | 4 | Diagrama de casos de uso (PlantUML) | Por asignar | 07/10/2026 | 14/10/2026 | Pendiente |
 
 ## Cronograma
