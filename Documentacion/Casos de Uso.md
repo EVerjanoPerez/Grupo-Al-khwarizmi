@@ -22,3 +22,7 @@ Relación de casos de uso y actores que pueden realizarlos.
 | 16 | Métricas del equipo | Administrador, Superadministrador |
 | 17 | Métricas de clientes | Todos |
 | 18 | Métricas de la empresa | Superadministrador |
+| 19 | Verificar baja del sistema | Administrador, Superadministrador |  ?
+| 20 | Aceptar baja del sistema | Administrador, Superadministrador |  ?
+| 21 | Reparto de clientes a usuario |  Administrador, Superadministrador | ?
+| 22 | Visualización de facturas antiguas | Todos |
