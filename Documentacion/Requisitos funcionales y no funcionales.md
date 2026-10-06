@@ -84,7 +84,7 @@
 
 ### 2.1. Usabilidad y experiencia de usuario (UX)
 
-- **Extrema rapidez y simplicidad:** la gestión del software debe ser sumamente rápida y fluida. Acciones críticas como dar de alta un cliente, generar una factura recurrente o realizar un chequeo anual no deben tomar más de 1 minuto, minimizando drásticamente el número de clics requeridos.
+- **Extrema rapidez y simplicidad:** la gestión del software debe ser sumamente rápida y fluida. Acciones críticas como dar de alta un cliente, generar una factura recurrente, realizar un chequeo anual o comprobar el estado de un cobro no deben tomar más de 1 minuto, minimizando drásticamente el número de clics requeridos.
 - **Diseño minimalista:** la interfaz debe ser limpia y directa, evitando la complejidad excesiva del software de contabilidad comercial tradicional (por ejemplo, Holded).
 
 ### 2.2. Portabilidad y accesibilidad
@@ -94,7 +94,27 @@
 ### 2.3. Independencia tecnológica y arquitectura
 
 - **Aislamiento del producto principal:** el sistema de facturación y administración interna debe ser una aplicación completamente independiente. No debe tocar, depender ni integrarse con el núcleo del producto principal de la compañía (el Brain Operating System).
+- **Tecnología:** libre elección; base de datos asequible, preferiblemente libre.
+- **Interoperabilidad:** la integración de cobros estará desacoplada para sustituir la simulación por Stripe real sin rediseño.
 
 ### 2.4. Consistencia de datos
 
 - **Integridad documental:** el documento PDF de la factura generado automáticamente debe mantener una consistencia absoluta, siendo idéntico independientemente de la sección, dispositivo o plataforma desde donde se consulte, imprima o descargue.
+- **Imagen corporativa:** el PDF respetará la estética corporativa de Turbine.
+
+### 2.5. Fiabilidad 
+
+- **Flujo de información sin pérdidas:** ningún dato ni notificación podrá dejar de llegar a la persona correcta (criterio de éxito del cliente).
+
+### 2.6 Escalabilidad y rendimiento
+
+- **Escalabilidad:** el sistema soportará miles de clientes y sus facturas sin rediseño.
+- **Rendimiento:** respuesta ágil en cualquier dispositivo.
+
+### 2.7 Seguridad, privacidad y cumplimiento legal
+
+- **Privacidad desde el diseño:** datos fiscales y personales protegidos conforme al RGPD.
+- **Autenticación robusta:** doble facto de autenticación; contraseñas almacenadas de forma segura.
+- **Validez legal:** facturas conformes a la normativa española e inmutables tras el cierre trimestral.
+- **Conservación:** datos de clientes conservados el máximo que permita la ley.
+
