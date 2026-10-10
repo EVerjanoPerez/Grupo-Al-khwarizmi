@@ -4,8 +4,8 @@ En esta carpeta se guardará toda la documentación técnica del proyecto. Cualq
 
 ## 1. Requisitos funcionales y no funcionales
 
-En [este documento](Requisitos%20funcionales%20y%20no%20funcionales.md) se detallan los requisitos funcionales y no funcionales recogidos en la reunión con el cliente, `TurbineH`.
+En el directorio `requisitos` se detallan los requisitos funcionales y no funcionales recogidos en la reunión con el cliente, `TurbineH`.
 
 ## 2. Casos de uso
 
-En [este documento](Casos%20de%20Uso.md) se recogen los casos de uso que va a tener nuestra aplicación.
+En el directorio `casosDeUso` se recogen los casos de uso que va a tener nuestra aplicación.
