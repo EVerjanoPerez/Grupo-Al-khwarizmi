@@ -77,6 +77,68 @@
 - FR14. La eliminación de clientes será siempre lógica: se conservará el histórico y el estado, sujeto a lo que permita la ley.
     - Dependencias: FR5
 
+### C. Suscripción
+
+- FR15. El sistema registrará para cada cliente su suscripción, separada de las facturas: fecha de inicio, plan o rango, tarifa acordada, conceptos facturables, responsable, condiciones de pago (incluido el vencimiento pactado) y documentos firmados fuera de la plataforma. No existirá permanencia: el servicio es mes a mes.
+    - Dependencias: FR5. 
+- FR15.1. La suscripción podrá tener una fecha de inicio futura. Hasta esa fecha el cliente aparecerá como pendiente de activación, sin facturas ni recordatorios.
+    - Dependencias: FR15, FR8.
+- FR15.2. Si el alta se produce a mitad de mes, el sistema emitirá una factura proporcional hasta fin de mes y la mensualidad completa desde el día 1 siguiente. La regla de cálculo (días naturales reales del mes, incluido el alta el último día) estará documentada y el cálculo se mostrará antes de confirmar el alta.
+    - Dependencias: FR15.
+- FR15.3. El sistema permitirá registrar de forma explícita la excepción comercial de empezar a facturar el mes siguiente sin prorrateo.
+    - Dependencias: FR15.2.
+- FR15.4. El sistema impedirá activar la recurrencia de un cliente sin datos fiscales suficientes y explicará qué falta.
+    - Dependencias: FR15, FR5.2.
+- FR16. El sistema permitirá pausar una suscripción con motivo, fecha de inicio y, si se conoce, fecha prevista de reactivación. Durante la pausa no se generarán mensualidades, pero las facturas antiguas seguirán su curso.
+    - Dependencias: FR15.
+- FR16.1. Al llegar la fecha de reactivación, el sistema avisará al responsable y pedirá confirmación si la política lo exige.
+    - Dependencias: FR16.
+- FR17. El sistema permitirá registrar la solicitud de baja de un cliente, en la aplicación o recibida por API, y creará la tarea correspondiente.
+    - Dependencias: FR15.
+- FR17.1. Al hacerse efectiva la baja, el sistema dejará de generar mensualidades desde esa fecha. Si hay deuda pendiente, el recobro de las facturas anteriores continuará: la deuda no bloquea la baja y la baja no borra la deuda.
+    - Dependencias: FR17.
+
+### D. Tarifas, excepciones y aprobaciones.
+
+- FR18. El superadministrador gestionará la tabla de rangos de facturación anual y sus precios como configuración versionada con fecha de efecto. Cambiarla no alterará las facturas ya emitidas.
+- FR19. El sistema lanzará una campaña anual (o en la fecha configurada) con los clientes cuya facturación anual debe revisarse.
+    - Dependencias: FR18, FR15. 
+- FR19.1. El dato de facturación anual podrá obtenerse de una fuente simulada o introducirse a mano indicando fuente y fecha. Si no está disponible, la revisión quedará pendiente.
+    - Dependencias: FR19.
+- FR19.2. El sistema propondrá el rango correspondiente, pero el cambio requerirá la aprobación de un responsable. Se registrará quién lo aprobó, cuándo, el precio anterior, el nuevo y la fecha de efecto, sin reescribir meses anteriores.
+    - Dependencias: FR19.1, FR21.
+- FR19.3. El sistema permitirá corregir después un dato de revisión con trazabilidad y calcular su impacto. Cualquier regularización será una acción explícita y aprobada, nunca facturas retroactivas automáticas.
+    - Dependencias: FR19.2.
+- FR20. El sistema permitirá registrar excepciones comerciales (descuento temporal, mes gratuito, precio pactado de un servicio) con fecha de fin. El usuario las solicita y requieren aprobación; al caducar se dejan de aplicar.
+    - Dependencias: FR15, FR21.
+- FR21. El sistema dispondrá de un flujo de aprobación para las operaciones sensibles: importe modificado a mano, descuento extraordinario, vencimiento fuera de lo habitual, factura puntual de importe alto, cambio de rango, rectificativa e incobrable, según umbrales configurables. Las recurrentes que salen de una suscripción aprobada no necesitan aprobación. El sistema explicará por qué un elemento está pendiente.
+    - Dependencias: FR3.
+- FR21.1. Por encima de un umbral superior configurable, la aprobación corresponderá al superadministrador.
+    - Dependencias: FR21.
+- FR21.2. El sistema tendrá una bandeja de aprobaciones donde el solicitante verá el estado (pendiente, aprobada o rechazada) y el comentario del aprobador.
+    - Dependencias: FR21.
+- FR21.3. Cuando la regla exija separación de funciones, el aprobador no podrá aprobar su propia solicitud.
+    - Dependencias: FR21.
+FR21.4. Un administrador podrá reasignar una aprobación o definir un suplente; la reasignación quedará registrada.
+    - Dependencias: FR21.
+
+### E. Facturación
+
+### F. Envios y comunicaciones.
+
+### G. Recordatorios, recobro e incidencias.
+
+### H. Cobros y conciliación. 
+
+### I. Notificaciones, trabajo diario y colaboración
+
+### J. Informes, dashboard y exportaciones
+
+### K. Configuración, automatización y administración.
+
+-------------------
+# Desactualizados
+
 ### 1.2. Gestión de facturación
 
 - **Tipos de facturación:** el sistema debe permitir generar tanto facturas puntuales como facturas recurrentes automatizadas (mensuales).
