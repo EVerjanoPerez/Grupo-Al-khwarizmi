@@ -124,6 +124,46 @@ FR21.4. Un administrador podrá reasignar una aprobación o definir un suplente;
 
 ### E. Facturación
 
+- FR22. El sistema gestionará el ciclo de vida de la factura con, al menos, los estados: borrador, pendiente de aprobación, lista para emitir, emitida, enviada, vencida, pagada, con diferencia pendiente, en disputa, incobrable, anulada y rectificada. Cada cambio de estado tendrá una causa registrada.
+    - Dependencias: FR21.
+- FR23. El sistema permitirá crear facturas puntuales con varias líneas, cada una con concepto, cantidad, precio unitario, descuento e impuesto.
+    - Dependencias: FR5, FR27.
+- FR23.1. El sistema tendrá un catálogo ligero de conceptos frecuentes con precio orientativo e impuesto por defecto, ajustables al facturar. Cambiar el catálogo no modificará las facturas antiguas.
+    - Dependencias: FR23.
+- FR24. El día 1 de cada mes el sistema generará automáticamente las facturas recurrentes a partir de los conceptos de cada suscripción activa, aplicando la tarifa y las excepciones vigentes, las pausas, las bajas y los vencimientos pactados.
+    - Dependencias: FR15, FR18, FR20, FR16, FR17.
+- FR24.1. La generación será idempotente: si el sistema estaba caído, al volver generará las facturas que falten sin duplicar ninguna.
+    - Dependencias: FR24.
+- FR24.2. Si falla un cliente, el resto seguirá procesándose. Cada excepción (falta contacto, cliente pausado, baja efectiva…) quedará identificada y se notificará a quien pueda resolverla.
+    - Dependencias: FR24.
+- FR25. Antes de emitir una factura el sistema mostrará una vista previa y bloqueará la emisión si falta un dato fiscal imprescindible, indicando cuál.
+    - Dependencias: FR23, FR5.2.
+- FR25.1. El sistema advertirá, sin bloquear, si el importe se sale mucho del patrón habitual del cliente según una regla configurable.
+    - Dependencias: FR25.
+- FR26. El superadministrador configurará series de facturación (ordinaria, rectificativas y otras). Cada factura recibirá al emitirse un número único dentro de su serie; los borradores no consumen número.
+    - Dependencias: FR22.
+- FR26.1. La numeración será correcta aunque varias personas emitan a la vez, y reintentar un envío fallido no generará otra factura ni otro número.
+    - Dependencias: FR26.
+- FR27. Los impuestos de cada línea se seleccionarán entre los dados de alta en la configuración, sin que el sistema deduzca la legislación de cada país. Cada factura se emite y conserva en su moneda.
+- FR28. El sistema generará el PDF a partir de los datos de la factura, con la identidad corporativa (logo, datos fiscales, numeración, fechas, líneas, bases, impuestos, total, condiciones de pago y datos de soporte) y en el idioma del cliente.
+    - Dependencias: FR22.
+- FR28.1. El sistema conservará el PDF original emitido: un cambio posterior de plantilla o logo no alterará las facturas históricas, y el PDF será idéntico en cualquier pantalla o descarga.
+    - Dependencias: FR28.
+- FR29. Una factura en borrador podrá corregirse libremente. Una factura emitida no podrá modificarse en silencio: los cambios permitidos quedarán trazados y los cambios relevantes se harán mediante rectificativa.
+    - Dependencias: FR22, FR30.
+- FR30. Los usuarios con permiso administrativo podrán crear una factura rectificativa o nota de crédito a partir de la original. El sistema propondrá los datos a rectificar, generará el documento vinculado y requerirá aprobación según el importe. El saldo del cliente tendrá en cuenta ambos documentos.
+    - Dependencias: FR29, FR21, FR26.
+- FR31. Solo se podrán borrar facturas en borrador que nunca se emitieron, dejando traza. Una factura emitida nunca se borra.
+    - Dependencias: FR22.
+- FR32. Un administrador autorizado podrá cerrar periodos (mes o trimestre). En un periodo cerrado no se permitirán cambios ordinarios en elementos económicos, y reabrirlo requerirá permiso de superadministrador y un motivo.
+    - Dependencias: FR29.
+- FR33. El sistema permitirá consultar y filtrar facturas por fecha, estado, tipo (puntual o recurrente), cliente, responsable, país y moneda, y descargar su PDF según los permisos.
+    - Dependencias: FR3, FR28.
+- FR34. El sistema permitirá crear presupuestos, enviarlos, marcarlos como aceptados o rechazados con evidencia adjunta y convertirlos en factura reutilizando sus líneas, conservando cada documento su identidad.
+    - Dependencias: FR23.
+- FR35. El sistema permitirá imputar facturas a centros de coste o proyectos administrables para los informes; renombrar una categoría no alterará el histórico. 
+    - Dependencias: FR23.
+
 ### F. Envios y comunicaciones.
 
 ### G. Recordatorios, recobro e incidencias.
