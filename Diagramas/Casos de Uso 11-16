@@ -1,0 +1,32 @@
+@startuml
+skinparam actorstyle awesome
+
+actor :Superadministrador: as superadmin
+actor :Administrador: as admin
+actor :Lector: as lector
+actor :Sistema interno: as sistema
+actor :Servicio de mensajería: as mensajeria
+
+usecase (Envío de la factura al cliente) as cu12
+usecase (Borrado lógico de clientes y facturas) as cu13
+usecase (Descarga de factura en PDF) as cu15
+usecase (Visualización de métricas por equipos) as cu11
+usecase (Auditoría y copias de seguridad) as cu14
+usecase (Generación de copias de seguridad) as cu16
+
+superadmin -- cu11
+admin -- cu11
+
+mensajeria -- cu12
+
+superadmin -- cu13
+admin -- cu13
+
+superadmin -- cu14
+
+superadmin -- cu15
+admin -- cu15
+lector -- cu15
+
+sistema -- cu16
+@enduml
