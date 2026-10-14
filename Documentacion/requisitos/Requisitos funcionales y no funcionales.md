@@ -4,7 +4,23 @@
 
 ## 1. Requisitos de negocio
 
+- **BR1. Optimización operativa y reducción de la carga administrativa.** Minimizar el tiempo invertido en tareas manuales mediante flujos ágiles y una interfaz directa para mantener el foco del equipo en el producto principal.
+    - Implementado en: FR49, NFR1, NFR2.
 
+- **BR2. Automatización del modelo de ingresos.** Gestionar automáticamente las suscripciones mensuales por tramos de facturación, prorrateos, revisiones anuales de tarifas y facturas puntuales.
+    - Implementado en: FR15, FR19, FR23, FR24.
+
+- **BR3. Escalabilidad operativa y organizativa.** Soportar el crecimiento hasta miles de clientes estructurando el departamento administrativo mediante roles, asignación de carteras e importación masiva.
+    - Implementado en: FR3, FR4, FR12, NFR6.
+
+- **BR4. Aseguramiento del flujo de caja y reducción de la morosidad.** Reducir los tiempos de cobro y los impagos mediante la conciliación automatizada de pagos, recordatorios periódicos y seguimiento financiero.
+    - Implementado en: FR39, FR43, FR45, FR53.
+
+- **BR5. Aislamiento del producto principal.** Operar como una aplicación de gestión exclusivamente interna e independiente de Brain Operating System.
+    - Implementado en: FR38, NFR3.
+
+- **BR6. Cumplimiento legal, fiscal y de privacidad.** Garantizar que las facturas emitidas no se modifiquen en periodos cerrados y cumplir con la ley de protección de datos mediante borrado lógico y auditoría.
+    - Implementado en: FR14, FR29, FR32, FR62, NFR7.
 
 ## 2. Requisitos de usuario
 
