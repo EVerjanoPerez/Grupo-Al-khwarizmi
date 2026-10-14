@@ -48,7 +48,7 @@
     - Dependencias: FR5.
 - FR5.3. Antes de crear un cliente, el sistema buscará posibles duplicados por identificador fiscal y avisará, sin fusionar automáticamente.
     - Dependencias: FR5.
-- FR6. El sistema permitirá registrar varias personas de contacto por empresa, cada una con su función (contratación, facturación, cobros), idioma preferido, canales y consentimientos.
+- FR6. El sistema permitirá registrar varias personas de contacto por empresa, cada una con su función (contratación, facturación, cobros), idioma preferido, canales y consentimientos, pudiendo ser modificados en cualquier momento. Los cambios de datos fiscales quedarán auditados.
     - Dependencias: FR5.
 - FR6.1. Una persona podrá asociarse a varias empresas.
     - Dependencias: FR6.
@@ -56,8 +56,6 @@
     - Dependencias: FR6.
 - FR6.3. El sistema avisará si se intenta eliminar o desactivar el único contacto de facturación de un cliente activo.
     - Dependencias: FR6.
-- FR7. El sistema permitirá modificar los datos de clientes y contactos en cualquier momento. Los cambios de datos fiscales quedarán auditados.
-    - Dependencias: FR5.
 - FR8. El sistema gestionará los estados del cliente que afectan a la facturación: pendiente de activación, activo, pausado, baja solicitada, inactivo (baja efectiva) y bloqueado administrativamente. Antes de confirmar un cambio de estado mostrará sus consecuencias.
     - Dependencias: FR5
 - FR9. El sistema ofrecerá una búsqueda global por nombre comercial, razón social, identificador fiscal, persona de contacto, email y número de factura, y filtros por ubicación, sector, país, estado, responsable y etiquetas.
