@@ -163,7 +163,56 @@ Descripción de los casos de uso segun plantilla subida:
   - 5a. El rango no cambia: el sistema registra la revisión como hecha y termina.
   - 7a. La aprobación se rechaza: el rango no cambia y el sistema avisa al administrador con el comentario.
 
+## CU-06 · Activación de la facturación recurrente
+- **Actor principal:** Usuario
+- **Actor secundario:** Servicio de mensajería
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se registra la suscripción de un cliente (fecha de inicio, plan, tarifa, cuota y vencimiento pactado). Si el alta es a mitad de mes, se emite una factura prorrateada por los días restantes.
+- **Interesados:**
+  - Usuario: quiere dejar el cobro mensual automatizado.
+  - Cliente: quiere pagar solo los días que usa el servicio el primer mes.
+- **Precondiciones:** El cliente está registrado y asignado al usuario.
+- **Garantía de éxito:** La suscripción queda activa (o programada) y, si corresponde, se emite y envía la factura prorrateada.
+- **Garantía mínima:** No se activa ninguna suscripción sin datos fiscales suficientes.
+- **Disparador:** Un cliente contrata el servicio recurrente.
+- **Escenario principal de éxito:**
+  1. El usuario selecciona el cliente y elige activar su facturación recurrente.
+  2. El usuario indica la fecha de inicio, el plan, la cuota mensual y el vencimiento pactado.
+  3. El sistema comprueba que el cliente tiene los datos fiscales necesarios.
+  4. El sistema calcula la tarifa según el rango y muestra un resumen, con el prorrateo si el alta es a mitad de mes.
+  5. El usuario confirma.
+  6. El sistema registra la suscripción como activa.
+  7. El sistema emite la factura prorrateada por los días restantes del mes y la envía al cliente (CU-12).
+  8. El sistema registra la operación. Desde el día 1 siguiente se aplica la cuota normal (CU-32).
+- **Extensiones:**
+  - 2a. La fecha de inicio es futura: la suscripción queda programada y se activa en esa fecha.
+  - 2b. El vencimiento pactado está fuera de lo habitual: queda pendiente de aprobación (CU-30).
+  - 3a. Faltan datos fiscales: el sistema bloquea la activación e indica cuáles faltan.
+  - 4a. Se pide no prorratear: el usuario indica el motivo y la excepción queda pendiente de aprobación (CU-30).
+  - 7a. El alta es el día 1: no hay prorrateo y se pasa al paso 8.
 
+## CU-07 · Delegación temporal de clientes
+- **Actor principal:** Administrador
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Los clientes de un usuario se delegan en otro durante un intervalo (por ejemplo, unas vacaciones), sin perder la asignación principal.
+- **Interesados:**
+  - Administrador: no quiere que ningún cliente quede desatendido.
+  - Usuario ausente: quiere recuperar sus clientes al volver.
+- **Precondiciones:** Los dos usuarios están activos.
+- **Garantía de éxito:** Durante el intervalo, el sustituto ve y gestiona esos clientes y recibe sus avisos. Al terminar, la delegación caduca sola.
+- **Garantía mínima:** La asignación principal no cambia.
+- **Disparador:** Un usuario va a ausentarse.
+- **Escenario principal de éxito:**
+  1. El administrador selecciona al usuario que se ausenta.
+  2. El administrador indica el usuario sustituto y el intervalo.
+  3. El sistema comprueba que el sustituto está activo y que las fechas son válidas.
+  4. El sistema registra la delegación y avisa a ambos usuarios (CU-35).
+- **Extensiones:**
+  - 2a. Solo se delegan algunos clientes: el administrador los selecciona.
+  - 3a. El sustituto no está activo o las fechas no son válidas: el sistema informa y vuelve al paso 2.
+  - Cualquier paso posterior: el administrador cancela la delegación antes de tiempo y el sistema la finaliza.
 ---------------
 ## Desactualizados
 
