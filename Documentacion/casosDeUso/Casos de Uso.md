@@ -1,21 +1,171 @@
 # Casos de uso
 
+---------
+
+# Desactualizados 
+
 ## Actores 
 
 | Actor | Tipo | Descripción |
 |---|---|---|
 | Usuario | Primario | Empleado de Turbine. Crea, consulta y edita solo los clientes y facturas que tiene asignados. |
-| Administrador | Primario | Puede hacer todo lo del usuario sobre todos los clientes. Además gestiona usuarios, asigna clientes y consulta el dashboard. |
+| Administrador | Primario | Puede hacer todo lo del usuario sobre todos los clientes. Además gestiona usuarios, asigna clientes, aprueba solicitudes y consulta el dashboard. |
 | Superadministrador | Primario | Puede hacer todo lo del Administrador. Además configura el sistema y consulta la auditoría y las copias de seguridad. |
+| Planificador (tiempo) | Primario | Reloj del sistema que lanza los procesos periódicos: generación mensual, recordatorios, consulta de cobros, revisión anual y copias de seguridad. |
+| Sistema externo | Primario | Otro sistema de Turbine que se comunica con la aplicación por API (por ejemplo, para notificar una baja). |
 | Sistema de cobros | Secundario | Stripe (simulado) y, opcionalmente, Revolut. |
-| Sistema interno | Primarío | Servidor donde se aloja la aplicación. |
 | Servicio de mensajería | Secundario | Email y WhatsApp. |
 
-*TODO: Actor tiempo*: Hay algunos casos de usos que pueden depender del tiempo, en ese caso es posible hacer un actor que sea tiempo, pero me gustaría que se decidiera con el equipo
+-----------
 
-## Tabla de casos de uso
+**Convenciones**
+- **Ámbito:** en todos los casos es la *aplicación de facturación y cobros de Turbine*.
+- **Actor «Usuario»:** cuando el actor principal es el Usuario, también pueden iniciar el caso el Administrador y el Superadministrador, que heredan sus casos por generalización. Del mismo modo, el Superadministrador hereda los del Administrador.
+- **Visibilidad del Usuario:** el Usuario solo ve y gestiona sus clientes asignados. El Administrador ve todos.
+- **Referencias:** "(CU-xx)" remite a otro caso de uso.
+- **Numeración:** las extensiones se numeran con el paso del que salen (por ejemplo, 3a). "Cualquier paso" indica que la extensión puede ocurrir en cualquier momento.
+- **Autenticación:** todos los casos iniciados por personas tienen como precondición que el actor se ha autenticado (CU-01). No se repite en cada ficha.
 
-Relación de casos de uso y actores que pueden realizarlos.
+## Descripción de los casos de uso
+
+Descripción de los casos de uso segun plantilla subida:
+
+## CU-01 · Login
+- **Actor principal:** Usuario
+- **Actor secundario:** Servicio de mensajería (recuperación de contraseña)
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Subfunción
+- **Descripción:** El usuario accede de forma segura a la aplicación con su correo corporativo. Tras entrar, solo puede acceder a lo que permite su rol. Incluye recuperar la contraseña y cerrar la sesión.
+- **Interesados:**
+  - Usuario: quiere entrar rápido y ver su trabajo.
+  - Turbine: quiere que solo accedan sus empleados, con los permisos de su rol.
+- **Precondiciones:** El usuario tiene una cuenta activa.
+- **Garantía de éxito:** El usuario tiene una sesión iniciada con los permisos de su rol.
+- **Garantía mínima:** No se da acceso sin validar las credenciales, y el intento queda registrado.
+- **Disparador:** El usuario quiere acceder a la aplicación.
+- **Escenario principal de éxito:**
+  1. El usuario introduce su correo y su contraseña.
+  2. El sistema comprueba que el correo pertenece al dominio corporativo.
+  3. El sistema valida las credenciales.
+  4. El sistema inicia la sesión y muestra al usuario su pantalla de trabajo diario (CU-35).
+- **Extensiones:**
+  - 2a. El correo no es corporativo: el sistema rechaza el acceso e informa del motivo.
+  - 3a. Las credenciales son incorrectas: el sistema informa del error y permite reintentar. Tras varios intentos fallidos, bloquea la cuenta temporalmente.
+  - 3b. La cuenta está desactivada: el sistema deniega el acceso.
+  - 3c. El usuario ha olvidado la contraseña:
+    - el sistema le envía un enlace de recuperación por correo (Servicio de mensajería);
+    - el usuario define una contraseña nueva y vuelve al paso 1.
+  - Cualquier paso: si el usuario cierra la sesión, el sistema la finaliza.
+
+## CU-02 · Registro de usuarios internos
+- **Actor principal:** Administrador (con permiso de gestión de usuarios)
+- **Actor secundario:** Servicio de mensajería
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se registra o invita a un nuevo usuario interno y se le asigna el rol que controla sus accesos.
+- **Interesados:**
+  - Administrador: quiere dar acceso rápido a un empleado nuevo.
+  - Turbine: quiere que cada persona tenga solo los permisos que le corresponden.
+- **Precondiciones:** Si el actor es un administrador, tiene el permiso de gestión de usuarios.
+- **Garantía de éxito:** La cuenta queda creada con su rol y el usuario recibe la invitación.
+- **Garantía mínima:** No se crea ninguna cuenta duplicada ni ninguna con un correo que no sea corporativo.
+- **Disparador:** Se incorpora un empleado que necesita usar la aplicación.
+- **Escenario principal de éxito:**
+  1. El administrador indica que quiere registrar un usuario interno.
+  2. El administrador introduce el nombre, el correo corporativo y el rol.
+  3. El sistema comprueba que el correo es corporativo y que no está ya registrado.
+  4. El sistema crea la cuenta y envía la invitación por correo (Servicio de mensajería).
+  5. El sistema registra la operación en la auditoría.
+- **Extensiones:**
+  - 2a. El administrador intenta asignar el rol de superadministrador: el sistema lo impide, porque solo puede hacerlo un superadministrador.
+  - 3a. El correo no es corporativo: el sistema informa y vuelve al paso 2.
+  - 3b. El correo ya está registrado: el sistema lo informa. Si la cuenta está desactivada, ofrece reactivarla.
+  - 4a. Falla el envío de la invitación: la cuenta se crea igualmente, el sistema informa del fallo y permite reenviar la invitación.
+
+## CU-03 · Configuración global del sistema
+- **Actor principal:** Superadministrador
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se modifican los parámetros globales del sistema:
+  - plazos de pago y calendario de recordatorios;
+  - calendario laboral;
+  - tarifas por rango;
+  - series, impuestos y monedas;
+  - umbrales de aprobación;
+  - datos del emisor y de soporte;
+  - plantillas;
+  - funciones opcionales.
+- **Interesados:**
+  - Superadministrador: quiere adaptar el sistema sin depender de un programador.
+  - Turbine: quiere que los cambios no alteren lo ya facturado y queden trazados.
+- **Precondiciones:** El actor es superadministrador.
+- **Garantía de éxito:** La nueva configuración queda guardada y se aplica desde ese momento, sin modificar facturas ya emitidas.
+- **Garantía mínima:** Si no se guarda, sigue vigente la configuración anterior. Todo cambio guardado queda auditado.
+- **Disparador:** El superadministrador necesita cambiar un parámetro del sistema.
+- **Escenario principal de éxito:**
+  1. El superadministrador elige el grupo de parámetros que quiere modificar.
+  2. El sistema muestra los valores vigentes.
+  3. El superadministrador introduce los valores nuevos.
+  4. El sistema valida los valores.
+  5. El superadministrador confirma los cambios.
+  6. El sistema guarda la configuración y registra en la auditoría quién la cambió, cuándo y los valores anterior y nuevo.
+- **Extensiones:**
+  - 3a. El superadministrador edita una plantilla y pide una previsualización o un envío de prueba: el sistema la genera con datos de ejemplo y vuelve al paso 3.
+  - 3b. El superadministrador pide cargar datos de demostración: el sistema solo lo permite en un entorno de pruebas.
+  - 4a. Hay un valor no válido (por ejemplo, un umbral superior menor que el inferior): el sistema indica el error y vuelve al paso 3.
+  - Cualquier paso: si el superadministrador cancela, no se guarda ningún cambio.
+
+## CU-04 · Administración de la cuenta de recepción de pagos
+- **Actor principal:** Superadministrador
+- **Actor secundario:** Sistema de cobros
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se configura la conexión simulada con Stripe y, opcionalmente, con Revolut, de donde el sistema lee los cobros.
+- **Interesados:**
+  - Superadministrador: quiere que los cobros se detecten solos.
+  - Turbine: quiere que las credenciales estén protegidas.
+- **Precondiciones:** El actor es superadministrador.
+- **Garantía de éxito:** La conexión queda configurada y comprobada.
+- **Garantía mínima:** Las credenciales nunca se muestran en claro. Si la conexión falla, se mantiene la anterior.
+- **Disparador:** Hay que conectar o cambiar la cuenta de cobros.
+- **Escenario principal de éxito:**
+  1. El superadministrador indica que quiere configurar la conexión con el sistema de cobros.
+  2. El superadministrador introduce los datos de conexión.
+  3. El sistema comprueba la conexión con el Sistema de cobros.
+  4. El sistema guarda la configuración y lo registra en la auditoría.
+- **Extensiones:**
+  - 3a. La conexión falla: el sistema informa del error, no activa la configuración y vuelve al paso 2.
+
+## CU-05 · Revisión anual del rango de facturación
+- **Actor principal:** Administrador
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se revisa la facturación anual de los clientes que el sistema propone cada año y, si procede, se cambia su rango de tarifa con fecha de efecto.
+- **Interesados:**
+  - Administrador: quiere aplicar la tarifa correcta a cada cliente.
+  - Cliente: no quiere que se le cambien facturas pasadas.
+  - Turbine: quiere que el cambio esté justificado y aprobado.
+- **Precondiciones:** El cliente tiene una suscripción activa.
+- **Garantía de éxito:** El nuevo rango queda aprobado y se aplica desde su fecha de efecto.
+- **Garantía mínima:** Las facturas anteriores no se modifican, y el dato introducido queda registrado con su fuente.
+- **Disparador:** El sistema avisa de los clientes que toca revisar este año (CU-35).
+- **Escenario principal de éxito:**
+  1. El administrador consulta la lista de clientes pendientes de revisión.
+  2. El administrador selecciona un cliente.
+  3. El sistema muestra su rango actual y su facturación anual registrada.
+  4. El administrador introduce la facturación anual nueva, con su fuente y su fecha.
+  5. El sistema calcula el rango que corresponde según la tabla de tarifas.
+  6. El administrador confirma el cambio y su fecha de efecto.
+  7. El sistema deja el cambio pendiente de aprobación (CU-30).
+  8. Tras la aprobación, el sistema actualiza la tarifa de la suscripción desde la fecha de efecto.
+- **Extensiones:**
+  - 4a. El dato corrige un error detectado después: el administrador indica el motivo y el sistema conserva el valor anterior en el historial.
+  - 5a. El rango no cambia: el sistema registra la revisión como hecha y termina.
+  - 7a. La aprobación se rechaza: el rango no cambia y el sistema avisa al administrador con el comentario.
+
+
+---------------
+## Desactualizados
 
 | # | Caso de uso | Actor | Descripción | 
 |---|---|---|---| 
@@ -45,3 +195,4 @@ Relación de casos de uso y actores que pueden realizarlos.
 | 24 | Búsqueda y consulta de clientes | Superadministrador, administrador, usuario | Busca y filtra clientes por ubicación, sector y estado, y consulta su ficha con el historial de facturas y pagos. |
 | 25 | Descarga de factura en PDF | Superadministrador, administrador, usuario | Descarga el PDF de una factura, que es idéntico al enviado al cliente y al guardado. |
 | 26 | Generación de copias de seguridad | Sistema interno | Genera periódicamente copias de seguridad de los datos y movimientos del sistema. |
+-----
