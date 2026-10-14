@@ -271,25 +271,25 @@ FR21.4. Un administrador podrá reasignar una aprobación o definir un suplente;
     - Dependencias: FR3.
 
 ----
-## 2. Requisitos no funcionales
+## 4. Requisitos no funcionales
 
-### 2.1. Usabilidad y experiencia de usuario (UX)
+### A. Usabilidad y experiencia de usuario (UX)
 - **NFR1.** La gestión del software debe ser sumamente rápida y fluida: acciones críticas como dar de alta un cliente, generar una factura recurrente, realizar un chequeo anual o comprobar el estado de un cobro no deben tomar más de 1 minuto, minimizando drásticamente el número de clics requeridos.
     - Dependencias: FR5, FR15, FR19, FR43.
 - **NFR1.1.** La interfaz debe mantener un diseño minimalista, limpio y directo, evitando la complejidad excesiva del software de contabilidad comercial tradicional (por ejemplo, Holded).
 - **NFR1.2.** Los controles de la interfaz deben ser utilizables de forma táctil y mediante teclado, garantizando la compatibilidad con herramientas de zoom y accesibilidad sin depender exclusivamente del ratón.
 
-### 2.2. Portabilidad y accesibilidad
+### B. Portabilidad y accesibilidad
 - **NFR2.** El sistema debe desarrollarse obligatoriamente como una aplicación web accesible de forma fluida y multiplataforma, optimizada para su uso eficiente desde ordenadores, tablets y teléfonos móviles modernos (Android e iOS), permitiendo la operativa completa en movilidad.
 
-### 2.3. Independencia tecnológica y arquitectura
+### C. Independencia tecnológica y arquitectura
 - **NFR3.** El sistema de facturación y administración interna debe ser una aplicación completamente independiente, sin tocar, depender ni integrarse con el núcleo del producto principal de la compañía (el Brain Operating System).
     - Dependencias: FR43.
 - **NFR3.1.** La arquitectura debe seguir un diseño modular limpio (preferiblemente un monolito modular bien estructurado) que evite la sobreingeniería, garantizando un bajo acoplamiento y una alta cohesión entre componentes.
 - **NFR3.2.** Las integraciones con servicios externos (pasarelas de pago como Stripe, servicios de correo o WhatsApp simulados) deben estar completamente encapsuladas, de modo que sustituir un proveedor simulado por uno real no exija rediseñar el modelo de negocio ni las facturas.
     - Dependencias: FR36, FR43.
 
-### 2.4. Consistencia de datos y precisión
+### D. Consistencia de datos y precisión
 - **NFR4.** El documento PDF de la factura generado de forma automática debe mantener una consistencia absoluta, siendo idéntico independientemente de la sección, dispositivo o plataforma desde donde se consulte, imprima o descargue, respetando la identidad corporativa de Turbine de forma inalterable frente a futuros cambios de plantilla o logotipo.
     - Dependencias: FR28.
 - **NFR4.1.** El sistema debe garantizar una precisión decimal estricta en todos los cálculos monetarios (bases, impuestos, descuentos y totales), evitando la pérdida de céntimos o errores derivados del uso incorrecto de tipos de datos de punto flotante (`float`).
@@ -297,20 +297,20 @@ FR21.4. Un administrador podrá reasignar una aprobación o definir un suplente;
 - **NFR4.2.** Las marcas de tiempo e instantes de negocio deben almacenarse de forma normalizada para evitar fallos por zonas horarias, y las exportaciones (como ficheros CSV) deben garantizar la compatibilidad con caracteres internacionales y tildes.
     - Dependencias: FR54.
 
-### 2.5. Fiabilidad y tolerancia a fallos
+### E. Fiabilidad y tolerancia a fallos
 - **NFR5.** Ningún dato, notificación o proceso periódico programado (como la generación mensual de facturas el día 1) podrá fallar en silencio. Las tareas automáticas deben ser completamente reintentables e idempotentes (si el servidor sufre una caída a medianoche, al recuperarse generará las facturas pendientes sin duplicar ninguna).
     - Dependencias: FR24, FR39.
 - **NFR5.1.** Si un elemento o cliente específico falla durante un procesamiento masivo (como una importación CSV o un envío), la excepción debe quedar aislada y notificada, permitiendo que el resto del lote continúe procesándose con normalidad.
     - Dependencias: FR12, FR24.2, FR36.
 
-### 2.6. Escalabilidad y rendimiento
+### F. Escalabilidad y rendimiento
 - **NFR6.** El sistema debe soportar un crecimiento masivo de miles de clientes activos y cientos de miles de facturas históricas sin requerir un rediseño de la arquitectura.
 - **NFR6.1.** Las búsquedas globales y la visualización de listados amplios deben responder de forma prácticamente inmediata en condiciones normales de red, evitando cargar todo el histórico de golpe en el navegador mediante mecanismos adecuados de paginación o carga asíncrona.
     - Dependencias: FR9, FR33.
 - **NFR6.2.** Las operaciones pesadas o de larga duración (como la generación masiva de PDFs o informes anuales extensos) deben ejecutarse de forma asíncrona en segundo plano sin congelar la interfaz de usuario, mostrando estados claros de avance.
     - Dependencias: FR28, FR54.1.
 
-### 2.7. Seguridad, privacidad y cumplimiento legal
+### G. Seguridad, privacidad y cumplimiento legal
 - **NFR7.** Todos los datos personales y fiscales deben protegerse mediante un diseño que permita atender solicitudes de localización, anonimización o eliminación de contactos cuando legalmente proceda, asegurando que esto no invalide las facturas emitidas ni suprima los datos sujetos a obligación contable o fiscal.
     - Dependencias: FR14, FR28.1, FR62.
 - **NFR7.1.** Las facturas y archivos sensibles no se almacenarán en URLs públicas o adivinables; su descarga requerirá autenticación rigurosa, permisos de rol activos y enlaces temporales caducables.
