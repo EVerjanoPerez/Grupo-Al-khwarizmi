@@ -152,7 +152,7 @@ FR21.4. Un administrador podrá reasignar una aprobación o definir un suplente;
 - FR28.1. El sistema conservará el PDF original emitido: un cambio posterior de plantilla o logo no alterará las facturas históricas, y el PDF será idéntico en cualquier pantalla o descarga.
     - Dependencias: FR28.
 - FR29. Una factura en borrador podrá corregirse libremente. Una factura emitida no podrá modificarse en silencio: los cambios permitidos quedarán trazados y los cambios relevantes se harán mediante rectificativa.
-    - Dependencias: FR22, FR30.
+    - Dependencias: FR22.
 - FR30. Los usuarios con permiso administrativo podrán crear una factura rectificativa o nota de crédito a partir de la original. El sistema propondrá los datos a rectificar, generará el documento vinculado y requerirá aprobación según el importe. El saldo del cliente tendrá en cuenta ambos documentos.
     - Dependencias: FR29, FR21, FR26.
 - FR31. Solo se podrán borrar facturas en borrador que nunca se emitieron, dejando traza. Una factura emitida nunca se borra.
@@ -203,13 +203,12 @@ FR21.4. Un administrador podrá reasignar una aprobación o definir un suplente;
 - FR43.1. Si llega dos veces el mismo evento de pago, el cobro solo se contabilizará una vez.
     - Dependencias: FR43.
 - FR44. El sistema intentará asociar cada movimiento (importe, fecha, moneda, concepto, referencia) a una factura. Si la coincidencia es clara, la conciliará o propondrá según la política; si hay dudas, la presentará a una persona. Nunca elegirá al azar entre facturas iguales.
-    - Dependencias: FR44.
 - FR44.1. Un cobro sin referencia clara quedará pendiente de conciliación manual.
     - Dependencias: FR44.
 - FR44.2. Si el importe recibido es menor o mayor que el de la factura, esta no se marcará como pagada: el movimiento quedará asociado y la diferencia pendiente de revisión. No existe el pago fraccionado como modalidad comercial.
     - Dependencias: FR44.
 - FR44.3. Se podrá deshacer una conciliación dejando constancia de quién o qué regla la hizo, quién la revirtió y por qué. Los eventos nunca se borran.
-    - Dependencias: FR45.
+    - Dependencias: FR44.
 - FR45. Una factura solo pasará a "pagada" cuando haya un cobro detectado o validado. El movimiento que lo justifica será visible, se detendrán los recordatorios y se avisará al responsable.
     - Dependencias: FR44, FR39.
 - FR45.1. Un usuario autorizado podrá validar manualmente un cobro aportando el justificante.
@@ -286,38 +285,38 @@ FR21.4. Un administrador podrá reasignar una aprobación o definir un suplente;
 - **NFR4.** El sistema debe desarrollarse obligatoriamente como una aplicación web accesible de forma fluida y multiplataforma, optimizada para su uso eficiente desde ordenadores, tablets y teléfonos móviles modernos (Android e iOS), permitiendo la operativa completa en movilidad.
 
 ### C. Independencia tecnológica y arquitectura
-- **NFR3.** El sistema de facturación y administración interna debe ser una aplicación completamente independiente, sin tocar, depender ni integrarse con el núcleo del producto principal de la compañía (el Brain Operating System).La arquitectura debe seguir un diseño modular limpio (preferiblemente un monolito modular bien estructurado) que evite la sobreingeniería, garantizando un bajo acoplamiento y una alta cohesión entre componentes.
+- **NFR5.** El sistema de facturación y administración interna debe ser una aplicación completamente independiente, sin tocar, depender ni integrarse con el núcleo del producto principal de la compañía (el Brain Operating System).La arquitectura debe seguir un diseño modular limpio (preferiblemente un monolito modular bien estructurado) que evite la sobreingeniería, garantizando un bajo acoplamiento y una alta cohesión entre componentes.
     - Dependencias: FR43.
-- **NFR4.** Las integraciones con servicios externos (pasarelas de pago como Stripe, servicios de correo o WhatsApp simulados) deben estar completamente encapsuladas, de modo que sustituir un proveedor simulado por uno real no exija rediseñar el modelo de negocio ni las facturas.
+- **NFR6.** Las integraciones con servicios externos (pasarelas de pago como Stripe, servicios de correo o WhatsApp simulados) deben estar completamente encapsuladas, de modo que sustituir un proveedor simulado por uno real no exija rediseñar el modelo de negocio ni las facturas.
     - Dependencias: FR36, FR43.
 
 ### D. Consistencia de datos y precisión
-- **NFR5.** El documento PDF de la factura generado de forma automática debe mantener una consistencia absoluta, siendo idéntico independientemente de la sección, dispositivo o plataforma desde donde se consulte, imprima o descargue, respetando la identidad corporativa de Turbine de forma inalterable frente a futuros cambios de plantilla o logotipo.
+- **NFR7.** El documento PDF de la factura generado de forma automática debe mantener una consistencia absoluta, siendo idéntico independientemente de la sección, dispositivo o plataforma desde donde se consulte, imprima o descargue, respetando la identidad corporativa de Turbine de forma inalterable frente a futuros cambios de plantilla o logotipo.
     - Dependencias: FR28.
-- **NFR6.** El sistema debe garantizar una precisión decimal estricta en todos los cálculos monetarios (bases, impuestos, descuentos y totales), evitando la pérdida de céntimos o errores derivados del uso incorrecto de tipos de datos de punto flotante (`float`).
+- **NFR8.** El sistema debe garantizar una precisión decimal estricta en todos los cálculos monetarios (bases, impuestos, descuentos y totales), evitando la pérdida de céntimos o errores derivados del uso incorrecto de tipos de datos de punto flotante (`float`).
     - Dependencias: FR23, FR27.
-- **NFR7.** Las marcas de tiempo e instantes de negocio deben almacenarse de forma normalizada para evitar fallos por zonas horarias, y las exportaciones (como ficheros CSV) deben garantizar la compatibilidad con caracteres internacionales y tildes.
+- **NFR9.** Las marcas de tiempo e instantes de negocio deben almacenarse de forma normalizada para evitar fallos por zonas horarias, y las exportaciones (como ficheros CSV) deben garantizar la compatibilidad con caracteres internacionales y tildes.
     - Dependencias: FR54.
 
 ### E. Fiabilidad y tolerancia a fallos
-- **NFR8.** Ningún dato, notificación o proceso periódico programado (como la generación mensual de facturas el día 1) podrá fallar en silencio. Las tareas automáticas deben ser completamente reintentables e idempotentes (si el servidor sufre una caída a medianoche, al recuperarse generará las facturas pendientes sin duplicar ninguna).
+- **NFR10.** Ningún dato, notificación o proceso periódico programado (como la generación mensual de facturas el día 1) podrá fallar en silencio. Las tareas automáticas deben ser completamente reintentables e idempotentes (si el servidor sufre una caída a medianoche, al recuperarse generará las facturas pendientes sin duplicar ninguna).
     - Dependencias: FR24, FR39.
-- **NFR9.** Si un elemento o cliente específico falla durante un procesamiento masivo (como una importación CSV o un envío), la excepción debe quedar aislada y notificada, permitiendo que el resto del lote continúe procesándose con normalidad.
-    - Dependencias: FR12, FR24.2, FR36.
+- **NFR11.** Si un elemento o cliente específico falla durante un procesamiento masivo (como una importación CSV o un envío), la excepción debe quedar aislada y notificada, permitiendo que el resto del lote continúe procesándose con normalidad.
+    - Dependencias: FR12, FR24.1, FR36.
 
 ### F. Escalabilidad y rendimiento
-- **NFR10.** El sistema debe soportar un crecimiento masivo de miles de clientes activos y cientos de miles de facturas históricas sin requerir un rediseño de la arquitectura.
-- **NFR11.** Las búsquedas globales y la visualización de listados amplios deben responder de forma prácticamente inmediata en condiciones normales de red, evitando cargar todo el histórico de golpe en el navegador mediante mecanismos adecuados de paginación o carga asíncrona.
+- **NFR12.** El sistema debe soportar un crecimiento masivo de miles de clientes activos y cientos de miles de facturas históricas sin requerir un rediseño de la arquitectura.
+- **NFR13.** Las búsquedas globales y la visualización de listados amplios deben responder de forma prácticamente inmediata en condiciones normales de red, evitando cargar todo el histórico de golpe en el navegador mediante mecanismos adecuados de paginación o carga asíncrona.
     - Dependencias: FR9, FR33.
-- **NFR12.** Las operaciones pesadas o de larga duración (como la generación masiva de PDFs o informes anuales extensos) deben ejecutarse de forma asíncrona en segundo plano sin congelar la interfaz de usuario, mostrando estados claros de avance.
+- **NFR14.** Las operaciones pesadas o de larga duración (como la generación masiva de PDFs o informes anuales extensos) deben ejecutarse de forma asíncrona en segundo plano sin congelar la interfaz de usuario, mostrando estados claros de avance.
     - Dependencias: FR28, FR54.1.
 
 ### G. Seguridad, privacidad y cumplimiento legal
-- **NFR13.** Todos los datos personales y fiscales deben protegerse mediante un diseño que permita atender solicitudes de localización, anonimización o eliminación de contactos cuando legalmente proceda, asegurando que esto no invalide las facturas emitidas ni suprima los datos sujetos a obligación contable o fiscal.
+- **NFR15.** Todos los datos personales y fiscales deben protegerse mediante un diseño que permita atender solicitudes de localización, anonimización o eliminación de contactos cuando legalmente proceda, asegurando que esto no invalide las facturas emitidas ni suprima los datos sujetos a obligación contable o fiscal.
     - Dependencias: FR14, FR28.1, FR62.
-- **NFR14.** Las facturas y archivos sensibles no se almacenarán en URLs públicas o adivinables; su descarga requerirá autenticación rigurosa, permisos de rol activos y enlaces temporales caducables.
+- **NFR16.** Las facturas y archivos sensibles no se almacenarán en URLs públicas o adivinables; su descarga requerirá autenticación rigurosa, permisos de rol activos y enlaces temporales caducables.
     - Dependencias: FR3, FR28, FR33.
-- **NFR15.** Los tokens, credenciales o claves de acceso a servicios externos (aunque sean simulados) no deben incluirse jamás en duro dentro del repositorio de código fuente.
+- **NFR17.** Los tokens, credenciales o claves de acceso a servicios externos (aunque sean simulados) no deben incluirse jamás en duro dentro del repositorio de código fuente.
     - Dependencias: FR43.
-- **NFR16.** Debe existir una separación absoluta entre los datos de producción y los entornos de prueba o demostración (*mock data*), prohibiendo el uso de datos reales de clientes en repositorios o pruebas.
+- **NFR18.** Debe existir una separación absoluta entre los datos de producción y los entornos de prueba o demostración (*mock data*), prohibiendo el uso de datos reales de clientes en repositorios o pruebas.
     - Dependencias: FR63.
