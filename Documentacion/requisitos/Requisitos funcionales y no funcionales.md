@@ -266,7 +266,7 @@ FR21.4. Un administrador podrá reasignar una aprobación o definir un suplente;
 - FR60. El sistema mantendrá una auditoría de negocio que no podrá editar nadie, ni siquiera el superadministrador. Registrará quién crea clientes, cambia datos fiscales, emite facturas, cambia vencimientos, aprueba descuentos, reasigna clientes, marca disputas, concilia, exporta y cambia la configuración. El superadministrador podrá consultarla y filtrarla.
     - Dependencias: FR1. 
 - FR61. El sistema hará copias de seguridad automáticas de datos y documentos según una política definida, y tendrá un procedimiento de restauración documentado y probado.
-- FR62. El sistema permitirá localizar los datos personales de un contacto y anonimizarlos o eliminarlos cuando legalmente proceda, teniendo en cuenta los registros activos, el histórico y las copias, sin invalidar las facturas emitidas ni borrar datos con obligación contable. Los datos de facturación no se usarán automáticamente para campañas comerciales.
+//- FR62. El sistema permitirá localizar los datos personales de un contacto y anonimizarlos o eliminarlos cuando legalmente proceda, teniendo en cuenta los registros activos, el histórico y las copias, sin invalidar las facturas emitidas ni borrar datos con obligación contable. Los datos de facturación no se usarán automáticamente para campañas comerciales.
     - Dependencias: FR14, FR28.1, FR61.
 - FR63. El sistema podrá cargarse con datos ficticios para demostraciones, separados de los de producción.
 - FR64. Las funciones inteligentes que se añadan (clasificación de conceptos, detección de anomalías) serán opcionales y desactivables, respetarán los permisos y pedirán confirmación humana para cualquier sugerencia económica.
