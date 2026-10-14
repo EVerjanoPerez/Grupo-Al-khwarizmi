@@ -213,6 +213,126 @@ Descripción de los casos de uso segun plantilla subida:
   - 2a. Solo se delegan algunos clientes: el administrador los selecciona.
   - 3a. El sustituto no está activo o las fechas no son válidas: el sistema informa y vuelve al paso 2.
   - Cualquier paso posterior: el administrador cancela la delegación antes de tiempo y el sistema la finaliza.
+
+## CU-08 · Asignación de clientes a usuario
+- **Actor principal:** Administrador
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se asigna, reasigna o desasigna el usuario responsable de un cliente.
+- **Interesados:**
+  - Administrador: quiere repartir el trabajo.
+  - Nuevo responsable: quiere recibir las tareas pendientes.
+  - Turbine: quiere conservar quién hizo cada acción.
+- **Precondiciones:** El usuario destino está activo.
+- **Garantía de éxito:** El cliente tiene un nuevo responsable, que hereda sus tareas pendientes.
+- **Garantía mínima:** El histórico conserva quién hizo cada acción antes del cambio.
+- **Disparador:** Llega un cliente nuevo, se reparte la cartera o un usuario se desactiva.
+- **Escenario principal de éxito:**
+  1. El administrador busca y filtra los clientes (CU-24).
+  2. El administrador selecciona el cliente.
+  3. El administrador elige el usuario responsable.
+  4. El sistema muestra las tareas pendientes que se traspasarán.
+  5. El administrador confirma.
+  6. El sistema asigna el cliente, traspasa las tareas, avisa al nuevo responsable (CU-35) y lo registra en la auditoría.
+- **Extensiones:**
+  - 2a. Son muchos clientes: se hace como acción masiva (CU-37).
+  - 3a. El administrador desasigna el cliente: queda sin responsable y aparece en la bandeja global del administrador.
+
+## CU-09 · Visualización de pagos e impagos
+- **Actor principal:** Usuario
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se consulta el estado de los cobros (facturas pagadas, pendientes o vencidas) con filtros.
+- **Interesados:**
+  - Usuario: quiere saber qué falta por cobrar de sus clientes.
+  - Turbine: quiere que cada uno vea solo lo que le corresponde.
+- **Precondiciones:** Ninguna adicional.
+- **Garantía de éxito:** El usuario ve las facturas que cumplen los filtros, con sus totales.
+- **Garantía mínima:** El usuario nunca ve facturas de clientes que no tiene asignados.
+- **Disparador:** El usuario quiere revisar los cobros.
+- **Escenario principal de éxito:**
+  1. El usuario accede al listado de facturas.
+  2. El sistema muestra las facturas visibles para él con su estado.
+  3. El usuario aplica filtros por fecha, estado, tipo, cliente, responsable, país o moneda.
+  4. El sistema muestra las facturas que cumplen los filtros, con sus totales.
+  5. El usuario selecciona una factura.
+  6. El sistema muestra su detalle y su historial de pagos y envíos.
+- **Extensiones:**
+  - 4a. No hay resultados: el sistema lo indica.
+  - 6a. El usuario quiere el PDF: lo descarga (CU-25).
+
+## CU-10 · Visualización de métricas globales
+- **Actor principal:** Administrador
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se accede al cuadro de mando con lo facturado, cobrado y pendiente de toda la empresa, por periodo, con previsión de recurrentes y conversión a moneda base.
+- **Interesados:**
+  - Administrador: quiere conocer la situación financiera.
+  - Dirección de Turbine: quiere que las cifras sean fiables.
+- **Precondiciones:** El actor es administrador o superadministrador.
+- **Garantía de éxito:** El administrador ve las cifras del periodo y puede llegar al detalle de cada una.
+- **Garantía mínima:** Las cifras no se muestran a usuarios sin permiso.
+- **Disparador:** El administrador quiere revisar la situación financiera.
+- **Escenario principal de éxito:**
+  1. El administrador accede al cuadro de mando.
+  2. El sistema muestra lo facturado, cobrado y pendiente, y la previsión de recurrentes, en la moneda base.
+  3. El administrador elige el periodo (semana, mes, trimestre o año).
+  4. El sistema recalcula las cifras.
+  5. El administrador selecciona una cifra.
+  6. El sistema muestra las facturas que la componen.
+- **Extensiones:**
+  - 4a. No hay datos en el periodo: el sistema muestra las cifras a cero y lo indica.
+  - 6a. El administrador quiere sacar el dato: genera un informe (CU-11).
+
+## CU-11 · Generación y exportación de informes
+- **Actor principal:** Administrador
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se generan informes filtrados y se exportan a CSV o PDF. Incluye el paquete mensual o trimestral para la gestoría.
+- **Interesados:**
+  - Administrador: quiere sacar datos sin pedirlos a nadie.
+  - Gestoría: quiere recibir toda la documentación del periodo junta.
+- **Precondiciones:** Ninguna adicional.
+- **Garantía de éxito:** El informe queda generado y descargable.
+- **Garantía mínima:** El informe solo contiene datos que el actor tiene permiso para ver.
+- **Disparador:** El administrador necesita un informe o hay que enviar la documentación a la gestoría.
+- **Escenario principal de éxito:**
+  1. El administrador elige el tipo de informe.
+  2. El administrador aplica los filtros y el periodo.
+  3. El administrador elige el formato (CSV o PDF).
+  4. El sistema genera el informe respetando los permisos.
+  5. El administrador lo descarga.
+- **Extensiones:**
+  - 1a. Paquete para la gestoría:
+    - el administrador elige el mes o el trimestre;
+    - el sistema reúne en un paquete descargable las facturas emitidas, las rectificativas, los cobros y los PDF del periodo.
+  - 4a. El informe es pesado: el sistema lo genera en segundo plano y avisa cuando está listo (CU-35).
+  - 4b. No hay datos para los filtros elegidos: el sistema lo indica.
+
+## CU-12 · Envío de la factura al cliente
+- **Actor principal:** — (caso incluido en CU-31 y CU-32; lo inicia el caso que lo incluye)
+- **Actor secundario:** Servicio de mensajería
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Subfunción
+- **Descripción:** Se envía al cliente la factura con el PDF y los datos de soporte, por email o por WhatsApp si lo ha consentido.
+- **Interesados:**
+  - Cliente: quiere recibir la factura en su idioma y saber a quién llamar.
+  - Responsable: quiere saber si el envío falla.
+- **Precondiciones:** La factura está emitida y tiene su PDF.
+- **Garantía de éxito:** La factura llega al cliente y el envío queda registrado.
+- **Garantía mínima:** Cada intento queda registrado, y un reenvío nunca duplica la factura.
+- **Disparador:** Se emite una factura (CU-31 o CU-32).
+- **Escenario principal de éxito:**
+  1. El sistema obtiene el contacto de facturación del cliente y su canal (email, o WhatsApp si ha dado su consentimiento).
+  2. El sistema prepara el mensaje en el idioma del contacto con la plantilla configurada, el PDF y los datos de soporte.
+  3. El sistema lo envía a través del Servicio de mensajería.
+  4. El Servicio de mensajería confirma el envío.
+  5. El sistema registra el envío en el historial de la factura.
+- **Extensiones:**
+  - 1a. El cliente no tiene un contacto válido: el sistema no envía y avisa al responsable (CU-35).
+  - 1b. El cliente no ha consentido WhatsApp: se usa el email.
+  - 4a. El envío rebota o falla: el sistema registra el intento y avisa al responsable. Este corrige el contacto y reenvía la misma factura, sin que se duplique.
+
 ---------------
 ## Desactualizados
 
