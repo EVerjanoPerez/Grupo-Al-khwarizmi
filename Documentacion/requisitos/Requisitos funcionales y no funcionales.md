@@ -14,13 +14,7 @@
 
 ### A. Acceso, usuarios y permisos
 
-- FR1. el sistema debe permitir el alta de nuevos clientes, registrando obligatoriamente tanto a la entidad corporativa (empresa) como a la persona física asociada y sus datos de contacto.
-- FR1.1. El sistema permitirá recuperar la contraseña mediante un enlace que caduca.
-    - Dependencias: FR1. 
-- FR1.2. El sistema cerrará la sesión tras un periodo de inactividad y permitirá cerrarla manualmente.
-    - Dependencias: FR1. 
-- FR1.3. El sistema aplicará una protección básica ante intentos de login fallidos repetidos.
-    - Dependencias: FR1. 
+- FR1. El sistema permitirá a los usuarios internos acceder con email corporativo y contraseña, sin autorregistro. Gestionará la sesión: recuperación de contraseña mediante enlace que caduca, cierre manual o por inactividad, y protección ante intentos de login fallidos repetidos.
 - FR2. El sistema permitirá al superadministrador, o a un administrador con permiso, crear o invitar usuarios internos y asignarles un rol.
     - Dependencias: FR1, FR3. 
 - FR2.1. El sistema permitirá desactivar un usuario sin borrar el registro de sus acciones; al desactivarlo se invalidarán sus sesiones activas.
