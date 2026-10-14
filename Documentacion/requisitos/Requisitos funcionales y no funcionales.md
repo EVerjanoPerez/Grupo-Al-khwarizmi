@@ -130,10 +130,8 @@ FR21.4. Un administrador podrá reasignar una aprobación o definir un suplente;
     - Dependencias: FR15, FR18, FR20, FR16, FR17.
 - FR24.1. Si falla un cliente, el resto seguirá procesándose. Cada excepción (falta contacto, cliente pausado, baja efectiva…) quedará identificada y se notificará a quien pueda resolverla.
     - Dependencias: FR24.
-- FR25. Antes de emitir una factura el sistema mostrará una vista previa y bloqueará la emisión si falta un dato fiscal imprescindible, indicando cuál.
+- FR25. Antes de emitir una factura el sistema mostrará una vista previa y bloqueará la emisión si falta un dato fiscal imprescindible, indicando cuál. Y advertirá si el importe se sale mucho del patrón habitual del cliente.
     - Dependencias: FR23, FR5.2.
-- FR25.1. El sistema advertirá, sin bloquear, si el importe se sale mucho del patrón habitual del cliente según una regla configurable.
-    - Dependencias: FR25.
 - FR26. El superadministrador configurará series de facturación (ordinaria, rectificativas y otras). Cada factura recibirá al emitirse un número único dentro de su serie; los borradores no consumen número.
     - Dependencias: FR22.
 - FR26.1. La numeración será correcta aunque varias personas emitan a la vez, y reintentar un envío fallido no generará otra factura ni otro número.
