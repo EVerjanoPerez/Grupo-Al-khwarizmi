@@ -126,11 +126,9 @@ FR21.4. Un administrador podrá reasignar una aprobación o definir un suplente;
     - Dependencias: FR5, FR27.
 - FR23.1. El sistema tendrá un catálogo ligero de conceptos frecuentes con precio orientativo e impuesto por defecto, ajustables al facturar. Cambiar el catálogo no modificará las facturas antiguas.
     - Dependencias: FR23.
-- FR24. El día 1 de cada mes el sistema generará automáticamente las facturas recurrentes a partir de los conceptos de cada suscripción activa, aplicando la tarifa y las excepciones vigentes, las pausas, las bajas y los vencimientos pactados.
+- FR24. El día 1 de cada mes el sistema generará de forma idempotente y automática las facturas recurrentes a partir de los conceptos de cada suscripción activa, aplicando la tarifa y las excepciones vigentes, las pausas, las bajas y los vencimientos pactados.
     - Dependencias: FR15, FR18, FR20, FR16, FR17.
-- FR24.1. La generación será idempotente: si el sistema estaba caído, al volver generará las facturas que falten sin duplicar ninguna.
-    - Dependencias: FR24.
-- FR24.2. Si falla un cliente, el resto seguirá procesándose. Cada excepción (falta contacto, cliente pausado, baja efectiva…) quedará identificada y se notificará a quien pueda resolverla.
+- FR24.1. Si falla un cliente, el resto seguirá procesándose. Cada excepción (falta contacto, cliente pausado, baja efectiva…) quedará identificada y se notificará a quien pueda resolverla.
     - Dependencias: FR24.
 - FR25. Antes de emitir una factura el sistema mostrará una vista previa y bloqueará la emisión si falta un dato fiscal imprescindible, indicando cuál.
     - Dependencias: FR23, FR5.2.
