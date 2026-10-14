@@ -221,7 +221,7 @@ FR21.4. Un administrador podrá reasignar una aprobación o definir un suplente;
     - Dependencias: FR3, FR47.
 - FR50. El sistema permitirá añadir comentarios internos a clientes, facturas e incidencias, con menciones que notifican al usuario mencionado. Habrá dos niveles de visibilidad: normal y restringido a administradores. Los comentarios nunca se enviarán al cliente.
     - Dependencias: FR47.
-- FR51. El sistema permitirá adjuntar documentos con tipo y descripción (pedido, presupuesto aceptado, justificante, documento firmado, documento de gestoría) a clientes, facturas e incidencias. Los formatos y tamaños estarán limitados, y el acceso seguirá los permisos del elemento.
+//- FR51. El sistema permitirá adjuntar documentos con tipo y descripción (pedido, presupuesto aceptado, justificante, documento firmado, documento de gestoría) a clientes, facturas e incidencias. Los formatos y tamaños estarán limitados, y el acceso seguirá los permisos del elemento.
     - Dependencias: FR3.
 - FR52. El sistema permitirá acciones masivas (reasignar clientes, exportar una selección, cambiar el sector, generar informes) que mostrarán cuántos elementos afectan, pedirán confirmación si son sensibles y devolverán un resultado con éxitos y errores. No habrá un "marcar como pagadas" masivo sin controles.
     - Dependencias: FR3.
