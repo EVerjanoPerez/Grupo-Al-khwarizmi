@@ -1,0 +1,40 @@
+@startuml
+ie-diagram
+entity CLIENTE {
+* id_cliente : INT <<PK>>
+---
+nombre_empresa : VARCHAR
+cif_empresa : VARCHAR
+id_usuario : VARCHAR <<FK>>
+}
+
+entity factura {
+* id_factura : VARCHAR <<PK>>
+importe : INT 
+fecha : DATE
+id_cliente : INT <<FK>> 
+}
+
+CLIENTE ||--o{ factura 
+
+
+entity "USUARIO" as user {
+* id_usuario : VARCHAR <<PK>>
+---
+nombre : VARCHAR 
+rango : VARCHAR 
+}
+
+CLIENTE --|| user
+
+entity RECORDATORIO {
+*id_recordatorio : VARCHAR 
+fecha : DATE 
+id_factura : VARCHAR <<FK>> 
+id_cliente : VARCHAR <<FK>> 
+}
+
+CLIENTE ||--o{ RECORDATORIO
+factura ||--o{ RECORDATORIO
+
+@enduml
