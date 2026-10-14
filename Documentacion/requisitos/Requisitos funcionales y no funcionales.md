@@ -58,10 +58,8 @@
     - Dependencias: FR6.
 - FR8. El sistema gestionará los estados del cliente que afectan a la facturación: pendiente de activación, activo, pausado, baja solicitada, inactivo (baja efectiva) y bloqueado administrativamente. Antes de confirmar un cambio de estado mostrará sus consecuencias.
     - Dependencias: FR5
-- FR9. El sistema ofrecerá una búsqueda global por nombre comercial, razón social, identificador fiscal, persona de contacto, email y número de factura, y filtros por ubicación, sector, país, estado, responsable y etiquetas.
+- FR9. El sistema ofrecerá una búsqueda global por nombre comercial, razón social, identificador fiscal, persona de contacto, email y número de factura, y filtros por ubicación, sector, país, estado, responsable y etiquetas. Incluyendo acceso rápido a clientes favoritos y recientes.
     - Dependencias: FR3, FR5.
-- FR9.2. El sistema ofrecerá acceso rápido a clientes favoritos y recientes.
-    - Dependencias: FR9, FR3.2. 
 - FR10. El sistema permitirá etiquetar clientes con etiquetas administrables (estratégico, beta, partner…). Las situaciones derivadas de las facturas, como "impagado", no serán etiquetas manuales.
     - Dependencias: FR5.
 - FR11. La ficha del cliente mostrará su saldo, sus facturas, sus pagos y una línea temporal de eventos de negocio: alta, cambios de responsable y tarifa, facturas, pagos, incidencias, pausas, baja y reactivación.
