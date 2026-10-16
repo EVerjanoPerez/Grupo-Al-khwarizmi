@@ -333,6 +333,197 @@ Descripción de los casos de uso segun plantilla subida:
   - 1b. El cliente no ha consentido WhatsApp: se usa el email.
   - 4a. El envío rebota o falla: el sistema registra el intento y avisa al responsable. Este corrige el contacto y reenvía la misma factura, sin que se duplique.
 
+## CU-13 · Control de pagos por notificación
+- **Actor principal:** Sistema de cobros
+- **Actor alternativo:** el Planificador lanza la consulta periódica 
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se recibe un cobro de Stripe (simulado) o Revolut, se asocia a su factura, esta se marca como pagada y se detienen sus recordatorios.
+- **Interesados:**
+  - Usuario responsable: quiere saber que su cliente ha pagado sin revisarlo a mano.
+  - Cliente: no quiere recibir recordatorios después de pagar.
+- **Precondiciones:** La conexión con el sistema de cobros está configurada (CU-04).
+- **Garantía de éxito:** La factura queda pagada, sus recordatorios se detienen y se avisa al responsable.
+- **Garantía mínima:** Un mismo cobro nunca se aplica dos veces. Los cobros dudosos no se asignan solos.
+- **Disparador:** El sistema de cobros notifica un pago.
+- **Escenario principal de éxito:**
+  1. El Sistema de cobros notifica un cobro recibido.
+  2. El sistema comprueba que ese evento no se ha procesado ya.
+  3. El sistema busca la factura pendiente que corresponde (por referencia, cliente e importe).
+  4. El sistema marca la factura como pagada y registra el cobro.
+  5. El sistema detiene sus recordatorios.
+  6. El sistema avisa al usuario asignado.
+- **Extensiones:**
+  - 1a. Consulta periódica: el Planificador lanza la consulta, el sistema pide los cobros recientes al Sistema de cobros y continúa en el paso 2 con cada uno.
+  - 2a. El evento está duplicado: el sistema lo ignora y lo registra.
+  - 3a. No hay una coincidencia clara, o el importe no cuadra: el cobro queda pendiente de revisión manual (CU-14) y se avisa al responsable.
+
+## CU-14 · Registro manual de un pago
+- **Actor principal:** Usuario
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se marca a mano una factura como pagada aportando el justificante, o se concilia un cobro que quedó pendiente de revisión.
+- **Interesados:**
+  - Usuario: quiere reflejar pagos que el sistema no detecta solo.
+  - Cliente: no quiere recibir más recordatorios.
+  - Gestoría: quiere justificantes de cada cobro.
+- **Precondiciones:** La factura está pendiente o vencida.
+- **Garantía de éxito:** La factura queda pagada con su justificante y se detienen sus recordatorios.
+- **Garantía mínima:** Cada cambio queda trazado y puede deshacerse dejando constancia.
+- **Disparador:** El cliente ha pagado por un medio que no se detecta solo, o hay un cobro por conciliar.
+- **Escenario principal de éxito:**
+  1. El usuario selecciona la factura.
+  2. El usuario indica la fecha y el importe del pago y adjunta el justificante.
+  3. El sistema valida los datos.
+  4. El sistema marca la factura como pagada y registra el pago con el justificante.
+  5. El sistema detiene sus recordatorios y avisa al usuario asignado (CU-35).
+  6. El sistema lo registra en la auditoría.
+- **Extensiones:**
+  - 1a. Conciliar un cobro pendiente de revisión: el usuario selecciona el cobro, lo asocia a su factura y continúa en el paso 4.
+  - 2a. No hay justificante: el sistema no permite continuar.
+  - 3a. El importe no coincide con el de la factura: el sistema lo avisa y pide confirmación.
+  - Cualquier paso posterior: se descubre un error y se deshace la conciliación con un motivo. La factura vuelve a quedar pendiente y queda constancia del cambio.
+
+## CU-15 · Desactivación de cuentas
+- **Actor principal:** Administrador (con permiso de gestión de usuarios)
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se revoca el acceso de un usuario interno sin borrar el registro de sus acciones.
+- **Interesados:**
+  - Turbine: quiere que nadie que haya salido pueda seguir entrando.
+  - Auditoría: quiere conservar el historial.
+- **Precondiciones:** La cuenta está activa.
+- **Garantía de éxito:** La cuenta queda desactivada, con sus sesiones cerradas, y sus clientes quedan pendientes de reasignar.
+- **Garantía mínima:** El historial de acciones del usuario se conserva.
+- **Disparador:** Un empleado deja la empresa o cambia de funciones.
+- **Escenario principal de éxito:**
+  1. El administrador selecciona el usuario.
+  2. El administrador indica que quiere desactivarlo y el motivo.
+  3. El sistema muestra sus clientes asignados y sus tareas pendientes.
+  4. El administrador confirma.
+  5. El sistema desactiva la cuenta, invalida sus sesiones activas y lo registra en la auditoría.
+  6. El sistema deja sus clientes pendientes de reasignar (CU-08) y avisa al administrador.
+- **Extensiones:**
+  - 1a. El administrador intenta desactivar su propia cuenta o la del último superadministrador: el sistema lo impide.
+  - 3a. El administrador prefiere reasignar los clientes antes: lo hace (CU-08) y vuelve al paso 4.
+
+## CU-16 · Borrado lógico de clientes y facturas
+- **Actor principal:** Administrador
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se marca un cliente como eliminado sin borrar sus datos, que se conservan lo que exija la ley. Solo se borran de verdad las facturas en borrador nunca emitidas.
+- **Interesados:**
+  - Turbine: quiere cumplir la normativa fiscal y de protección de datos y mantener el histórico comercial.
+- **Precondiciones:** Ninguna adicional.
+- **Garantía de éxito:** El cliente deja de aparecer en los listados ordinarios y sus datos se conservan.
+- **Garantía mínima:** Ninguna factura emitida se borra, y todo borrado deja traza.
+- **Disparador:** Un cliente ya no debe aparecer en la operativa diaria.
+- **Escenario principal de éxito:**
+  1. El administrador selecciona el cliente.
+  2. El administrador indica que quiere eliminarlo y el motivo.
+  3. El sistema comprueba que el cliente no tiene una suscripción activa.
+  4. El administrador confirma.
+  5. El sistema marca el cliente como eliminado, conserva sus datos y facturas y lo registra en la auditoría.
+- **Extensiones:**
+  - 1a. Se quiere borrar una factura en borrador nunca emitida: el sistema la elimina dejando traza.
+  - 1b. Se quiere borrar una factura emitida: el sistema no lo permite e indica que se rectifique o anule.
+  - 3a. El cliente tiene una suscripción activa: el sistema pide tramitar antes la baja.
+
+## CU-17 · Consulta de facturas pendientes
+- **Actor principal:** Usuario
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario (también incluido en CU-19)
+- **Descripción:** Se consulta de forma organizada si un cliente tiene deudas pendientes.
+- **Interesados:**
+  - Usuario: quiere saber qué debe el cliente, por ejemplo antes de tramitar su baja.
+- **Precondiciones:** El cliente es visible para el usuario.
+- **Garantía de éxito:** El usuario ve las facturas pendientes y vencidas y el total adeudado.
+- **Garantía mínima:** No se muestran datos de clientes no asignados.
+- **Disparador:** El usuario necesita conocer la deuda de un cliente.
+- **Escenario principal de éxito:**
+  1. El usuario selecciona el cliente.
+  2. El usuario pide ver sus facturas pendientes.
+  3. El sistema muestra las facturas pendientes y vencidas, con su importe, su vencimiento y los días de retraso, y el total adeudado.
+- **Extensiones:**
+  - 3a. No hay deudas: el sistema indica que el cliente está al corriente.
+
+## CU-18 · Modificación de facturas y datos
+- **Actor principal:** Usuario
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se edita una factura en borrador. Una factura emitida no se modifica en silencio: los cambios relevantes se hacen con una rectificativa, y en un periodo cerrado no se permiten cambios ordinarios.
+- **Interesados:**
+  - Usuario: quiere corregir errores antes de emitir.
+  - Turbine y Hacienda: quieren que lo emitido no cambie sin rastro.
+- **Precondiciones:** La factura es visible para el usuario.
+- **Garantía de éxito:** La factura queda modificada, con el PDF regenerado y el cambio registrado.
+- **Garantía mínima:** Ninguna factura emitida cambia sus datos fiscales ni sus importes sin rectificativa.
+- **Disparador:** El usuario detecta un dato que corregir.
+- **Escenario principal de éxito:**
+  1. El usuario selecciona la factura.
+  2. El sistema comprueba su estado y su periodo.
+  3. El usuario modifica los datos.
+  4. El sistema valida los datos y muestra una vista previa.
+  5. El usuario confirma.
+  6. El sistema guarda los cambios, regenera el PDF y registra quién cambió qué y cuándo.
+- **Extensiones:**
+  - 2a. La factura está emitida: el sistema solo permite cambios que no afecten a sus datos fiscales ni a sus importes, y los deja trazados. Para el resto, indica que se haga una rectificativa.
+  - 2b. El periodo está cerrado: el sistema impide el cambio e indica que hace falta reabrirlo.
+  - 4a. Un importe manual supera el umbral: queda pendiente de aprobación.
+
+## CU-19 · Alta, baja y edición de clientes
+- **Actor principal:** Usuario
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se registran o modifican los datos fiscales de un cliente, sus etiquetas y sus contactos, se reactiva un cliente que vuelve o se tramita su baja.
+- **Interesados:**
+  - Usuario: quiere tener los datos de sus clientes al día.
+  - Cliente: quiere que su baja se haga cuando la pide.
+  - Turbine: quiere evitar duplicados y seguir cobrando la deuda.
+- **Precondiciones:** Para editar o dar de baja, el cliente está asignado al usuario.
+- **Garantía de éxito:** El cliente queda registrado o actualizado, o dado de baja desde la fecha efectiva.
+- **Garantía mínima:** Todo cambio queda trazado, y una baja no anula la deuda pendiente.
+- **Disparador:** Llega un cliente nuevo, cambian sus datos o pide la baja.
+- **Escenario principal de éxito (alta):**
+  1. El usuario indica que quiere dar de alta un cliente.
+  2. El usuario introduce los datos fiscales (razón social, NIF, dirección, ubicación, sector y rango), las etiquetas y los contactos (nombre, email, teléfono, función, idioma y consentimientos).
+  3. El sistema valida los datos y busca duplicados por NIF.
+  4. El sistema registra el cliente y lo asigna al usuario que lo crea.
+  5. El sistema lo registra en la auditoría.
+- **Extensiones:**
+  - 1a. Edición: el usuario selecciona un cliente y modifica sus datos. El sistema los valida y los guarda trazando el cambio.
+  - 1b. Baja (también a partir de una tarea creada por CU-28):
+    - el usuario indica la baja y su fecha efectiva;
+    - el sistema cancela la suscripción desde esa fecha y consulta las facturas pendientes;
+    - si hay deuda, el sistema la muestra, la baja se registra igualmente y el flujo de impagos continúa.
+  - 3a. Hay datos no válidos: el sistema indica cuáles y vuelve al paso 2.
+  - 3b. Ya existe un cliente con ese NIF: el sistema avisa y muestra el existente. El usuario cancela o continúa indicando el motivo.
+  - 3c. El cliente existente estaba dado de baja: el sistema ofrece reactivarlo conservando su histórico.
+
+## CU-20 · Importación masiva de clientes
+- **Actor principal:** Administrador
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se cargan clientes desde un fichero CSV, con mapeo de columnas, previsualización de errores y aviso de NIF duplicados.
+- **Interesados:**
+  - Administrador: quiere migrar la cartera sin teclearla.
+  - Turbine: no quiere datos erróneos ni duplicados.
+- **Precondiciones:** Ninguna adicional.
+- **Garantía de éxito:** Los clientes válidos quedan importados y se muestra un resumen.
+- **Garantía mínima:** No se importa nada sin confirmación, y las filas erróneas no se importan.
+- **Disparador:** Hay que cargar una base de datos de clientes.
+- **Escenario principal de éxito:**
+  1. El administrador sube el fichero CSV.
+  2. El sistema lo lee y propone el mapeo de columnas.
+  3. El administrador ajusta el mapeo.
+  4. El sistema valida cada fila y previsualiza los errores y los NIF duplicados.
+  5. El administrador confirma.
+  6. El sistema importa las filas válidas, muestra el resumen (importadas, erróneas y duplicadas) y lo registra.
+- **Extensiones:**
+  - 2a. El fichero no tiene un formato válido: el sistema lo rechaza e informa.
+  - 4a. Todas las filas son erróneas: el sistema no permite confirmar.
+  - 5a. El administrador cancela: no se importa nada.
+
 ---------------
 ## Desactualizados
 
