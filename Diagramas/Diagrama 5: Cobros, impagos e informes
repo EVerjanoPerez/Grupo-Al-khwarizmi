@@ -1,0 +1,35 @@
+@startuml
+skinparam actorstyle awesome
+left to right direction
+title Cobros, impagos e informes
+
+actor :Usuario: as usuario
+actor :Administrador: as admin
+actor :Planificador (tiempo): as planificador
+actor :Sistema de cobros: as sistemaCobros
+actor :Servicio de mensajería: as mensajeria
+
+usecase (CU-09 Visualización de pagos e impagos) as cu09
+usecase (CU-10 Visualización de métricas globales) as cu10
+usecase (CU-11 Generación y exportación de informes) as cu11
+usecase (CU-13 Control de pagos por notificación) as cu13
+usecase (CU-14 Registro manual de un pago) as cu14
+usecase (CU-21 Gestión del flujo de impagos automatizado) as cu21
+usecase (CU-34 Gestión de incidencias y disputas) as cu34
+
+admin --|> usuario
+
+usuario -- cu09
+usuario -- cu14
+usuario -- cu34
+
+admin -- cu10
+admin -- cu11
+
+planificador -- cu13
+planificador -- cu21
+
+sistemaCobros -- cu13
+
+mensajeria -- cu21
+@enduml
