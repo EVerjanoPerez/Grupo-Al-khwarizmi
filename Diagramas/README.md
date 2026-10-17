@@ -4,13 +4,13 @@ En esta carpeta se almacenará el código correspondiente a los diagramas UML de
 
 ---
 
-### 1. prueba.puml
+### 1. Diagramas de ejemplo
 
-Este documento contiene un diagrama de **ejemplo** realizado por el profesor en clase.
+En este directorio se recopilan los diagramas que se han hecho en clase a lo largo de las prácticas de la asignatura.
 
-### 2. ExplicacionClases-Clase0710
+### 2. Diagrama completo
 
-Segundo diagra de clase hecho por el profesor a modo de **ejemplo**.
+En este directorio se recoplila el diagrama completo de los casos de uso, además de sus subdiagramas para una correcta visualización.
 
 ---
 

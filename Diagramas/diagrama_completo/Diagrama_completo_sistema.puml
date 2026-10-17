@@ -1,0 +1,141 @@
+@startuml
+skinparam actorstyle awesome
+left to right direction
+title Sistema completo de facturación - Casos de uso
+
+' ===== Actores =====
+actor :Usuario: as usuario
+actor :Administrador: as admin
+actor :Superadministrador: as superadmin
+actor :Planificador (tiempo): as planificador
+actor :Sistema de cobros: as sistemaCobros
+actor :Sistema externo: as sistemaExterno
+actor :Servicio de mensajería: as mensajeria
+
+superadmin --|> admin
+admin --|> usuario
+
+' ===== Diagrama 1: Acceso, usuarios y trabajo diario =====
+rectangle "Acceso, usuarios y trabajo diario" {
+  usecase (CU-01 Login) as cu01
+  usecase (CU-02 Registro de usuarios internos) as cu02
+  usecase (CU-07 Delegación temporal de clientes) as cu07
+  usecase (CU-08 Asignación de clientes a usuario) as cu08
+  usecase (CU-15 Desactivación de cuentas) as cu15
+  usecase (CU-35 Notificaciones y pantalla de trabajo diario) as cu35
+  usecase (CU-36 Comentarios y adjuntos) as cu36
+}
+
+' ===== Diagrama 2: Configuración, auditoría y datos =====
+rectangle "Configuración, auditoría y datos" {
+  usecase (CU-03 Configuración global del sistema) as cu03
+  usecase (CU-04 Administración de la cuenta de recepción de pagos) as cu04
+  usecase (CU-22 Auditoría y copias de seguridad) as cu22
+  usecase (CU-26 Generación de copias de seguridad) as cu26
+  usecase (CU-38 Cierre y reapertura de periodos) as cu38
+  usecase (CU-39 Gestión de datos personales) as cu39
+}
+
+' ===== Diagrama 3: Clientes y suscripciones =====
+rectangle "Clientes y suscripciones" {
+  usecase (CU-05 Revisión anual del rango de facturación) as cu05
+  usecase (CU-06 Activación de la facturación recurrente) as cu06
+  usecase (CU-16 Borrado lógico de clientes y facturas) as cu16
+  usecase (CU-17 Consulta de facturas pendientes) as cu17
+  usecase (CU-19 Alta, baja y edición de clientes) as cu19
+  usecase (CU-20 Importación masiva de clientes) as cu20
+  usecase (CU-24 Búsqueda y consulta de clientes) as cu24
+  usecase (CU-27 Pausa y reactivación de suscripción) as cu27
+  usecase (CU-28 Notificación de baja por API) as cu28
+  usecase (CU-29 Solicitud de excepción comercial) as cu29
+  usecase (CU-37 Acciones masivas) as cu37
+}
+
+' ===== Diagrama 4: Facturación y aprobaciones =====
+rectangle "Facturación y aprobaciones" {
+  usecase (CU-12 Envío de la factura al cliente) as cu12
+  usecase (CU-18 Modificación de facturas y datos) as cu18
+  usecase (CU-23 Rectificación y anulación de facturas) as cu23
+  usecase (CU-25 Descarga de factura en PDF) as cu25
+  usecase (CU-30 Gestión de aprobaciones) as cu30
+  usecase (CU-31 Creación de factura puntual) as cu31
+  usecase (CU-32 Generación mensual de facturas recurrentes) as cu32
+  usecase (CU-33 Gestión de presupuestos) as cu33
+}
+
+' ===== Diagrama 5: Cobros, impagos e informes =====
+rectangle "Cobros, impagos e informes" {
+  usecase (CU-09 Visualización de pagos e impagos) as cu09
+  usecase (CU-10 Visualización de métricas globales) as cu10
+  usecase (CU-11 Generación y exportación de informes) as cu11
+  usecase (CU-13 Control de pagos por notificación) as cu13
+  usecase (CU-14 Registro manual de un pago) as cu14
+  usecase (CU-21 Gestión del flujo de impagos automatizado) as cu21
+  usecase (CU-34 Gestión de incidencias y disputas) as cu34
+}
+
+' ===== Usuario =====
+usuario -- cu01
+usuario -- cu35
+usuario -- cu36
+usuario -- cu06
+usuario -- cu17
+usuario -- cu19
+usuario -- cu24
+usuario -- cu27
+usuario -- cu29
+usuario -- cu18
+usuario -- cu25
+usuario -- cu31
+usuario -- cu33
+usuario -- cu09
+usuario -- cu14
+usuario -- cu34
+
+' ===== Administrador =====
+admin -- cu02
+admin -- cu07
+admin -- cu08
+admin -- cu15
+admin -- cu38
+admin -- cu39
+admin -- cu05
+admin -- cu16
+admin -- cu20
+admin -- cu37
+admin -- cu23
+admin -- cu30
+admin -- cu10
+admin -- cu11
+
+' ===== Superadministrador =====
+superadmin -- cu03
+superadmin -- cu04
+superadmin -- cu22
+
+' ===== Planificador (tiempo) =====
+planificador -- cu26
+planificador -- cu32
+planificador -- cu13
+planificador -- cu21
+
+' ===== Sistema de cobros =====
+sistemaCobros -- cu04
+sistemaCobros -- cu13
+
+' ===== Sistema externo =====
+sistemaExterno -- cu28
+
+' ===== Servicio de mensajería =====
+mensajeria -- cu01
+mensajeria -- cu02
+mensajeria -- cu06
+mensajeria -- cu12
+mensajeria -- cu33
+mensajeria -- cu21
+
+' ===== Relaciones entre casos de uso =====
+cu19 ..> cu17 : <<include>>
+cu31 ..> cu12 : <<include>>
+cu32 ..> cu12 : <<include>>
+@enduml
