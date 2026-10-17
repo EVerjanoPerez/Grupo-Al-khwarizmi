@@ -1,0 +1,42 @@
+@startuml
+skinparam actorstyle awesome
+left to right direction
+title Clientes y suscripciones
+
+actor :Usuario: as usuario
+actor :Administrador: as admin
+actor :Sistema externo: as sistemaExterno
+actor :Servicio de mensajería: as mensajeria
+
+usecase (CU-05 Revisión anual del rango de facturación) as cu05
+usecase (CU-06 Activación de la facturación recurrente) as cu06
+usecase (CU-16 Borrado lógico de clientes y facturas) as cu16
+usecase (CU-17 Consulta de facturas pendientes) as cu17
+usecase (CU-19 Alta, baja y edición de clientes) as cu19
+usecase (CU-20 Importación masiva de clientes) as cu20
+usecase (CU-24 Búsqueda y consulta de clientes) as cu24
+usecase (CU-27 Pausa y reactivación de suscripción) as cu27
+usecase (CU-28 Notificación de baja por API) as cu28
+usecase (CU-29 Solicitud de excepción comercial) as cu29
+usecase (CU-37 Acciones masivas) as cu37
+
+admin --|> usuario
+
+usuario -- cu06
+usuario -- cu17
+usuario -- cu19
+usuario -- cu24
+usuario -- cu27
+usuario -- cu29
+
+admin -- cu05
+admin -- cu16
+admin -- cu20
+admin -- cu37
+
+sistemaExterno -- cu28
+
+mensajeria -- cu06
+
+cu19 ..> cu17 : <<include>>
+@enduml
