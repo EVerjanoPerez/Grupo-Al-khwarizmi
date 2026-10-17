@@ -1,0 +1,30 @@
+@startuml
+skinparam actorstyle awesome
+left to right direction
+title Configuración, auditoría y datos
+
+actor :Administrador: as admin
+actor :Superadministrador: as superadmin
+actor :Planificador (tiempo): as planificador
+actor :Sistema de cobros: as sistemaCobros
+
+usecase (CU-03 Configuración global del sistema) as cu03
+usecase (CU-04 Administración de la cuenta de recepción de pagos) as cu04
+usecase (CU-22 Auditoría y copias de seguridad) as cu22
+usecase (CU-26 Generación de copias de seguridad) as cu26
+usecase (CU-38 Cierre y reapertura de periodos) as cu38
+usecase (CU-39 Gestión de datos personales) as cu39
+
+superadmin --|> admin
+
+superadmin -- cu03
+superadmin -- cu04
+superadmin -- cu22
+
+admin -- cu38
+admin -- cu39
+
+planificador -- cu26
+
+sistemaCobros -- cu04
+@enduml
