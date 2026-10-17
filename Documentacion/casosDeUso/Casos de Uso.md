@@ -2,8 +2,6 @@
 
 ---------
 
-# Desactualizados 
-
 ## Actores 
 
 | Actor | Tipo | Descripción |
@@ -13,7 +11,7 @@
 | Superadministrador | Primario | Puede hacer todo lo del Administrador. Además configura el sistema y consulta la auditoría y las copias de seguridad. |
 | Planificador (tiempo) | Primario | Reloj del sistema que lanza los procesos periódicos: generación mensual, recordatorios, consulta de cobros, revisión anual y copias de seguridad. |
 | Sistema externo | Primario | Otro sistema de Turbine que se comunica con la aplicación por API (por ejemplo, para notificar una baja). |
-| Sistema de cobros | Secundario | Stripe (simulado) y, opcionalmente, Revolut. |
+| Sistema de cobros | Primario / Secundario | Stripe (simulado) y, opcionalmente, Revolut. |
 | Servicio de mensajería | Secundario | Email y WhatsApp. |
 
 -----------
@@ -769,35 +767,227 @@ Descripción de los casos de uso segun plantilla subida:
   - 3a. La solicitud es del propio administrador: el sistema no le permite resolverla.
   - 4a. El administrador la reasigna a un suplente: el sistema la mueve a la bandeja del suplente y le avisa.
 
----------------
-## Desactualizados
+## CU-31 · Creación de factura puntual
+- **Actor principal:** Usuario
+- **Actor secundario:** Servicio de mensajería (a través de CU-12)
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se crea una factura con varias líneas, se previsualiza y se emite con el número de su serie, su PDF y su envío al cliente.
+- **Interesados:**
+  - Usuario: quiere facturar un servicio adicional.
+  - Cliente: quiere una factura correcta.
+  - Hacienda: quiere numeración correlativa y datos fiscales completos.
+- **Precondiciones:** El cliente está asignado al usuario.
+- **Garantía de éxito:** La factura queda emitida con su número y su PDF y se envía al cliente.
+- **Garantía mínima:** No se emite ninguna factura con datos fiscales incompletos, y si no se emite queda como borrador.
+- **Disparador:** Hay que cobrar un servicio no recurrente.
+- **Escenario principal de éxito:**
+  1. El usuario selecciona el cliente y crea una factura.
+  2. El usuario añade las líneas (concepto, cantidad, precio, descuento e impuesto), si quiere desde el catálogo, y el centro de coste.
+  3. El sistema calcula los totales y la guarda como borrador.
+  4. El usuario pide la vista previa.
+  5. El sistema muestra la vista previa del PDF.
+  6. El usuario emite la factura.
+  7. El sistema comprueba que los datos fiscales están completos.
+  8. El sistema asigna el número de su serie, genera el PDF y marca la factura como emitida.
+  9. El sistema envía la factura al cliente (incluye CU-12).
+- **Extensiones:**
+  - 2a. Hay un importe manual o un descuento por encima del umbral: la factura queda pendiente de aprobación (CU-30) antes de poder emitirse.
+  - 3a. El importe parece anómalo: el sistema avisa, y el usuario lo corrige o lo confirma.
+  - 6a. El usuario no la emite todavía: queda como borrador editable (CU-18).
+  - 7a. Falta un dato fiscal: el sistema bloquea la emisión e indica cuál falta.
 
-| # | Caso de uso | Actor | Descripción | 
-|---|---|---|---| 
-| 1 | Login | Superadministrador, administrador, usuario | Permite acceder de forma segura al sistema validando credenciales y comprobando que el correo electrónico pertenezca a un dominio corporativo válido de la empresa. |
-| 2 | Registro de usuarios internos| Superadministrador | Permite registrar un nuevo usuario interno en la aplicación asignándole su rol correspondiente para el control de accesos. |
-| 3 | Configuración global del sistema | Superadministrador | 	Modifica los parámetros globales: plazo estándar de pago (5 días), calendario de recordatorios (días 3 y 5 y, después, cada 2–3 días), datos de soporte que aparecen en las notificaciones y plantilla corporativa del PDF. Solo puede hacerlo este rol. |
-| 4 | Administración de la cuenta de recepción de pagos | Superadministrador | 	Configura la conexión simulada con Stripe y, opcionalmente, con la cuenta de Revolut, de las que el sistema lee los cobros. |
-| 5 | Revisión anual del rango de facturación | Superadministrador, administrador | Revisa los niveles de facturación anual de los clientes para actualizar importes y notificar cambios de rango o plan de suscripción. Así como administra y ajusta las condiciones o excepciones extraordinarias aplicadas sobre los cobros y pagos previstos. |
-| 6 | Activación de la facturación recurrente | Superadministrador, administrador | Marca un cliente como recurrente e indica su cuota mensual. Si el alta es a mitad de mes, se emite una factura puntual prorrateada por los días restantes y la cuota normal desde el día 1 siguiente. |
-| 7 | Asignación de grupos de usuarios a administradores | Superadministrador | Organiza y distribuye a los usuarios disponibles en grupos que serán regulados por un administrador de forma optimizada a la carga de trabajo. |
-| 8 | Asignación de clientes a usuario | Superadministrador | Organiza y distribuye a los usuarios disponibles en los grupos para que cada usuario tenga asignado a 1 cliente o mas. |
-| 9 | Visualización de pagos e impagos | Superadministrador, administrador, usuario | Consulta el estado financiero de los cobros, identificando facturas pagadas, pendientes o vencidas según la asignación de clientes. |
-| 10 | Visualización de métricas globales | Superadministrador, administrador | Accede al cuadro de mando con lo facturado, lo cobrado y lo pendiente de toda la empresa, con desglose semanal, mensual, trimestral y anual. Solo para administración. |
-| 11 | Visualización de métricas por equipos | Superadministrador, administrador,  | Accede a cuadros de mando protegidos con desgloses semanales, mensuales, trimestrales y anuales de ingresos del equipo de usuarios que tenga asignado. |
-| 12 | Envío de la factura al cliente | Servicio de mensajería | Envía automáticamente al cliente, por email o WhatsApp, la factura con el PDF y los datos de soporte (email y teléfono). |
-| 13 | Control de pagos por notificación |  Superadministrador, administrador, usuario, sistema de cobros | Consulta periódicamente los cobros en Stripe (simulado) o Revolut, los asocia a las facturas pendientes, las marca como pagadas, detiene sus recordatorios y avisa al usuario asignado. |
-| 14 | Registro manual de un pago | Superadministrador, administrador, usuario | Marca a mano una factura como pagada o cambia su estado. Se detienen sus recordatorios y se avisa al usuario asignado. |
-| 15 | Borrado de cuentas | Superadministrador | Elimina o revoca el acceso de usuarios internos de la aplicación por motivos de seguridad o cambios organizativos. |
-| 16 | Borrado lógico de clientes y facturas | Superadministrador, administrador | Marca un cliente como eliminado sin borrar sus datos, que se conservan el máximo que permita la ley. Cumple la normativa fiscal y de protección de datos y mantiene el histórico comercial. Las facturas no se borran: se anulan. |
-| 17 | Consulta de facturas pendientes |  Superadministrador, administrador, usuario | Permite  consultar de forma automatizada y organizada si un cliente tiene deudas pendientes para gestionar bloqueos de baja. |   
-| 18 | Modificación de facturas y datos | Superadministrador, administrador, usuario  | Edita una factura mientras su trimestre natural no esté cerrado (por ejemplo, una factura del 15 de marzo no se puede tocar desde el 1 de abril). Regenera el PDF y registra el cambio. Los datos del cliente se editan en el caso 19 y no tienen esta restricción. |
-| 19 | Alta, baja y edición de clientes | Superadministrador, administrador | Registra o modifica en cualquier momento los datos fiscales de la empresa (razón social, NIF, dirección, ubicación, sector, rango de facturación) y los de la persona de contacto (nombre, email, teléfono). Al pedir la baja se cancela de inmediato la recurrencia y se comprueba si hay facturas pendientes (caso 17). Sin deudas, la baja es inmediata. Con deudas, queda como "baja solicitada", se avisa al cliente, el flujo de impago continúa y la baja se completa cuando se paga la última factura. |
-| 20 | Importación masiva de clientes | Superadministrador | Carga de forma ágil bases de datos masivas de clientes mediante ficheros estructurados en formato CSV. |
-| 21 | Gestión del flujo de impagos automatizado | Servicio de mensajería | Envía al cliente un recordatorio el día 3 y otro el día 5. Si la factura vence sin pagarse, envía recordatorios amistosos cada 2–3 días hasta el pago, sin cancelar ni sancionar al cliente. En cada seguimiento avisa al usuario asignado al cliente (caso 28), no siempre al administrador. |
-| 22 | Auditoría y copias de seguridad | Superadministrador | Consulta el registro exhaustivo de operaciones del sistema y gestiona los respaldos periódicos de seguridad y datos. |
-| 23 | Anulación de facturas | Superadministrador, administrador | Anula una factura errónea mientras su trimestre esté abierto. Conserva su número y detiene sus recordatorios. Las facturas no se borran porque la numeración debe ser correlativa. |
-| 24 | Búsqueda y consulta de clientes | Superadministrador, administrador, usuario | Busca y filtra clientes por ubicación, sector y estado, y consulta su ficha con el historial de facturas y pagos. |
-| 25 | Descarga de factura en PDF | Superadministrador, administrador, usuario | Descarga el PDF de una factura, que es idéntico al enviado al cliente y al guardado. |
-| 26 | Generación de copias de seguridad | Sistema interno | Genera periódicamente copias de seguridad de los datos y movimientos del sistema. |
------
+## CU-32 · Generación mensual de facturas recurrentes
+- **Actor principal:** Planificador (tiempo)
+- **Actor secundario:** Servicio de mensajería (a través de CU-12)
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** El día 1 se generan y envían las facturas de todas las suscripciones activas, aplicando tarifas, excepciones, pausas, bajas y vencimientos pactados.
+- **Interesados:**
+  - Turbine: quiere facturar a todos sin intervención manual.
+  - Cliente: quiere recibir una sola factura correcta al mes.
+- **Precondiciones:** Las tarifas y las series están configuradas (CU-03).
+- **Garantía de éxito:** Cada suscripción activa tiene su factura del mes emitida y enviada.
+- **Garantía mínima:**
+  - Ninguna factura se duplica aunque el proceso se repita.
+  - Un error en un cliente no detiene al resto.
+  - El resultado de la ejecución queda registrado.
+- **Disparador:** Llega el día 1 del mes.
+- **Escenario principal de éxito:**
+  1. El Planificador lanza la generación mensual.
+  2. El sistema obtiene las suscripciones activas.
+  3. Para cada suscripción, el sistema calcula el importe aplicando la tarifa, las excepciones vigentes y el vencimiento pactado.
+  4. El sistema comprueba que la factura de ese mes no existe ya.
+  5. El sistema emite la factura con el número de su serie y su PDF.
+  6. El sistema la envía al cliente (incluye CU-12).
+  7. El sistema registra el resultado: facturas generadas, omitidas y errores.
+- **Extensiones:**
+  - 2a. La suscripción está pausada (CU-27) o dada de baja (CU-19): el sistema la omite.
+  - 4a. La factura ya existe: el sistema no la duplica.
+  - 5a. Falla un cliente (por ejemplo, por datos fiscales incompletos): el sistema registra el error, avisa a quien pueda resolverlo (CU-35) y sigue con el resto.
+
+## CU-33 · Gestión de presupuestos
+- **Actor principal:** Usuario
+- **Actor secundario:** Servicio de mensajería
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se crea un presupuesto, se envía, se registra si el cliente lo acepta o lo rechaza y, si lo acepta, se convierte en factura.
+- **Interesados:**
+  - Usuario: no quiere teclear dos veces las mismas líneas.
+  - Cliente: quiere conocer el precio antes de aceptarlo.
+- **Precondiciones:** El cliente está asignado al usuario.
+- **Garantía de éxito:** El presupuesto aceptado se convierte en un borrador de factura con sus mismas líneas.
+- **Garantía mínima:** Ningún presupuesto cambia de estado sin una evidencia adjunta.
+- **Disparador:** El cliente pide un presupuesto.
+- **Escenario principal de éxito:**
+  1. El usuario crea un presupuesto para el cliente con sus líneas.
+  2. El sistema calcula los totales y lo guarda.
+  3. El usuario pide enviarlo.
+  4. El sistema genera su PDF y lo envía al cliente (Servicio de mensajería).
+  5. El usuario marca el presupuesto como aceptado y adjunta la evidencia.
+  6. El usuario pide convertirlo en factura.
+  7. El sistema crea un borrador de factura con sus líneas y continúa en CU-31, paso 4.
+- **Extensiones:**
+  - 5a. El cliente lo rechaza: el usuario lo marca como rechazado con su evidencia y el caso termina.
+  - 5b. No hay evidencia: el sistema no permite cambiar el estado.
+
+## CU-34 · Gestión de incidencias y disputas
+- **Actor principal:** Usuario
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se abren incidencias internas sobre un cliente o una factura, o se pone una factura en disputa para que no se envíen recordatorios mientras dure.
+- **Interesados:**
+  - Usuario: quiere coordinar la resolución de un problema.
+  - Cliente: no quiere recibir recordatorios de una factura que discute.
+- **Precondiciones:** El cliente o la factura son visibles para el usuario.
+- **Garantía de éxito:** La incidencia queda resuelta y cerrada, con su historial.
+- **Garantía mínima:** No se envían recordatorios de una factura en disputa.
+- **Disparador:** Surge un problema con un cliente o una factura.
+- **Escenario principal de éxito:**
+  1. El usuario selecciona el cliente o la factura y abre una incidencia.
+  2. El usuario indica la descripción, el responsable y la prioridad.
+  3. El sistema la registra y avisa al responsable (CU-35).
+  4. Los implicados añaden comentarios (CU-36).
+  5. El responsable registra la resolución y cierra la incidencia.
+  6. El sistema registra el cierre.
+- **Extensiones:**
+  - 1a. Disputa o pausa del seguimiento:
+    - el usuario indica el motivo y la fecha de revisión;
+    - el sistema detiene los recordatorios de la factura mientras dure;
+    - en la fecha de revisión, el sistema avisa al responsable.
+  - 5a. La factura sigue pendiente al cerrar la disputa: se reanudan sus recordatorios (CU-21).
+
+## CU-35 · Notificaciones y pantalla de trabajo diario
+- **Actor principal:** Usuario
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** El usuario ve su pantalla de trabajo diario y sus notificaciones, las gestiona y elige por qué canal las recibe. El administrador ve también la bandeja global y configura las alertas corporativas.
+- **Interesados:**
+  - Usuario: quiere saber qué hacer hoy.
+  - Administrador: quiere que nada quede sin atender.
+- **Precondiciones:** Ninguna adicional.
+- **Garantía de éxito:** El usuario ve sus tareas del día y sus notificaciones quedan gestionadas.
+- **Garantía mínima:** Cada usuario solo ve los avisos de lo que tiene asignado o delegado.
+- **Disparador:** El usuario entra en la aplicación (CU-01) o recibe una notificación.
+- **Escenario principal de éxito:**
+  1. El usuario accede a su pantalla de trabajo diario.
+  2. El sistema muestra los vencimientos, los pagos por conciliar, los problemas de entrega, las aprobaciones y las revisiones pendientes.
+  3. El sistema muestra las notificaciones no leídas.
+  4. El usuario abre una notificación.
+  5. El sistema le lleva al elemento al que se refiere.
+  6. El usuario la marca como leída o atendida.
+- **Extensiones:**
+  - 2a. El actor es administrador: el sistema muestra además la bandeja global (por ejemplo, los clientes sin responsable).
+  - 2b. El administrador configura una alerta corporativa: indica la condición, los destinatarios y el canal, y el sistema la guarda.
+  - Cualquier paso: el usuario elige por qué canales quiere recibir las notificaciones.
+
+## CU-36 · Comentarios y adjuntos
+- **Actor principal:** Usuario
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se añaden comentarios internos con menciones y se adjuntan documentos a clientes, facturas e incidencias.
+- **Interesados:**
+  - Usuarios: quieren comunicarse sin salir de la aplicación.
+  - Cliente: no debe ver las notas internas.
+- **Precondiciones:** El elemento es visible para el usuario.
+- **Garantía de éxito:** El comentario o el adjunto queda guardado con su autor y su fecha, y se avisa a los mencionados.
+- **Garantía mínima:** Los comentarios y los adjuntos nunca se envían al cliente.
+- **Disparador:** El usuario quiere dejar una nota o un documento.
+- **Escenario principal de éxito:**
+  1. El usuario abre el cliente, la factura o la incidencia.
+  2. El usuario escribe un comentario y, si quiere, menciona a otros usuarios.
+  3. El sistema guarda el comentario con su autor y su fecha.
+  4. El sistema avisa a los usuarios mencionados (CU-35).
+- **Extensiones:**
+  - 2a. El comentario es restringido: solo lo ven los administradores.
+  - 2b. El usuario adjunta un documento: el sistema valida su tipo y su tamaño y lo asocia al elemento.
+
+## CU-37 · Acciones masivas
+- **Actor principal:** Administrador
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se ejecuta una misma acción sobre varios elementos: reasignar clientes, exportar una selección, cambiar el sector o generar informes en bloque.
+- **Interesados:**
+  - Administrador: quiere ahorrar tiempo.
+  - Turbine: no quiere cambios masivos por error.
+- **Precondiciones:** Ninguna adicional.
+- **Garantía de éxito:** La acción se aplica a los elementos seleccionados y se muestra el resultado.
+- **Garantía mínima:** Nada se ejecuta sin confirmación, y cada elemento queda registrado con su éxito o su error.
+- **Disparador:** El administrador necesita cambiar muchos elementos a la vez.
+- **Escenario principal de éxito:**
+  1. El administrador selecciona los elementos con filtros (CU-24).
+  2. El administrador elige la acción.
+  3. El sistema muestra cuántos elementos se verán afectados.
+  4. El administrador confirma.
+  5. El sistema ejecuta la acción sobre cada elemento.
+  6. El sistema muestra el resultado con los éxitos y los errores y lo registra.
+- **Extensiones:**
+  - 4a. La acción es sensible: el sistema pide una confirmación explícita adicional.
+  - 4b. El administrador cancela: no se cambia nada.
+  - 5a. Falla en algunos elementos: el sistema sigue con el resto y los lista en el resultado.
+
+## CU-38 · Cierre y reapertura de periodos
+- **Actor principal:** Administrador
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se cierra un mes o un trimestre para que no se hagan cambios ordinarios en sus elementos económicos. Reabrirlo requiere a un superadministrador y un motivo.
+- **Interesados:**
+  - Gestoría: quiere que lo ya declarado no cambie.
+  - Administrador: quiere cerrar cuentas.
+- **Precondiciones:** El periodo ha terminado.
+- **Garantía de éxito:** El periodo queda cerrado (o reabierto) y registrado.
+- **Garantía mínima:** Ningún administrador puede reabrir un periodo, y toda reapertura deja un motivo.
+- **Disparador:** Termina un mes o un trimestre.
+- **Escenario principal de éxito:**
+  1. El administrador elige el mes o el trimestre.
+  2. El sistema muestra un resumen del periodo y sus avisos (por ejemplo, borradores o cobros sin conciliar).
+  3. El administrador confirma el cierre.
+  4. El sistema marca el periodo como cerrado y lo registra en la auditoría.
+- **Extensiones:**
+  - 1a. Reapertura:
+    - el superadministrador elige un periodo cerrado e indica el motivo;
+    - el sistema lo reabre y lo registra.
+    - Si lo intenta un administrador, el sistema lo deniega.
+  - 2a. Hay elementos pendientes: el administrador los resuelve antes o cierra el periodo igualmente.
+
+## CU-39 · Gestión de datos personales
+- **Actor principal:** Administrador
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se localizan los datos personales de un contacto y se anonimizan o eliminan cuando legalmente procede.
+- **Interesados:**
+  - Contacto: quiere ejercer sus derechos de protección de datos.
+  - Turbine: quiere conservar lo que obliga la normativa contable.
+- **Precondiciones:** Existe una petición o un motivo legal.
+- **Garantía de éxito:** Los datos que pueden eliminarse quedan anonimizados o eliminados.
+- **Garantía mínima:** Las facturas emitidas no se invalidan, no se borran datos con obligación contable y la operación queda registrada.
+- **Disparador:** Un contacto pide la supresión de sus datos, o vence su plazo de conservación.
+- **Escenario principal de éxito:**
+  1. El administrador busca el contacto.
+  2. El sistema localiza todos sus datos personales en la aplicación.
+  3. El administrador elige anonimizar o eliminar e indica el motivo.
+  4. El sistema indica qué datos deben conservarse por obligación legal o contable.
+  5. El administrador confirma.
+  6. El sistema anonimiza o elimina el resto y lo registra.
+- **Extensiones:**
+  - 4a. Todos los datos deben conservarse: el sistema lo informa y no cambia nada.
