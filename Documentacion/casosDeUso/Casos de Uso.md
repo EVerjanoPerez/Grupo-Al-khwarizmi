@@ -519,7 +519,7 @@ Descripción de los casos de uso segun plantilla subida:
   - 4a. Todas las filas son erróneas: el sistema no permite confirmar.
   - 5a. El administrador cancela: no se importa nada.
  
-  ## CU-21 · Gestión del flujo de impagos automatizado
+## CU-21 · Gestión del flujo de impagos automatizado
 - **Actor principal:** Planificador (tiempo)
 - **Actor secundario:** Servicio de mensajería
 - **Ámbito:** Aplicación de facturación
