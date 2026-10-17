@@ -6,8 +6,8 @@
 
 | Actor | Tipo | Descripción |
 |---|---|---|
-| Usuario | Primario | Empleado de Turbine. Crea, consulta y edita solo los clientes y facturas que tiene asignados. |
-| Administrador | Primario | Puede hacer todo lo del usuario sobre todos los clientes. Además gestiona usuarios (con permiso), asigna clientes, aprueba solicitudes y consulta el dashboard. |
+| Usuario | Primario | Empleado de Turbine. Consulta, edita y da de baja solo los clientes que tiene asignados y gestiona sus facturas. |
+| Administrador | Primario | Puede hacer todo lo del usuario sobre todos los clientes. Además da de alta y borra clientes, gestiona usuarios (con permiso), asigna clientes, aprueba solicitudes y consulta el dashboard. |
 | Superadministrador | Primario | Puede hacer todo lo del Administrador. Además configura el sistema y los cobros, aprueba por encima del umbral superior, reabre periodos y consulta la auditoría y las copias de seguridad. |
 | Planificador (tiempo) | Primario | Reloj del sistema que lanza los procesos periódicos (generación mensual, recordatorios, consulta de cobros, revisión anual y copias) y las acciones con fecha (activaciones, fin de pausas, delegaciones y excepciones, y bajas). |
 | Sistema externo | Primario | Otro sistema de Turbine que se comunica con la aplicación por API (por ejemplo, para notificar una baja). |
@@ -470,34 +470,30 @@ Descripción de los casos de uso segun plantilla subida:
   - 2b. El periodo está cerrado: el sistema impide el cambio e indica que hace falta reabrirlo.
   - 4a. Un importe manual supera el umbral: queda pendiente de aprobación.
 
-## CU-19 · Alta, baja y edición de clientes
+## CU-19 · Edición y baja de clientes
 - **Actor principal:** Usuario
 - **Ámbito:** Aplicación de facturación
 - **Nivel:** Objetivo de usuario
-- **Descripción:** Se registran o modifican los datos fiscales de un cliente, sus etiquetas y sus contactos, se reactiva un cliente que vuelve o se tramita su baja.
+- **Descripción:** Se modifican los datos fiscales de un cliente, sus etiquetas y sus contactos, o se tramita su baja.
 - **Interesados:**
   - Usuario: quiere tener los datos de sus clientes al día.
   - Cliente: quiere que su baja se haga cuando la pide.
-  - Turbine: quiere evitar duplicados y seguir cobrando la deuda.
-- **Precondiciones:** Para editar o dar de baja, el cliente está asignado al usuario.
-- **Garantía de éxito:** El cliente queda registrado o actualizado, o dado de baja desde la fecha efectiva.
+  - Turbine: quiere que los cambios queden trazados y seguir cobrando la deuda.
+- **Precondiciones:** El cliente está asignado al usuario.
+- **Garantía de éxito:** Los datos del cliente quedan actualizados, o el cliente queda dado de baja desde la fecha efectiva.
 - **Garantía mínima:** Todo cambio queda trazado, y una baja no anula la deuda pendiente.
-- **Disparador:** Llega un cliente nuevo, cambian sus datos o pide la baja.
-- **Escenario principal de éxito (alta):**
-  1. El usuario indica que quiere dar de alta un cliente.
-  2. El usuario introduce los datos fiscales (razón social, NIF, dirección, ubicación, sector y rango), las etiquetas y los contactos (nombre, email, teléfono, función, idioma y consentimientos).
-  3. El sistema valida los datos y busca duplicados por NIF.
-  4. El sistema registra el cliente y lo asigna al usuario que lo crea.
-  5. El sistema lo registra en la auditoría.
+- **Disparador:** Cambian los datos de un cliente o este pide la baja.
+- **Escenario principal de éxito:**
+  1. El usuario selecciona el cliente (CU-24).
+  2. El usuario modifica los datos fiscales (salvo el rango, que cambia en CU-05), las etiquetas o los contactos.
+  3. El sistema valida los datos.
+  4. El sistema guarda los cambios y los registra en la auditoría.
 - **Extensiones:**
-  - 1a. Edición: el usuario selecciona un cliente y modifica sus datos. El sistema los valida y los guarda trazando el cambio.
-  - 1b. Baja (también a partir de una tarea creada por CU-28):
+  - 2a. Baja (también a partir de una tarea creada por CU-28):
     - el usuario indica la baja y su fecha efectiva;
     - el sistema cancela la suscripción desde esa fecha y consulta las facturas pendientes (CU-17);
-    - si hay deuda, el sistema la muestra, la baja se registra igualmente y el flujo de impagos continúa.
+    - si hay deuda, el sistema la muestra, la baja se registra igualmente y el flujo de impagos continúa (CU-21).
   - 3a. Hay datos no válidos: el sistema indica cuáles y vuelve al paso 2.
-  - 3b. Ya existe un cliente con ese NIF: el sistema avisa y muestra el existente. El usuario cancela o continúa indicando el motivo.
-  - 3c. El cliente existente estaba dado de baja: el sistema ofrece reactivarlo conservando su histórico.
 
 ## CU-20 · Importación masiva de clientes
 - **Actor principal:** Administrador
@@ -992,3 +988,25 @@ Descripción de los casos de uso segun plantilla subida:
   6. El sistema anonimiza o elimina el resto y lo registra.
 - **Extensiones:**
   - 4a. Todos los datos deben conservarse: el sistema lo informa y no cambia nada.
+
+## CU-40 · Alta de clientes
+- **Actor principal:** Administrador
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se da de alta un cliente con su responsable, o se reactiva un cliente que vuelve.
+- **Interesados:**
+  - Administrador: quiere incorporar clientes sin duplicados.
+  - Turbine: quiere conservar el histórico de los clientes que vuelven.
+- **Precondiciones:** Ninguna adicional.
+- **Garantía de éxito:** El cliente queda registrado con su responsable.
+- **Garantía mínima:** No se crea ningún cliente sin validar sus datos, y el alta queda trazada.
+- **Disparador:** Llega un cliente nuevo.
+- **Escenario principal de éxito:**
+  1. El administrador indica que quiere dar de alta un cliente.
+  2. El administrador introduce los datos fiscales (razón social, NIF, dirección, ubicación, sector y rango), las etiquetas, los contactos (nombre, email, teléfono, función, idioma y consentimientos) y el responsable.
+  3. El sistema valida los datos y busca duplicados por NIF.
+  4. El sistema registra el cliente, avisa al responsable (CU-35) y lo registra en la auditoría.
+- **Extensiones:**
+  - 3a. Hay datos no válidos: el sistema indica cuáles y vuelve al paso 2.
+  - 3b. Ya existe un cliente con ese NIF: el sistema avisa y muestra el existente. El administrador cancela o continúa indicando el motivo.
+  - 3c. El cliente existente estaba dado de baja: el sistema ofrece reactivarlo conservando su histórico.

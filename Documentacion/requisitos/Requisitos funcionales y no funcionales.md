@@ -45,13 +45,13 @@
     - Implementado en: FR52, FR53, FR54.
 - **UR8.** El administrador podrá conciliar cobros manualmente, cerrar periodos y configurar alertas corporativas.
     - Implementado en: FR31, FR43.1, FR43.3, FR47.
-- **UR9.** El administrador podrá importar clientes desde CSV y ejecutar acciones masivas.
-    - Implementado en: FR11, FR11.2, FR51.
+- **UR9.** El administrador podrá dar de alta, reactivar y borrar clientes, importarlos desde CSV y ejecutar acciones masivas.
+    - Implementado en: FR5, FR11, FR11.2, FR12, FR13, FR51.
 
 ### Usuario
 
-- **UR10.** El usuario podrá dar de alta, consultar y modificar los clientes y contactos que tenga asignados, y reactivar clientes que vuelven.
-    - Implementado en: FR3.1, FR5, FR6, FR7, FR10, FR12.
+- **UR10.** El usuario podrá consultar y modificar los clientes y contactos que tenga asignados.
+    - Implementado en: FR3.1, FR6, FR7, FR10.
 - **UR11.** El usuario podrá gestionar la suscripción de sus clientes: alta con prorrateo, pausa y baja.
     - Implementado en: FR14, FR14.2, FR15, FR16.
 - **UR12.** El usuario podrá crear facturas puntuales y presupuestos, previsualizarlos antes de emitir y solicitar descuentos o excepciones comerciales.
@@ -84,7 +84,7 @@
     - Dependencias: FR2. 
 - FR3. El sistema implementará un modelo de autorización centralizado con tres roles (Superadministrador, Administrador, Usuario) y permisos asignables, extensible a nuevos roles.
     - Dependencias: FR1. 
-- FR3.1. El Usuario solo podrá ver y modificar la información de los clientes que tenga asignados, crear facturas si su permiso lo permite, seguir cobros y descargar documentos. No podrá asignarse clientes, cambiar tarifas globales, crear series ni ver el dashboard global.
+- FR3.1. El Usuario solo podrá ver y modificar la información de los clientes que tenga asignados, crear facturas si su permiso lo permite, seguir cobros y descargar documentos. No podrá dar de alta ni borrar clientes, asignarse clientes, cambiar tarifas globales, crear series ni ver el dashboard global.
     - Dependencias: FR3, FR4. 
 - FR3.2. El servidor comprobará los permisos en cada petición: acceder por URL directa a un elemento no autorizado será rechazado, y los menús, favoritos o recientes no servirán como mecanismo de autorización.
     - Dependencias: FR3.
@@ -97,7 +97,7 @@
 
 ### B. Clientes y contactos
 
-- FR5. El sistema permitirá dar de alta un cliente (empresa) con nombre comercial, razón social, identificador fiscal, domicilio fiscal, país, moneda, sector, ubicación, etiquetas, responsable interno y estado.
+- FR5. El sistema permitirá a un administrador dar de alta un cliente (empresa) con nombre comercial, razón social, identificador fiscal, domicilio fiscal, país, moneda, sector, ubicación, etiquetas, responsable interno y estado.
     - Dependencias: FR1, FR3.
 - FR5.1. El sistema propondrá valores por defecto (país, moneda, vencimiento y tarifa sugerida según el rango) y mostrará qué va a ocurrir antes de confirmar.
     - Dependencias: FR5.
