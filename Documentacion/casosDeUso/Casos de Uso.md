@@ -523,6 +523,251 @@ Descripción de los casos de uso segun plantilla subida:
   - 2a. El fichero no tiene un formato válido: el sistema lo rechaza e informa.
   - 4a. Todas las filas son erróneas: el sistema no permite confirmar.
   - 5a. El administrador cancela: no se importa nada.
+ 
+  ## CU-21 · Gestión del flujo de impagos automatizado
+- **Actor principal:** Planificador (tiempo)
+- **Actor secundario:** Servicio de mensajería
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se envían recordatorios amistosos de las facturas pendientes:
+  - el día 3 y el día 5, o según el vencimiento pactado y el calendario laboral;
+  - después del vencimiento, cada 2–3 días hasta el pago, sin cancelar ni sancionar al cliente.
+- **Interesados:**
+  - Turbine: quiere cobrar sin perseguir a mano.
+  - Cliente: quiere recordatorios amables y no sanciones.
+  - Responsable: quiere saber cómo va cada seguimiento.
+- **Precondiciones:** El calendario de recordatorios está configurado (CU-03).
+- **Garantía de éxito:** Cada factura que lo necesita recibe su recordatorio y su responsable queda avisado.
+- **Garantía mínima:** No se envían recordatorios de facturas pagadas o en disputa, y cada ejecución queda registrada.
+- **Disparador:** Llega la hora programada de cada día laborable.
+- **Escenario principal de éxito:**
+  1. El Planificador lanza el proceso diario.
+  2. El sistema busca las facturas pendientes a las que toca un recordatorio hoy.
+  3. Para cada factura, el sistema envía un recordatorio amistoso al contacto, con el PDF y los datos de soporte (Servicio de mensajería).
+  4. El sistema registra el envío en la factura.
+  5. El sistema avisa al usuario asignado al cliente (CU-35).
+  6. El sistema registra el resultado de la ejecución.
+- **Extensiones:**
+  - 2a. La factura está en disputa o con el seguimiento pausado (CU-34): el sistema la omite.
+  - 2b. Hoy no es laborable: el envío pasa al siguiente día laborable.
+  - 3a. El envío falla: el sistema lo registra, avisa al responsable y sigue con el resto.
+
+## CU-22 · Auditoría y copias de seguridad
+- **Actor principal:** Superadministrador
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se consultan el registro de operaciones, el registro de ejecución de los procesos automáticos y la pantalla de salud, y se gestionan las copias de seguridad y su restauración.
+- **Interesados:**
+  - Superadministrador: quiere saber quién hizo qué y si el sistema funciona.
+  - Turbine: quiere poder recuperarse ante una pérdida de datos.
+- **Precondiciones:** El actor es superadministrador.
+- **Garantía de éxito:** El superadministrador obtiene la información que busca, o la copia se descarga o restaura.
+- **Garantía mínima:** El registro de auditoría no se puede modificar, y toda restauración queda registrada.
+- **Disparador:** Hay que revisar una operación, el estado del sistema o una copia.
+- **Escenario principal de éxito:**
+  1. El superadministrador accede a la auditoría.
+  2. El superadministrador filtra por usuario, tipo de operación, entidad o fechas.
+  3. El sistema muestra las operaciones con quién las hizo, cuándo, qué cambió y los valores anterior y nuevo.
+  4. El superadministrador consulta el detalle de una operación.
+- **Extensiones:**
+  - 1a. El superadministrador consulta los procesos automáticos: el sistema muestra la última ejecución de cada uno, su resultado y sus errores, y el estado de salud.
+  - 1b. Copias de seguridad:
+    - el sistema lista las copias;
+    - el superadministrador descarga una o pide restaurarla;
+    - el sistema pide confirmación, la restaura y lo registra.
+  - 3a. No hay resultados: el sistema lo indica.
+
+## CU-23 · Rectificación y anulación de facturas
+- **Actor principal:** Administrador
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se crea una factura rectificativa vinculada a la original, se anula una factura cuando legalmente procede o se declara una deuda incobrable.
+- **Interesados:**
+  - Administrador: quiere corregir lo emitido.
+  - Hacienda y gestoría: quieren la numeración correlativa y trazabilidad.
+  - Cliente: quiere que se corrija lo que se le cobró mal.
+- **Precondiciones:** La factura está emitida.
+- **Garantía de éxito:** La rectificativa queda emitida y vinculada, o la factura queda anulada o declarada incobrable.
+- **Garantía mínima:** La factura original conserva su número y nunca se borra.
+- **Disparador:** Se detecta un error en una factura emitida o una deuda que no se cobrará.
+- **Escenario principal de éxito (rectificativa):**
+  1. El administrador selecciona la factura emitida.
+  2. El administrador elige crear una rectificativa.
+  3. El sistema crea un borrador vinculado a la original, copiando sus líneas.
+  4. El administrador indica los cambios y el motivo.
+  5. El sistema calcula la diferencia y muestra una vista previa.
+  6. El administrador confirma.
+  7. El sistema solicita la aprobación que corresponda según el importe (CU-30).
+  8. Tras la aprobación, el sistema emite la rectificativa con el número de su serie y su PDF, y actualiza el saldo de la original.
+- **Extensiones:**
+  - 1a. La factura está en borrador: no hace falta rectificativa, porque se edita directamente (CU-18).
+  - 2a. Anulación:
+    - el administrador indica el motivo;
+    - el sistema comprueba que legalmente procede;
+    - el sistema anula la factura conservando su número y detiene sus recordatorios.
+  - 2b. Deuda incobrable:
+    - el administrador indica el motivo y la solicitud queda pendiente de aprobación (CU-30);
+    - tras la aprobación, el sistema marca la factura como incobrable y detiene sus recordatorios.
+  - 7a. El importe no requiere aprobación: el sistema pasa directamente al paso 8.
+  - 7b. La aprobación se rechaza: el borrador no se emite y se avisa al administrador.
+
+## CU-24 · Búsqueda y consulta de clientes
+- **Actor principal:** Usuario
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se buscan clientes y facturas por nombre, NIF, contacto, email o número de factura, con filtros y accesos a favoritos y recientes, y se consulta la ficha del cliente.
+- **Interesados:**
+  - Usuario: quiere encontrar rápido lo que busca.
+- **Precondiciones:** Ninguna adicional.
+- **Garantía de éxito:** El usuario ve la ficha del cliente con su saldo, su historial y su línea temporal.
+- **Garantía mínima:** Los resultados solo incluyen lo que el usuario puede ver.
+- **Disparador:** El usuario necesita información de un cliente o una factura.
+- **Escenario principal de éxito:**
+  1. El usuario introduce un texto de búsqueda.
+  2. El sistema muestra los clientes y las facturas que coinciden.
+  3. El usuario aplica filtros por ubicación, sector, estado o etiquetas.
+  4. El usuario selecciona un cliente.
+  5. El sistema muestra su ficha: datos, contactos, saldo, historial de facturas y pagos y línea temporal de eventos.
+- **Extensiones:**
+  - 1a. El usuario accede desde sus favoritos o recientes y continúa en el paso 5.
+  - 2a. No hay resultados: el sistema lo indica.
+  - 5a. El usuario marca el cliente como favorito.
+
+## CU-25 · Descarga de factura en PDF
+- **Actor principal:** Usuario
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se descarga el PDF de una factura, idéntico al enviado al cliente y al guardado.
+- **Interesados:**
+  - Usuario: quiere reenviar o archivar la factura.
+  - Cliente: quiere que su copia coincida con la de Turbine.
+- **Precondiciones:** La factura está emitida y es visible para el usuario.
+- **Garantía de éxito:** El usuario obtiene el PDF original.
+- **Garantía mínima:** El PDF no se regenera con datos distintos de los emitidos.
+- **Disparador:** El usuario necesita el PDF de una factura.
+- **Escenario principal de éxito:**
+  1. El usuario selecciona la factura.
+  2. El usuario pide descargar el PDF.
+  3. El sistema entrega el PDF guardado.
+- **Extensiones:**
+  - 3a. El PDF no está disponible: el sistema informa del error y lo registra.
+
+## CU-26 · Generación de copias de seguridad
+- **Actor principal:** Planificador (tiempo)
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se generan periódicamente copias de seguridad de los datos y los movimientos del sistema.
+- **Interesados:**
+  - Turbine: no quiere perder datos de facturación.
+- **Precondiciones:** La periodicidad de las copias está configurada.
+- **Garantía de éxito:** Hay una copia nueva, completa y registrada.
+- **Garantía mínima:** Si la copia falla, se avisa y se conservan las anteriores.
+- **Disparador:** Llega la hora programada.
+- **Escenario principal de éxito:**
+  1. El Planificador lanza la copia.
+  2. El sistema genera la copia de los datos y los movimientos.
+  3. El sistema comprueba que la copia está completa.
+  4. El sistema la guarda y registra la ejecución.
+- **Extensiones:**
+  - 2a, 3a. La copia falla o está incompleta: el sistema registra el error y avisa al superadministrador (CU-35).
+    
+## CU-27 · Pausa y reactivación de suscripción
+- **Actor principal:** Usuario
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se pausa una suscripción con motivo y fechas. Durante la pausa no se generan mensualidades, pero las facturas antiguas siguen su curso.
+- **Interesados:**
+  - Cliente: no quiere pagar mientras no usa el servicio.
+  - Turbine: quiere seguir cobrando lo ya facturado.
+- **Precondiciones:** El cliente tiene una suscripción activa.
+- **Garantía de éxito:** La suscripción queda pausada entre las fechas indicadas y se avisa al responsable para reactivarla.
+- **Garantía mínima:** Las facturas anteriores a la pausa siguen su flujo de cobro.
+- **Disparador:** El cliente pide pausar el servicio.
+- **Escenario principal de éxito:**
+  1. El usuario selecciona la suscripción del cliente.
+  2. El usuario indica el motivo, la fecha de inicio y la fecha prevista de reactivación.
+  3. El sistema valida las fechas.
+  4. El usuario confirma.
+  5. El sistema registra la pausa. Desde la fecha de inicio, la generación mensual la omite (CU-32).
+  6. Al llegar la fecha prevista, el sistema avisa al responsable (CU-35).
+  7. El usuario reactiva la suscripción y el sistema vuelve a incluirla en la generación mensual.
+- **Extensiones:**
+  - 3a. Las fechas no son válidas: el sistema informa y vuelve al paso 2.
+  - 7a. El cliente no quiere volver: el usuario tramita la baja (CU-19).
+  - Cualquier paso posterior al 5: el usuario reactiva la suscripción antes de tiempo y continúa en el paso 7.
+
+## CU-28 · Notificación de baja por API
+- **Actor principal:** Sistema externo
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Otro sistema de Turbine notifica que un cliente solicita la baja, y la aplicación crea una tarea para su responsable.
+- **Interesados:**
+  - Turbine: quiere que las bajas pedidas por otros canales no se pierdan.
+  - Responsable: quiere enterarse a tiempo.
+- **Precondiciones:** El sistema externo tiene credenciales de acceso a la API.
+- **Garantía de éxito:** Queda creada una tarea de baja para el responsable, que la tramita en CU-19.
+- **Garantía mínima:** Las peticiones no autenticadas se rechazan y todas quedan registradas.
+- **Disparador:** Un cliente pide la baja fuera de la aplicación.
+- **Escenario principal de éxito:**
+  1. El Sistema externo envía la solicitud de baja con el identificador del cliente y la fecha.
+  2. El sistema autentica la petición.
+  3. El sistema localiza el cliente.
+  4. El sistema crea la tarea de baja y avisa al responsable (CU-35).
+  5. El sistema confirma la recepción al Sistema externo.
+- **Extensiones:**
+  - 2a. La petición no está autenticada: el sistema la rechaza y la registra.
+  - 3a. El cliente no existe: el sistema responde con un error.
+  - 4a. Ya existe una tarea de baja para ese cliente: el sistema no la duplica.
+
+## CU-29 · Solicitud de excepción comercial
+- **Actor principal:** Usuario
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Se solicita para un cliente un descuento temporal, un mes gratuito o un precio pactado, con fecha de fin y sujeto a aprobación.
+- **Interesados:**
+  - Usuario: quiere cerrar un acuerdo con el cliente.
+  - Turbine: quiere controlar los descuentos.
+- **Precondiciones:** El cliente tiene una suscripción.
+- **Garantía de éxito:** La excepción aprobada se aplica en la generación mensual hasta su fecha de fin y luego deja de aplicarse sola.
+- **Garantía mínima:** Ninguna excepción se aplica sin aprobación.
+- **Disparador:** Se ha negociado una condición especial con el cliente.
+- **Escenario principal de éxito:**
+  1. El usuario selecciona el cliente.
+  2. El usuario indica el tipo de excepción, su valor, el motivo y la fecha de fin.
+  3. El sistema valida los datos.
+  4. El sistema deja la excepción pendiente de aprobación (CU-30).
+  5. Tras la aprobación, el sistema la aplica en la generación mensual (CU-32) hasta su fecha de fin.
+- **Extensiones:**
+  - 3a. Falta la fecha de fin o el valor no es válido: el sistema informa y vuelve al paso 2.
+  - 4a. La aprobación se rechaza: el sistema avisa al solicitante con el comentario.
+
+## CU-30 · Gestión de aprobaciones
+- **Actor principal:** Administrador
+- **Ámbito:** Aplicación de facturación
+- **Nivel:** Objetivo de usuario
+- **Descripción:** Desde una bandeja se aprueban o rechazan con comentario las operaciones sensibles:
+  - importes manuales y descuentos;
+  - vencimientos fuera de lo habitual;
+  - facturas de importe alto;
+  - cambios de rango;
+  - rectificativas e incobrables.
+- **Interesados:**
+  - Solicitante: quiere una respuesta rápida.
+  - Turbine: quiere que nadie apruebe sus propias operaciones.
+- **Precondiciones:** Hay solicitudes pendientes para el actor.
+- **Garantía de éxito:** La solicitud queda aprobada o rechazada, la operación se aplica si procede y se avisa al solicitante.
+- **Garantía mínima:** Ninguna operación sensible se aplica sin una aprobación registrada.
+- **Disparador:** Llega una solicitud de aprobación (CU-05, CU-06, CU-18, CU-23, CU-29 o CU-31).
+- **Escenario principal de éxito:**
+  1. El administrador accede a la bandeja de aprobaciones.
+  2. El sistema muestra las solicitudes pendientes, con su solicitante, tipo, importe y motivo.
+  3. El administrador selecciona una solicitud.
+  4. El administrador la aprueba o la rechaza con un comentario.
+  5. El sistema registra la decisión, aplica la operación si se ha aprobado y avisa al solicitante (CU-35).
+- **Extensiones:**
+  - 2a. La solicitud supera el umbral superior: solo puede aprobarla un superadministrador.
+  - 3a. La solicitud es del propio administrador: el sistema no le permite resolverla.
+  - 4a. El administrador la reasigna a un suplente: el sistema la mueve a la bandeja del suplente y le avisa.
 
 ---------------
 ## Desactualizados
