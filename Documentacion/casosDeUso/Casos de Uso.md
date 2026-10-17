@@ -7,9 +7,9 @@
 | Actor | Tipo | Descripción |
 |---|---|---|
 | Usuario | Primario | Empleado de Turbine. Crea, consulta y edita solo los clientes y facturas que tiene asignados. |
-| Administrador | Primario | Puede hacer todo lo del usuario sobre todos los clientes. Además gestiona usuarios, asigna clientes, aprueba solicitudes y consulta el dashboard. |
-| Superadministrador | Primario | Puede hacer todo lo del Administrador. Además configura el sistema y consulta la auditoría y las copias de seguridad. |
-| Planificador (tiempo) | Primario | Reloj del sistema que lanza los procesos periódicos: generación mensual, recordatorios, consulta de cobros, revisión anual y copias de seguridad. |
+| Administrador | Primario | Puede hacer todo lo del usuario sobre todos los clientes. Además gestiona usuarios (con permiso), asigna clientes, aprueba solicitudes y consulta el dashboard. |
+| Superadministrador | Primario | Puede hacer todo lo del Administrador. Además configura el sistema y los cobros, aprueba por encima del umbral superior, reabre periodos y consulta la auditoría y las copias de seguridad. |
+| Planificador (tiempo) | Primario | Reloj del sistema que lanza los procesos periódicos (generación mensual, recordatorios, consulta de cobros, revisión anual y copias) y las acciones con fecha (activaciones, fin de pausas, delegaciones y excepciones, y bajas). |
 | Sistema externo | Primario | Otro sistema de Turbine que se comunica con la aplicación por API (por ejemplo, para notificar una baja). |
 | Sistema de cobros | Primario / Secundario | Stripe (simulado) y, opcionalmente, Revolut. |
 | Servicio de mensajería | Secundario | Email y WhatsApp. |
@@ -56,7 +56,7 @@ Descripción de los casos de uso segun plantilla subida:
   - Cualquier paso: si el usuario cierra la sesión, el sistema la finaliza.
 
 ## CU-02 · Registro de usuarios internos
-- **Actor principal:** Administrador (con permiso de gestión de usuarios)
+- **Actor principal:** Administrador
 - **Actor secundario:** Servicio de mensajería
 - **Ámbito:** Aplicación de facturación
 - **Nivel:** Objetivo de usuario
@@ -64,7 +64,7 @@ Descripción de los casos de uso segun plantilla subida:
 - **Interesados:**
   - Administrador: quiere dar acceso rápido a un empleado nuevo.
   - Turbine: quiere que cada persona tenga solo los permisos que le corresponden.
-- **Precondiciones:** Si el actor es un administrador, tiene el permiso de gestión de usuarios.
+- **Precondiciones:** Si no es superadministrador, el actor tiene el permiso de gestión de usuarios.
 - **Garantía de éxito:** La cuenta queda creada con su rol y el usuario recibe la invitación.
 - **Garantía mínima:** No se crea ninguna cuenta duplicada ni ninguna con un correo que no sea corporativo.
 - **Disparador:** Se incorpora un empleado que necesita usar la aplicación.
@@ -82,6 +82,7 @@ Descripción de los casos de uso segun plantilla subida:
 
 ## CU-03 · Configuración global del sistema
 - **Actor principal:** Superadministrador
+- **Actor secundario:** Servicio de mensajería (envíos de prueba)
 - **Ámbito:** Aplicación de facturación
 - **Nivel:** Objetivo de usuario
 - **Descripción:** Se modifican los parámetros globales del sistema:
@@ -92,6 +93,7 @@ Descripción de los casos de uso segun plantilla subida:
   - umbrales de aprobación;
   - datos del emisor y de soporte;
   - plantillas;
+  - periodicidad de las copias de seguridad;
   - funciones opcionales.
 - **Interesados:**
   - Superadministrador: quiere adaptar el sistema sin depender de un programador.
@@ -146,7 +148,7 @@ Descripción de los casos de uso segun plantilla subida:
 - **Precondiciones:** El cliente tiene una suscripción activa.
 - **Garantía de éxito:** El nuevo rango queda aprobado y se aplica desde su fecha de efecto.
 - **Garantía mínima:** Las facturas anteriores no se modifican, y el dato introducido queda registrado con su fuente.
-- **Disparador:** El sistema avisa de los clientes que toca revisar este año (CU-35).
+- **Disparador:** El Planificador lanza la revisión anual y el sistema avisa de los clientes que toca revisar (CU-35).
 - **Escenario principal de éxito:**
   1. El administrador consulta la lista de clientes pendientes de revisión.
   2. El administrador selecciona un cliente.
@@ -163,7 +165,7 @@ Descripción de los casos de uso segun plantilla subida:
 
 ## CU-06 · Activación de la facturación recurrente
 - **Actor principal:** Usuario
-- **Actor secundario:** Servicio de mensajería
+- **Actor secundario:** Servicio de mensajería (a través de CU-12)
 - **Ámbito:** Aplicación de facturación
 - **Nivel:** Objetivo de usuario
 - **Descripción:** Se registra la suscripción de un cliente (fecha de inicio, plan, tarifa, cuota y vencimiento pactado). Si el alta es a mitad de mes, se emite una factura prorrateada por los días restantes.
@@ -181,14 +183,14 @@ Descripción de los casos de uso segun plantilla subida:
   4. El sistema calcula la tarifa según el rango y muestra un resumen, con el prorrateo si el alta es a mitad de mes.
   5. El usuario confirma.
   6. El sistema registra la suscripción como activa.
-  7. El sistema emite la factura prorrateada por los días restantes del mes y la envía al cliente (CU-12).
+  7. El sistema emite la factura prorrateada por los días restantes del mes y la envía al cliente (incluye CU-12).
   8. El sistema registra la operación. Desde el día 1 siguiente se aplica la cuota normal (CU-32).
 - **Extensiones:**
   - 2a. La fecha de inicio es futura: la suscripción queda programada y se activa en esa fecha.
   - 2b. El vencimiento pactado está fuera de lo habitual: queda pendiente de aprobación (CU-30).
   - 3a. Faltan datos fiscales: el sistema bloquea la activación e indica cuáles faltan.
   - 4a. Se pide no prorratear: el usuario indica el motivo y la excepción queda pendiente de aprobación (CU-30).
-  - 7a. El alta es el día 1: no hay prorrateo y se pasa al paso 8.
+  - 7a. El alta es el día 1: no hay prorrateo y el sistema emite y envía la factura del mes completo (incluye CU-12).
 
 ## CU-07 · Delegación temporal de clientes
 - **Actor principal:** Administrador
@@ -308,7 +310,7 @@ Descripción de los casos de uso segun plantilla subida:
   - 4b. No hay datos para los filtros elegidos: el sistema lo indica.
 
 ## CU-12 · Envío de la factura al cliente
-- **Actor principal:** — (caso incluido en CU-31 y CU-32; lo inicia el caso que lo incluye)
+- **Actor principal:** — (caso incluido en CU-06, CU-31 y CU-32; lo inicia el caso que lo incluye)
 - **Actor secundario:** Servicio de mensajería
 - **Ámbito:** Aplicación de facturación
 - **Nivel:** Subfunción
@@ -319,7 +321,7 @@ Descripción de los casos de uso segun plantilla subida:
 - **Precondiciones:** La factura está emitida y tiene su PDF.
 - **Garantía de éxito:** La factura llega al cliente y el envío queda registrado.
 - **Garantía mínima:** Cada intento queda registrado, y un reenvío nunca duplica la factura.
-- **Disparador:** Se emite una factura (CU-31 o CU-32).
+- **Disparador:** Se emite una factura (CU-06, CU-31 o CU-32).
 - **Escenario principal de éxito:**
   1. El sistema obtiene el contacto de facturación del cliente y su canal (email, o WhatsApp si ha dado su consentimiento).
   2. El sistema prepara el mensaje en el idioma del contacto con la plantilla configurada, el PDF y los datos de soporte.
@@ -333,7 +335,6 @@ Descripción de los casos de uso segun plantilla subida:
 
 ## CU-13 · Control de pagos por notificación
 - **Actor principal:** Sistema de cobros
-- **Actor alternativo:** el Planificador lanza la consulta periódica 
 - **Ámbito:** Aplicación de facturación
 - **Nivel:** Objetivo de usuario
 - **Descripción:** Se recibe un cobro de Stripe (simulado) o Revolut, se asocia a su factura, esta se marca como pagada y se detienen sus recordatorios.
@@ -343,7 +344,7 @@ Descripción de los casos de uso segun plantilla subida:
 - **Precondiciones:** La conexión con el sistema de cobros está configurada (CU-04).
 - **Garantía de éxito:** La factura queda pagada, sus recordatorios se detienen y se avisa al responsable.
 - **Garantía mínima:** Un mismo cobro nunca se aplica dos veces. Los cobros dudosos no se asignan solos.
-- **Disparador:** El sistema de cobros notifica un pago.
+- **Disparador:** El Sistema de cobros notifica un pago, o el Planificador lanza la consulta periódica (1a).
 - **Escenario principal de éxito:**
   1. El Sistema de cobros notifica un cobro recibido.
   2. El sistema comprueba que ese evento no se ha procesado ya.
@@ -383,14 +384,14 @@ Descripción de los casos de uso segun plantilla subida:
   - Cualquier paso posterior: se descubre un error y se deshace la conciliación con un motivo. La factura vuelve a quedar pendiente y queda constancia del cambio.
 
 ## CU-15 · Desactivación de cuentas
-- **Actor principal:** Administrador (con permiso de gestión de usuarios)
+- **Actor principal:** Administrador
 - **Ámbito:** Aplicación de facturación
 - **Nivel:** Objetivo de usuario
 - **Descripción:** Se revoca el acceso de un usuario interno sin borrar el registro de sus acciones.
 - **Interesados:**
   - Turbine: quiere que nadie que haya salido pueda seguir entrando.
   - Auditoría: quiere conservar el historial.
-- **Precondiciones:** La cuenta está activa.
+- **Precondiciones:** La cuenta está activa y, si no es superadministrador, el actor tiene el permiso de gestión de usuarios.
 - **Garantía de éxito:** La cuenta queda desactivada, con sus sesiones cerradas, y sus clientes quedan pendientes de reasignar.
 - **Garantía mínima:** El historial de acciones del usuario se conserva.
 - **Disparador:** Un empleado deja la empresa o cambia de funciones.
@@ -465,7 +466,7 @@ Descripción de los casos de uso segun plantilla subida:
   5. El usuario confirma.
   6. El sistema guarda los cambios, regenera el PDF y registra quién cambió qué y cuándo.
 - **Extensiones:**
-  - 2a. La factura está emitida: el sistema solo permite cambios que no afecten a sus datos fiscales ni a sus importes, y los deja trazados. Para el resto, indica que se haga una rectificativa.
+  - 2a. La factura está emitida: el sistema solo permite cambios que no afecten a sus datos fiscales ni a sus importes, y los deja trazados. Para el resto, el usuario notifica al administrador que hace falta una rectificativa (CU-23).
   - 2b. El periodo está cerrado: el sistema impide el cambio e indica que hace falta reabrirlo.
   - 4a. Un importe manual supera el umbral: queda pendiente de aprobación.
 
@@ -492,7 +493,7 @@ Descripción de los casos de uso segun plantilla subida:
   - 1a. Edición: el usuario selecciona un cliente y modifica sus datos. El sistema los valida y los guarda trazando el cambio.
   - 1b. Baja (también a partir de una tarea creada por CU-28):
     - el usuario indica la baja y su fecha efectiva;
-    - el sistema cancela la suscripción desde esa fecha y consulta las facturas pendientes;
+    - el sistema cancela la suscripción desde esa fecha y consulta las facturas pendientes (CU-17);
     - si hay deuda, el sistema la muestra, la baja se registra igualmente y el flujo de impagos continúa.
   - 3a. Hay datos no válidos: el sistema indica cuáles y vuelve al paso 2.
   - 3b. Ya existe un cliente con ese NIF: el sistema avisa y muestra el existente. El usuario cancela o continúa indicando el motivo.
@@ -537,7 +538,7 @@ Descripción de los casos de uso segun plantilla subida:
 - **Precondiciones:** El calendario de recordatorios está configurado (CU-03).
 - **Garantía de éxito:** Cada factura que lo necesita recibe su recordatorio y su responsable queda avisado.
 - **Garantía mínima:** No se envían recordatorios de facturas pagadas o en disputa, y cada ejecución queda registrada.
-- **Disparador:** Llega la hora programada de cada día laborable.
+- **Disparador:** Llega la hora programada de cada día del calendario.
 - **Escenario principal de éxito:**
   1. El Planificador lanza el proceso diario.
   2. El sistema busca las facturas pendientes a las que toca un recordatorio hoy.
@@ -587,7 +588,7 @@ Descripción de los casos de uso segun plantilla subida:
 - **Precondiciones:** La factura está emitida.
 - **Garantía de éxito:** La rectificativa queda emitida y vinculada, o la factura queda anulada o declarada incobrable.
 - **Garantía mínima:** La factura original conserva su número y nunca se borra.
-- **Disparador:** Se detecta un error en una factura emitida o una deuda que no se cobrará.
+- **Disparador:** Se detecta (o un usuario notifica, CU-18) un error en una factura emitida, o una deuda que no se cobrará.
 - **Escenario principal de éxito (rectificativa):**
   1. El administrador selecciona la factura emitida.
   2. El administrador elige crear una rectificativa.
@@ -598,7 +599,6 @@ Descripción de los casos de uso segun plantilla subida:
   7. El sistema solicita la aprobación que corresponda según el importe (CU-30).
   8. Tras la aprobación, el sistema emite la rectificativa con el número de su serie y su PDF, y actualiza el saldo de la original.
 - **Extensiones:**
-  - 1a. La factura está en borrador: no hace falta rectificativa, porque se edita directamente (CU-18).
   - 2a. Anulación:
     - el administrador indica el motivo;
     - el sistema comprueba que legalmente procede;
@@ -744,9 +744,9 @@ Descripción de los casos de uso segun plantilla subida:
 - **Ámbito:** Aplicación de facturación
 - **Nivel:** Objetivo de usuario
 - **Descripción:** Desde una bandeja se aprueban o rechazan con comentario las operaciones sensibles:
-  - importes manuales y descuentos;
+  - importes manuales, descuentos y excepciones comerciales (incluido no prorratear);
   - vencimientos fuera de lo habitual;
-  - facturas de importe alto;
+  - facturas puntuales de importe alto;
   - cambios de rango;
   - rectificativas e incobrables.
 - **Interesados:**
@@ -792,7 +792,7 @@ Descripción de los casos de uso segun plantilla subida:
   8. El sistema asigna el número de su serie, genera el PDF y marca la factura como emitida.
   9. El sistema envía la factura al cliente (incluye CU-12).
 - **Extensiones:**
-  - 2a. Hay un importe manual o un descuento por encima del umbral: la factura queda pendiente de aprobación (CU-30) antes de poder emitirse.
+  - 2a. Hay un importe manual o un descuento por encima del umbral, o la factura es de importe alto: la factura queda pendiente de aprobación (CU-30) antes de poder emitirse.
   - 3a. El importe parece anómalo: el sistema avisa, y el usuario lo corrige o lo confirma.
   - 6a. El usuario no la emite todavía: queda como borrador editable (CU-18).
   - 7a. Falta un dato fiscal: el sistema bloquea la emisión e indica cuál falta.
@@ -812,17 +812,17 @@ Descripción de los casos de uso segun plantilla subida:
   - Ninguna factura se duplica aunque el proceso se repita.
   - Un error en un cliente no detiene al resto.
   - El resultado de la ejecución queda registrado.
-- **Disparador:** Llega el día 1 del mes.
+- **Disparador:** Llega el día 1 del mes. Las suscripciones pausadas o pendientes de activación se revisan además cada día (2a).
 - **Escenario principal de éxito:**
   1. El Planificador lanza la generación mensual.
-  2. El sistema obtiene las suscripciones activas.
+  2. El sistema obtiene las suscripciones que no están dadas de baja (CU-19).
   3. Para cada suscripción, el sistema calcula el importe aplicando la tarifa, las excepciones vigentes y el vencimiento pactado.
   4. El sistema comprueba que la factura de ese mes no existe ya.
   5. El sistema emite la factura con el número de su serie y su PDF.
   6. El sistema la envía al cliente (incluye CU-12).
   7. El sistema registra el resultado: facturas generadas, omitidas y errores.
 - **Extensiones:**
-  - 2a. La suscripción está pausada (CU-27) o dada de baja (CU-19): el sistema la omite.
+  - 2a. La suscripción está pausada (CU-27) o pendiente de activación: el sistema no la factura y la revisa cada día hasta que se reactive o se dé de baja. Si se activa con el mes ya empezado, continúa en el paso 3 con el importe prorrateado.
   - 4a. La factura ya existe: el sistema no la duplica.
   - 5a. Falla un cliente (por ejemplo, por datos fiscales incompletos): el sistema registra el error, avisa a quien pueda resolverlo (CU-35) y sigue con el resto.
 
@@ -879,6 +879,7 @@ Descripción de los casos de uso segun plantilla subida:
 
 ## CU-35 · Notificaciones y pantalla de trabajo diario
 - **Actor principal:** Usuario
+- **Actor secundario:** Servicio de mensajería
 - **Ámbito:** Aplicación de facturación
 - **Nivel:** Objetivo de usuario
 - **Descripción:** El usuario ve su pantalla de trabajo diario y sus notificaciones, las gestiona y elige por qué canal las recibe. El administrador ve también la bandeja global y configura las alertas corporativas.
