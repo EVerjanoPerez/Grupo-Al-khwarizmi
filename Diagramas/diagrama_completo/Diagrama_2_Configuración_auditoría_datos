@@ -7,6 +7,7 @@ actor :Administrador: as admin
 actor :Superadministrador: as superadmin
 actor :Planificador (tiempo): as planificador
 actor :Sistema de cobros: as sistemaCobros
+actor :Servicio de mensajería: as mensajeria
 
 usecase (CU-03 Configuración global del sistema) as cu03
 usecase (CU-04 Administración de la cuenta de recepción de pagos) as cu04
@@ -27,4 +28,6 @@ admin -- cu39
 planificador -- cu26
 
 sistemaCobros -- cu04
+
+mensajeria -- cu03
 @enduml

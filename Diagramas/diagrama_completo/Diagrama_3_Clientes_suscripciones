@@ -5,20 +5,23 @@ title Clientes y suscripciones
 
 actor :Usuario: as usuario
 actor :Administrador: as admin
+actor :Planificador (tiempo): as planificador
 actor :Sistema externo: as sistemaExterno
 actor :Servicio de mensajería: as mensajeria
 
 usecase (CU-05 Revisión anual del rango de facturación) as cu05
 usecase (CU-06 Activación de la facturación recurrente) as cu06
+usecase (CU-12 Envío de la factura al cliente) as cu12
 usecase (CU-16 Borrado lógico de clientes y facturas) as cu16
 usecase (CU-17 Consulta de facturas pendientes) as cu17
-usecase (CU-19 Alta, baja y edición de clientes) as cu19
+usecase (CU-19 Edición y baja de clientes) as cu19
 usecase (CU-20 Importación masiva de clientes) as cu20
 usecase (CU-24 Búsqueda y consulta de clientes) as cu24
 usecase (CU-27 Pausa y reactivación de suscripción) as cu27
 usecase (CU-28 Notificación de baja por API) as cu28
 usecase (CU-29 Solicitud de excepción comercial) as cu29
 usecase (CU-37 Acciones masivas) as cu37
+usecase (CU-40 Alta de clientes) as cu40
 
 admin --|> usuario
 
@@ -33,10 +36,14 @@ admin -- cu05
 admin -- cu16
 admin -- cu20
 admin -- cu37
+admin -- cu40
+
+planificador -- cu05
 
 sistemaExterno -- cu28
 
-mensajeria -- cu06
+mensajeria -- cu12
 
+cu06 ..> cu12 : <<include>>
 cu19 ..> cu17 : <<include>>
 @enduml
