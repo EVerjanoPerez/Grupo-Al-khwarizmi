@@ -1,0 +1,37 @@
+@startuml
+skinparam actorstyle awesome
+left to right direction
+title Facturación y aprobaciones
+
+actor :Usuario: as usuario
+actor :Administrador: as admin
+actor :Planificador (tiempo): as planificador
+actor :Servicio de mensajería: as mensajeria
+
+usecase (CU-12 Envío de la factura al cliente) as cu12
+usecase (CU-18 Modificación de facturas y datos) as cu18
+usecase (CU-23 Rectificación y anulación de facturas) as cu23
+usecase (CU-25 Descarga de factura en PDF) as cu25
+usecase (CU-30 Gestión de aprobaciones) as cu30
+usecase (CU-31 Creación de factura puntual) as cu31
+usecase (CU-32 Generación mensual de facturas recurrentes) as cu32
+usecase (CU-33 Gestión de presupuestos) as cu33
+
+admin --|> usuario
+
+usuario -- cu18
+usuario -- cu25
+usuario -- cu31
+usuario -- cu33
+
+admin -- cu23
+admin -- cu30
+
+planificador -- cu32
+
+mensajeria -- cu12
+mensajeria -- cu33
+
+cu31 ..> cu12 : <<include>>
+cu32 ..> cu12 : <<include>>
+@enduml
