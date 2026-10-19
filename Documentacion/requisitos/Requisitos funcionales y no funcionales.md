@@ -60,17 +60,12 @@
     - Implementado en: FR8, FR32.
 - **UR14.** El usuario podrá seguir los cobros de sus clientes: validar un pago con justificante, poner una factura en disputa y abrir incidencias.
     - Implementado en: FR39, FR41, FR44.1.
-- **UR15.** El usuario podrá organizar su trabajo desde una pantalla diaria, recibir notificaciones y comentar con sus compañeros.
-    - Implementado en: FR46, FR46.2, FR48, FR49.
-
-### Sistemas externos
-
-- **UR16.** Otros sistemas de Turbine podrán notificar por API que un cliente solicita la baja.
-    - Implementado en: FR16.
+- **UR15.** El usuario podrá organizar su trabajo desde una pantalla diaria, recibir notificaciones, comentar con sus compañeros y adjuntar documentos.
+    - Implementado en: FR46, FR46.2, FR48, FR49, FR50.
 
 ### Cliente de Turbine (no usa la aplicación)
 
-- **UR17.** El cliente recibirá automáticamente sus facturas y recordatorios por email (o por WhatsApp si lo ha consentido), en su idioma y con los datos de contacto de soporte.
+- **UR16.** El cliente recibirá automáticamente sus facturas y recordatorios por email (o por WhatsApp si lo ha consentido), en su idioma y con los datos de contacto de soporte.
     - Implementado en: FR35, FR36, FR37, FR38.
 
 ## 3. Requisitos funcionales
@@ -146,7 +141,7 @@
     - Dependencias: FR14.
 - FR15.1. Al llegar la fecha de reactivación, el sistema avisará al responsable y pedirá confirmación si la política lo exige.
     - Dependencias: FR15.
-- FR16. El sistema permitirá registrar la solicitud de baja de un cliente, en la aplicación o recibida por API, y creará la tarea correspondiente.
+- FR16. El sistema permitirá al responsable registrar la solicitud de baja de un cliente con su fecha efectiva. Hasta esa fecha el cliente figurará como «baja solicitada».
     - Dependencias: FR14.
 - FR16.1. Al hacerse efectiva la baja, el sistema dejará de generar mensualidades desde esa fecha. Si hay deuda pendiente, el recobro de las facturas anteriores continuará: la deuda no bloquea la baja y la baja no borra la deuda.
     - Dependencias: FR16.
