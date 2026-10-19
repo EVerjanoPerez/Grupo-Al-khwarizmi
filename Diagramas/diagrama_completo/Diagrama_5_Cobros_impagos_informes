@@ -4,32 +4,31 @@ left to right direction
 title Cobros, impagos e informes
 
 actor :Usuario: as usuario
-actor :Administrador: as admin
+actor :Sistema de cobros: as cobros
 actor :Planificador (tiempo): as planificador
-actor :Sistema de cobros: as sistemaCobros
 actor :Servicio de mensajería: as mensajeria
-
-usecase (CU-09 Visualización de pagos e impagos) as cu09
-usecase (CU-10 Visualización de métricas globales) as cu10
-usecase (CU-11 Generación y exportación de informes) as cu11
-usecase (CU-13 Control de pagos por notificación) as cu13
-usecase (CU-14 Registro manual de un pago) as cu14
-usecase (CU-21 Gestión del flujo de impagos automatizado) as cu21
-usecase (CU-34 Gestión de incidencias y disputas) as cu34
-
-admin --|> usuario
+usecase "CU-09\nConsulta de cobros,\nmétricas e informes" as cu09
+usecase "CU-11\nControl de pagos por notificación" as cu11
+usecase "CU-19\nGestión del flujo de\nimpagos automatizado" as cu19
+usecase "CU-31\nGestión de incidencias y disputas" as cu31
+usecase "CU-12\nRegistro manual de un pago" as cu12
+usecase "CU-03\nConfiguración global del sistema\n(ver diagrama 2)" as cu03
+usecase "CU-04\nAdministración de la cuenta\nde recepción de pagos\n(ver diagrama 2)" as cu04
+usecase "CU-10\nEnvío de la factura al cliente\n(ver diagrama 4)" as cu10
 
 usuario -- cu09
-usuario -- cu14
-usuario -- cu34
+usuario -- cu12
+usuario -- cu31
 
-admin -- cu10
-admin -- cu11
+planificador -- cu11
+planificador -- cu19
 
-planificador -- cu13
-planificador -- cu21
+cu11 -- cobros
+cu19 -- mensajeria
 
-sistemaCobros -- cu13
-
-mensajeria -- cu21
+cu11 ..> cu04 : <<dependency>>
+cu11 ..> cu10 : <<dependency>>
+cu12 ..> cu10 : <<dependency>>
+cu19 ..> cu03 : <<dependency>>
+cu19 ..> cu10 : <<dependency>>
 @enduml

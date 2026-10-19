@@ -3,144 +3,155 @@ skinparam actorstyle awesome
 left to right direction
 title Sistema completo de facturación - Casos de uso
 
-' ===== Actores =====
-actor :Usuario: as usuario
 actor :Administrador: as admin
-actor :Superadministrador: as superadmin
 actor :Planificador (tiempo): as planificador
-actor :Sistema de cobros: as sistemaCobros
-actor :Sistema externo: as sistemaExterno
+actor :Sistema de cobros: as cobros
+actor :Usuario: as usuario
 actor :Servicio de mensajería: as mensajeria
+actor :Superadministrador: as superadmin
 
-superadmin --|> admin
 admin --|> usuario
+superadmin --|> admin
 
-' ===== Diagrama 1: Acceso, usuarios y trabajo diario =====
-rectangle "Acceso, usuarios y trabajo diario" {
-  usecase (CU-01 Login) as cu01
-  usecase (CU-02 Registro de usuarios internos) as cu02
-  usecase (CU-07 Delegación temporal de clientes) as cu07
-  usecase (CU-08 Asignación de clientes a usuario) as cu08
-  usecase (CU-15 Desactivación de cuentas) as cu15
-  usecase (CU-35 Notificaciones y pantalla de trabajo diario) as cu35
-  usecase (CU-36 Comentarios y adjuntos) as cu36
-}
+usecase "CU-01\nLogin" as cu01
+usecase "CU-28\nCreación de factura puntual" as cu28
+usecase "CU-32\nTrabajo diario, notificaciones\ny comentarios" as cu32
+usecase "CU-19\nGestión del flujo de\nimpagos automatizado" as cu19
+usecase "CU-15\nConsulta de facturas pendientes" as cu15
+usecase "CU-08\nAsignación de clientes a usuario" as cu08
+usecase "CU-27\nGestión de aprobaciones" as cu27
+usecase "CU-18\nImportación masiva de clientes" as cu18
+usecase "CU-17\nEdición y baja de clientes" as cu17
+usecase "CU-07\nDelegación temporal de clientes" as cu07
+usecase "CU-16\nModificación de facturas y datos" as cu16
+usecase "CU-21\nRectificación y anulación\nde facturas" as cu21
+usecase "CU-23\nDescarga de factura en PDF" as cu23
+usecase "CU-36\nAlta de clientes" as cu36
+usecase "CU-09\nConsulta de cobros,\nmétricas e informes" as cu09
+usecase "CU-20\nAuditoría y copias de seguridad" as cu20
+usecase "CU-02\nRegistro de usuarios internos" as cu02
+usecase "CU-25\nPausa y reactivación\nde suscripción" as cu25
+usecase "CU-31\nGestión de incidencias y disputas" as cu31
+usecase "CU-35\nGestión de datos personales" as cu35
+usecase "CU-11\nControl de pagos por notificación" as cu11
+usecase "CU-14\nBorrado lógico de\nclientes y facturas" as cu14
+usecase "CU-12\nRegistro manual de un pago" as cu12
+usecase "CU-26\nSolicitud de excepción comercial" as cu26
+usecase "CU-05\nRevisión anual del rango\nde facturación" as cu05
+usecase "CU-24\nGeneración de copias de seguridad" as cu24
+usecase "CU-03\nConfiguración global del sistema" as cu03
+usecase "CU-04\nAdministración de la cuenta\nde recepción de pagos" as cu04
+usecase "CU-22\nBúsqueda y consulta de clientes" as cu22
+usecase "CU-30\nGestión de presupuestos" as cu30
+usecase "CU-33\nAcciones masivas" as cu33
+usecase "CU-34\nCierre y reapertura de periodos" as cu34
+usecase "CU-29\nGeneración mensual de\nfacturas recurrentes" as cu29
+usecase "CU-06\nActivación de la\nfacturación recurrente" as cu06
+usecase "CU-13\nDesactivación de cuentas" as cu13
+usecase "CU-10\nEnvío de la factura al cliente" as cu10
 
-' ===== Diagrama 2: Configuración, auditoría y datos =====
-rectangle "Configuración, auditoría y datos" {
-  usecase (CU-03 Configuración global del sistema) as cu03
-  usecase (CU-04 Administración de la cuenta de recepción de pagos) as cu04
-  usecase (CU-22 Auditoría y copias de seguridad) as cu22
-  usecase (CU-26 Generación de copias de seguridad) as cu26
-  usecase (CU-38 Cierre y reapertura de periodos) as cu38
-  usecase (CU-39 Gestión de datos personales) as cu39
-}
-
-' ===== Diagrama 3: Clientes y suscripciones =====
-rectangle "Clientes y suscripciones" {
-  usecase (CU-05 Revisión anual del rango de facturación) as cu05
-  usecase (CU-06 Activación de la facturación recurrente) as cu06
-  usecase (CU-16 Borrado lógico de clientes y facturas) as cu16
-  usecase (CU-17 Consulta de facturas pendientes) as cu17
-  usecase (CU-19 Edición y baja de clientes) as cu19
-  usecase (CU-20 Importación masiva de clientes) as cu20
-  usecase (CU-24 Búsqueda y consulta de clientes) as cu24
-  usecase (CU-27 Pausa y reactivación de suscripción) as cu27
-  usecase (CU-28 Notificación de baja por API) as cu28
-  usecase (CU-29 Solicitud de excepción comercial) as cu29
-  usecase (CU-37 Acciones masivas) as cu37
-  usecase (CU-40 Alta de clientes) as cu40
-}
-
-' ===== Diagrama 4: Facturación y aprobaciones =====
-rectangle "Facturación y aprobaciones" {
-  usecase (CU-12 Envío de la factura al cliente) as cu12
-  usecase (CU-18 Modificación de facturas y datos) as cu18
-  usecase (CU-23 Rectificación y anulación de facturas) as cu23
-  usecase (CU-25 Descarga de factura en PDF) as cu25
-  usecase (CU-30 Gestión de aprobaciones) as cu30
-  usecase (CU-31 Creación de factura puntual) as cu31
-  usecase (CU-32 Generación mensual de facturas recurrentes) as cu32
-  usecase (CU-33 Gestión de presupuestos) as cu33
-}
-
-' ===== Diagrama 5: Cobros, impagos e informes =====
-rectangle "Cobros, impagos e informes" {
-  usecase (CU-09 Visualización de pagos e impagos) as cu09
-  usecase (CU-10 Visualización de métricas globales) as cu10
-  usecase (CU-11 Generación y exportación de informes) as cu11
-  usecase (CU-13 Control de pagos por notificación) as cu13
-  usecase (CU-14 Registro manual de un pago) as cu14
-  usecase (CU-21 Gestión del flujo de impagos automatizado) as cu21
-  usecase (CU-34 Gestión de incidencias y disputas) as cu34
-}
 
 ' ===== Usuario =====
 usuario -- cu01
-usuario -- cu35
-usuario -- cu36
 usuario -- cu06
-usuario -- cu17
-usuario -- cu19
-usuario -- cu24
-usuario -- cu27
-usuario -- cu29
-usuario -- cu18
-usuario -- cu25
-usuario -- cu31
-usuario -- cu33
 usuario -- cu09
-usuario -- cu14
-usuario -- cu34
+usuario -- cu12
+usuario -- cu15
+usuario -- cu16
+usuario -- cu17
+usuario -- cu22
+usuario -- cu23
+usuario -- cu25
+usuario -- cu26
+usuario -- cu28
+usuario -- cu30
+usuario -- cu31
+usuario -- cu32
 
 ' ===== Administrador =====
 admin -- cu02
+admin -- cu05
 admin -- cu07
 admin -- cu08
-admin -- cu15
-admin -- cu38
-admin -- cu39
-admin -- cu05
-admin -- cu16
-admin -- cu20
-admin -- cu37
-admin -- cu40
-admin -- cu23
-admin -- cu30
-admin -- cu10
-admin -- cu11
+admin -- cu13
+admin -- cu14
+admin -- cu18
+admin -- cu21
+admin -- cu27
+admin -- cu33
+admin -- cu34
+admin -- cu35
+admin -- cu36
 
 ' ===== Superadministrador =====
 superadmin -- cu03
 superadmin -- cu04
-superadmin -- cu22
+superadmin -- cu20
 
 ' ===== Planificador (tiempo) =====
 planificador -- cu05
-planificador -- cu26
-planificador -- cu32
-planificador -- cu13
-planificador -- cu21
+planificador -- cu11
+planificador -- cu19
+planificador -- cu24
+planificador -- cu29
 
 ' ===== Sistema de cobros =====
-sistemaCobros -- cu04
-sistemaCobros -- cu13
-
-' ===== Sistema externo =====
-sistemaExterno -- cu28
+cu04 -- cobros
+cu11 -- cobros
 
 ' ===== Servicio de mensajería =====
-mensajeria -- cu01
-mensajeria -- cu02
-mensajeria -- cu03
-mensajeria -- cu12
-mensajeria -- cu33
-mensajeria -- cu21
-mensajeria -- cu35
+cu01 -- mensajeria
+cu02 -- mensajeria
+cu03 -- mensajeria
+cu10 -- mensajeria
+cu19 -- mensajeria
+cu30 -- mensajeria
+cu32 -- mensajeria
 
-' ===== Relaciones entre casos de uso =====
-cu19 ..> cu17 : <<include>>
-cu06 ..> cu12 : <<include>>
-cu31 ..> cu12 : <<include>>
-cu32 ..> cu12 : <<include>>
+' ===== Include =====
+cu06 ..> cu10 : <<include>>
+cu08 ..> cu22 : <<include>>
+cu17 ..> cu15 : <<include>>
+cu17 ..> cu22 : <<include>>
+cu28 ..> cu10 : <<include>>
+cu29 ..> cu10 : <<include>>
+cu30 ..> cu28 : <<include>>
+cu33 ..> cu22 : <<include>>
+
+' ===== Extend =====
+cu08 ..> cu13 : <<extend>>
+cu17 ..> cu25 : <<extend>>
+cu23 ..> cu09 : <<extend>>
+cu33 ..> cu08 : <<extend>>
+
+' ===== Dependency =====
+cu01 ..> cu02 : <<dependency>>
+cu05 ..> cu06 : <<dependency>>
+cu05 ..> cu27 : <<dependency>>
+cu06 ..> cu08 : <<dependency>>
+cu06 ..> cu27 : <<dependency>>
+cu07 ..> cu02 : <<dependency>>
+cu08 ..> cu36 : <<dependency>>
+cu11 ..> cu04 : <<dependency>>
+cu11 ..> cu10 : <<dependency>>
+cu12 ..> cu10 : <<dependency>>
+cu14 ..> cu17 : <<dependency>>
+cu16 ..> cu27 : <<dependency>>
+cu16 ..> cu28 : <<dependency>>
+cu17 ..> cu08 : <<dependency>>
+cu19 ..> cu03 : <<dependency>>
+cu19 ..> cu10 : <<dependency>>
+cu20 ..> cu24 : <<dependency>>
+cu21 ..> cu10 : <<dependency>>
+cu21 ..> cu27 : <<dependency>>
+cu23 ..> cu10 : <<dependency>>
+cu24 ..> cu03 : <<dependency>>
+cu25 ..> cu06 : <<dependency>>
+cu26 ..> cu06 : <<dependency>>
+cu26 ..> cu27 : <<dependency>>
+cu28 ..> cu08 : <<dependency>>
+cu28 ..> cu27 : <<dependency>>
+cu29 ..> cu03 : <<dependency>>
+cu29 ..> cu06 : <<dependency>>
+cu30 ..> cu08 : <<dependency>>
 @enduml

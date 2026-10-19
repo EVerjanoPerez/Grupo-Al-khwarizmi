@@ -3,30 +3,35 @@ skinparam actorstyle awesome
 left to right direction
 title Acceso, usuarios y trabajo diario
 
-actor :Usuario: as usuario
 actor :Administrador: as admin
 actor :Servicio de mensajería: as mensajeria
-
-usecase (CU-01 Login) as cu01
-usecase (CU-02 Registro de usuarios internos) as cu02
-usecase (CU-07 Delegación temporal de clientes) as cu07
-usecase (CU-08 Asignación de clientes a usuario) as cu08
-usecase (CU-15 Desactivación de cuentas) as cu15
-usecase (CU-35 Notificaciones y pantalla de trabajo diario) as cu35
-usecase (CU-36 Comentarios y adjuntos) as cu36
+actor :Usuario: as usuario
 
 admin --|> usuario
+usecase "CU-13\nDesactivación de cuentas" as cu13
+usecase "CU-02\nRegistro de usuarios internos" as cu02
+usecase "CU-08\nAsignación de clientes a usuario" as cu08
+usecase "CU-32\nTrabajo diario, notificaciones\ny comentarios" as cu32
+usecase "CU-07\nDelegación temporal de clientes" as cu07
+usecase "CU-01\nLogin" as cu01
+usecase "CU-22\nBúsqueda y consulta de clientes\n(ver diagrama 3)" as cu22
+usecase "CU-36\nAlta de clientes\n(ver diagrama 3)" as cu36
 
 usuario -- cu01
-usuario -- cu35
-usuario -- cu36
+usuario -- cu32
 
 admin -- cu02
 admin -- cu07
 admin -- cu08
-admin -- cu15
+admin -- cu13
 
-mensajeria -- cu01
-mensajeria -- cu02
-mensajeria -- cu35
+cu01 -- mensajeria
+cu02 -- mensajeria
+cu32 -- mensajeria
+
+cu01 ..> cu02 : <<dependency>>
+cu07 ..> cu02 : <<dependency>>
+cu08 ..> cu13 : <<extend>>
+cu08 ..> cu22 : <<include>>
+cu08 ..> cu36 : <<dependency>>
 @enduml

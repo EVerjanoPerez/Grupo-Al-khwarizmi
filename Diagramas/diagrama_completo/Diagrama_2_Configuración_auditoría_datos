@@ -6,28 +6,29 @@ title Configuración, auditoría y datos
 actor :Administrador: as admin
 actor :Superadministrador: as superadmin
 actor :Planificador (tiempo): as planificador
-actor :Sistema de cobros: as sistemaCobros
+actor :Sistema de cobros: as cobros
 actor :Servicio de mensajería: as mensajeria
 
-usecase (CU-03 Configuración global del sistema) as cu03
-usecase (CU-04 Administración de la cuenta de recepción de pagos) as cu04
-usecase (CU-22 Auditoría y copias de seguridad) as cu22
-usecase (CU-26 Generación de copias de seguridad) as cu26
-usecase (CU-38 Cierre y reapertura de periodos) as cu38
-usecase (CU-39 Gestión de datos personales) as cu39
-
 superadmin --|> admin
+usecase "CU-03\nConfiguración global del sistema" as cu03
+usecase "CU-04\nAdministración de la cuenta\nde recepción de pagos" as cu04
+usecase "CU-20\nAuditoría y copias de seguridad" as cu20
+usecase "CU-24\nGeneración de copias de seguridad" as cu24
+usecase "CU-34\nCierre y reapertura de periodos" as cu34
+usecase "CU-35\nGestión de datos personales" as cu35
+
+admin -- cu34
+admin -- cu35
 
 superadmin -- cu03
 superadmin -- cu04
-superadmin -- cu22
+superadmin -- cu20
 
-admin -- cu38
-admin -- cu39
+planificador -- cu24
 
-planificador -- cu26
+cu03 -- mensajeria
+cu04 -- cobros
 
-sistemaCobros -- cu04
-
-mensajeria -- cu03
+cu20 ..> cu24 : <<dependency>>
+cu24 ..> cu03 : <<dependency>>
 @enduml

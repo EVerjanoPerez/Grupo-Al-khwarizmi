@@ -3,35 +3,50 @@ skinparam actorstyle awesome
 left to right direction
 title Facturación y aprobaciones
 
-actor :Usuario: as usuario
-actor :Administrador: as admin
-actor :Planificador (tiempo): as planificador
 actor :Servicio de mensajería: as mensajeria
-
-usecase (CU-12 Envío de la factura al cliente) as cu12
-usecase (CU-18 Modificación de facturas y datos) as cu18
-usecase (CU-23 Rectificación y anulación de facturas) as cu23
-usecase (CU-25 Descarga de factura en PDF) as cu25
-usecase (CU-30 Gestión de aprobaciones) as cu30
-usecase (CU-31 Creación de factura puntual) as cu31
-usecase (CU-32 Generación mensual de facturas recurrentes) as cu32
-usecase (CU-33 Gestión de presupuestos) as cu33
+actor :Planificador (tiempo): as planificador
+actor :Administrador: as admin
+actor :Usuario: as usuario
 
 admin --|> usuario
+usecase "CU-09\nConsulta de cobros,\nmétricas e informes\n(ver diagrama 5)" as cu09
+usecase "CU-23\nDescarga de factura en PDF" as cu23
+usecase "CU-10\nEnvío de la factura al cliente" as cu10
+usecase "CU-29\nGeneración mensual de\nfacturas recurrentes" as cu29
+usecase "CU-21\nRectificación y anulación\nde facturas" as cu21
+usecase "CU-03\nConfiguración global del sistema\n(ver diagrama 2)" as cu03
+usecase "CU-06\nActivación de la\nfacturación recurrente\n(ver diagrama 3)" as cu06
+usecase "CU-27\nGestión de aprobaciones" as cu27
+usecase "CU-16\nModificación de facturas y datos" as cu16
+usecase "CU-30\nGestión de presupuestos" as cu30
+usecase "CU-28\nCreación de factura puntual" as cu28
+usecase "CU-08\nAsignación de clientes a usuario\n(ver diagrama 1)" as cu08
 
-usuario -- cu18
-usuario -- cu25
-usuario -- cu31
-usuario -- cu33
+usuario -- cu16
+usuario -- cu23
+usuario -- cu28
+usuario -- cu30
 
-admin -- cu23
-admin -- cu30
+admin -- cu21
+admin -- cu27
 
-planificador -- cu32
+planificador -- cu29
 
-mensajeria -- cu12
-mensajeria -- cu33
+cu10 -- mensajeria
+cu30 -- mensajeria
 
-cu31 ..> cu12 : <<include>>
-cu32 ..> cu12 : <<include>>
+cu16 ..> cu27 : <<dependency>>
+cu16 ..> cu28 : <<dependency>>
+cu21 ..> cu10 : <<dependency>>
+cu21 ..> cu27 : <<dependency>>
+cu23 ..> cu09 : <<extend>>
+cu23 ..> cu10 : <<dependency>>
+cu28 ..> cu08 : <<dependency>>
+cu28 ..> cu10 : <<include>>
+cu28 ..> cu27 : <<dependency>>
+cu29 ..> cu03 : <<dependency>>
+cu29 ..> cu06 : <<dependency>>
+cu29 ..> cu10 : <<include>>
+cu30 ..> cu08 : <<dependency>>
+cu30 ..> cu28 : <<include>>
 @enduml
