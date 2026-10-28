@@ -1,0 +1,41 @@
+@startuml
+'diagrama de secuencia
+
+actor Usuario
+participant InterfazLogin
+participant ControladorAuth
+
+database DataBase
+
+'ServicioEmail no hace falta activarlo porque es un servicio 
+'asincrono (no sabemos cuando se activa y cuando se desactiva)
+participant ServicioEmail
+
+Usuario-> InterfazLogin : 1: iniciarSesion(usuario,contraseña)
+activate InterfazLogin
+
+InterfazLogin-> ControladorAuth: 2: autentificar(usuario,contraseña)
+activate ControladorAuth
+
+ControladorAuth->DataBase : 3: obtenerUsuario(usuario)
+activate DataBase
+
+'importante crearlo aqui para que no salga antes de lo que deberia
+create participant usuario
+
+DataBase-->usuario : 4: crearUsuario(usuario)
+DataBase --> ControladorAuth : Usuario
+deactivate DataBase
+ControladorAuth --> usuario : validarContraseña(contraseña)
+activate usuario
+usuario --> ControladorAuth : True
+deactivate usuario
+ControladorAuth -> ServicioEmail: 5: enviarNotificacion(usuarioEmail)
+ControladorAuth --> InterfazLogin : True
+deactivate ControladorAuth
+InterfazLogin --> Usuario : True
+deactivate InterfazLogin
+
+destroy usuario
+destroy ControladorAuth
+@enduml
