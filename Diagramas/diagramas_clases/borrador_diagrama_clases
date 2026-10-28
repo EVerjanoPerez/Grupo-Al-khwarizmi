@@ -1,0 +1,309 @@
+@startuml
+
+' ---------- Bloque 1: Usuarios, accesos y trabajo diario ----------
+Class Usuario {
+- int idUsuario
+- String nombre
+- String correoCorporativo
+- String passwordHash
+- RolUsuario rol
+- bool puedeGestionarUsuarios
+- bool activo
+- int intentosFallidos
+- DateTime bloqueadoHasta
+- List<CanalNotificacion> canalesPreferidos
+
++ bool iniciarSesion(String correo, String pass)
++ void cerrarSesion()
++ void recuperarPassword()
++ bool enviarInvitacion()
++ void reactivarCuenta()
++ void desactivarCuenta(String motivo)
++ void configurarCanales(List<CanalNotificacion> canales)
+}
+
+Class DelegacionTemporal {
+- int idDelegacion
+- Date fechaInicio
+- Date fechaFin
+- bool activa
+
++ void activarDelegacion()
++ void cancelarDelegacion()
++ bool estaVigente(Date fecha)
+}
+
+Class Notificacion {
+- int idNotificacion
+- String mensaje
+- DateTime fechaCreacion
+- EstadoNotificacion estado
+- CanalNotificacion canal
+
++ void marcarComoLeida()
++ void marcarComoAtendida()
++ bool enviar()
+}
+
+' ---------- Bloque 2: Configuración, auditoría y datos ----------
+Class ConfiguracionSistema {
+- int plazoPagoDefecto
+- List<int> diasRecordatorio
+- double impuestoDefecto
+- String monedaBase
+- double umbralAprobacionInferior
+- double umbralAprobacionSuperior
+- int periodicidadCopias
+- String datosEmisor
+- String datosSoporte
+
++ bool actualizarParametros()
++ bool validarUmbrales()
++ bool configurarPasarelaCobro(String proveedor, String credenciales)
+}
+
+Class RegistroAuditoria {
+- int idRegistro
+- DateTime fechaHora
+- String tipoOperacion
+- String entidadAfectada
+- String valorAnterior
+- String valorNuevo
+
+{static} + RegistroAuditoria registrarEvento(Usuario u, String tipoOperacion, String entidad, String valorAnterior, String valorNuevo)
+{static} + List<RegistroAuditoria> consultar(Usuario usuario, String tipoOperacion, String entidad, Date desde, Date hasta)
+}
+
+Class PeriodoContable {
+- String idPeriodo
+- TipoPeriodo tipo
+- Date fechaInicio
+- Date fechaFin
+- bool cerrado
+- DateTime fechaCierre
+- String motivoReapertura
+
++ List<String> obtenerAvisosPendientes()
++ bool cerrarPeriodo(Usuario admin)
++ bool reabrirPeriodo(Usuario superadmin, String motivo)
++ bool contieneFecha(Date fecha)
+}
+
+' ---------- Bloque 3: Clientes y suscripciones ----------
+Class Cliente {
+- int idCliente
+- String razonSocial
+- String nif
+- String direccionFiscal
+- String pais
+- String sector
+- List<String> etiquetas
+- String rangoTarifa
+- double facturacionAnual
+- EstadoCliente estado
+- Date fechaBaja
+- bool eliminadoLogico
+
++ bool darDeAlta()
++ void reactivar()
++ void modificarDatosFiscales()
++ void asignarResponsable(Usuario u)
++ void desasignarResponsable()
++ void registrarFacturacionAnual(double importe, String fuente, Date fecha)
++ String calcularRango()
++ List<Factura> obtenerFacturasPendientes()
++ double calcularDeudaTotal()
++ void darDeBaja(Date fechaEfectiva)
++ void borradoLogico(String motivo)
+}
+
+Class ContactoCliente {
+- int idContacto
+- String nombre
+- String email
+- String telefono
+- String funcion
+- String idioma
+- bool consienteWhatsApp
+
++ CanalNotificacion obtenerCanalEnvio()
++ void anonimizarDatos()
++ void eliminarDatos()
+}
+
+Class Suscripcion {
+- int idSuscripcion
+- String plan
+- double cuotaMensual
+- int diaVencimientoPactado
+- Date fechaInicio
+- Date fechaFin
+- EstadoSuscripcion estado
+- String motivoPausa
+- Date fechaInicioPausa
+- Date fechaReactivacionPrevista
+
++ void activar()
++ double calcularProrrateo(Date fechaAlta)
++ void pausar(Date fechaInicio, Date fechaReactivacion, String motivo)
++ void reactivar()
++ void cancelar(Date fechaEfectiva)
++ void actualizarTarifa(String nuevoRango, Date fechaEfecto)
++ void aplicarExcepcion(double descuento, Date fechaFin)
++ double calcularImporteMensual(Date mes)
++ Factura generarFacturaMensual(Date mes)
+}
+
+' ---------- Bloque 4: Facturación, presupuestos y aprobaciones ----------
+Class Presupuesto {
+- String idPresupuesto
+- Date fechaCreacion
+- EstadoPresupuesto estado
+- String documentoEvidencia
+
++ double calcularTotal()
++ bool enviar()
++ void aceptar(String evidencia)
++ void rechazar(String evidencia)
++ Factura convertirEnFactura()
+}
+
+Class Factura {
+- int idFactura
+- String numeroFactura
+- String serie
+- TipoFactura tipo
+- Date fechaEmision
+- Date fechaVencimiento
+- String mesFacturado
+- String moneda
+- String centroCoste
+- double baseImponible
+- double totalImpuestos
+- double importeTotal
+- double saldoPendiente
+- EstadoFactura estado
+- bool enDisputa
+- String rutaPdf
+
++ void calcularTotales()
++ bool modificarBorrador()
++ bool eliminarBorrador()
++ bool emitir()
++ String generarPdf()
++ String obtenerPdf()
++ bool enviarAlCliente()
++ void marcarComoPagada(Cobro c)
++ int calcularDiasRetraso()
++ bool requiereRecordatorio(Date fecha)
++ Factura crearRectificativa(String motivo)
++ bool anular(String motivo)
++ void declararIncobrable(String motivo)
+}
+
+Class LineaFactura {
+- int numeroLinea
+- String concepto
+- int cantidad
+- double precioUnitario
+- double porcentajeDescuento
+- double porcentajeImpuesto
+
++ double calcularSubtotal()
+}
+
+Class SolicitudAprobacion {
+- int idSolicitud
+- TipoAprobacion tipoOperacion
+- double importeAfectado
+- String motivoSolicitud
+- String comentarioResolucion
+- DateTime fechaSolicitud
+- DateTime fechaResolucion
+- EstadoAprobacion estado
+
++ bool requiereSuperadmin()
++ bool aprobar(Usuario aprobador, String comentario)
++ void rechazar(Usuario aprobador, String comentario)
++ void reasignar(Usuario suplente)
+}
+
+' ---------- Bloque 5: Cobros, impagos e incidencias ----------
+Class Cobro {
+- int idCobro
+- String referenciaExterna
+- Date fechaCobro
+- double importe
+- OrigenCobro origen
+- String justificanteAdjunto
+- bool conciliado
+
++ bool procesarCobroAutomatico()
++ bool conciliarManualmente(Factura f, String justificante)
++ void deshacerConciliacion(String motivo)
+}
+
+Class RecordatorioImpago {
+- int idRecordatorio
+- DateTime fechaEnvio
+- int numeroIntento
+- CanalNotificacion canal
+- bool enviadoConExito
+
++ bool enviarRecordatorio()
+}
+
+Class Incidencia {
+- int idIncidencia
+- String descripcion
+- Prioridad prioridad
+- DateTime fechaApertura
+- bool esDisputaFactura
+- Date fechaRevision
+- String resolucion
+- bool resuelta
+
++ void abrirIncidencia()
++ void pausarSeguimientoImpago(String motivo, Date fechaRevision)
++ void reanudarSeguimientoImpago()
++ void agregarComentario(Usuario u, String texto)
++ void resolverYCerrar(String resolucion)
+}
+
+' ---------- Composiciones ----------
+Factura "0..1" *-- "1..*" LineaFactura
+Presupuesto "0..1" *-- "1..*" LineaFactura
+Cliente "1" *-- "1..*" ContactoCliente
+
+note right of LineaFactura : {xor} cada línea pertenece\na una Factura o a un Presupuesto
+
+' ---------- Asociaciones ----------
+Usuario "0..1" --> "0..*" Cliente : -clientesAsignados
+Usuario "0..*" --> "0..*" Cliente : -favoritos
+Usuario "1" --> "0..*" Notificacion : -notificaciones
+DelegacionTemporal "0..*" --> "1" Usuario : -titular
+DelegacionTemporal "0..*" --> "1" Usuario : -sustituto
+DelegacionTemporal "0..*" --> "0..*" Cliente : -clientesDelegados
+Cliente "1" --> "0..*" Suscripcion : -suscripciones
+Cliente "1" --> "0..*" Factura : -facturas
+Cliente "1" --> "0..*" Presupuesto : -presupuestos
+Suscripcion "0..1" --> "0..*" Factura : -facturasGeneradas
+Presupuesto "0..1" --> "0..1" Factura : -facturaGenerada
+Factura "0..1" --> "0..*" Cobro : -cobros
+Factura "1" --> "0..*" RecordatorioImpago : -recordatorios
+Factura "0..1" <-- "0..*" Factura : -facturaOriginal
+SolicitudAprobacion "0..*" --> "1" Usuario : -solicitante
+SolicitudAprobacion "0..*" --> "0..1" Usuario : -aprobador
+Incidencia "0..*" --> "0..1" Cliente
+Incidencia "0..*" --> "0..1" Factura
+Incidencia "0..*" --> "1" Usuario : -responsable
+RegistroAuditoria "0..*" --> "0..1" Usuario : -autor
+
+note bottom of Incidencia : {xor} sobre un cliente\no sobre una factura
+
+' ---------- Dependencias ----------
+Factura ..> PeriodoContable : <<uses>>
+Factura ..> ConfiguracionSistema : <<uses>>
+SolicitudAprobacion ..> ConfiguracionSistema : <<uses>>
+
+@enduml
