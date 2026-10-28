@@ -77,6 +77,17 @@ Parámetros globales modificables por el Superadministrador.
   * `+ validarUmbrales() : bool` *(CU-03)*
   * `+ configurarPasarelaCobro(proveedor : String, credenciales : String) : bool` *(CU-04)*
 
+### Clase `TarifaRango`
+Tabla de tramos de facturación anual para calcular automáticamente el rango y tarifa de cada cliente.
+* **Atributos:**
+  * `- idTarifaRango : int`
+  * `- nombreRango : String`
+  * `- facturacionMinima : double`
+  * `- facturacionMaxima : double`
+  * `- cuotaBaseAsociada : double`
+* **Métodos:**
+  * `+ calcularRangoCorrespondiente(facturacionAnual : double) : TarifaRango` *(CU-03, CU-05)*
+
 ### Clase `RegistroAuditoria`
 Trazabilidad inmutable de todas las operaciones críticas del sistema (no tiene métodos de modificación).
 * **Atributos:**
@@ -106,6 +117,34 @@ Control de cierre mensual o trimestral para evitar modificaciones en facturas de
   * `+ reabrirPeriodo(superadmin : Usuario, motivo : String) : bool` *(CU-34)*
   * `+ contieneFecha(fecha : Date) : bool` *(CU-16)*
 
+### Clase `EjecucionProceso`
+Registro de cada tarea automática lanzada por el Planificador (generación mensual, recordatorios, copias).
+* **Atributos:**
+  * `- idEjecucion : int`
+  * `- tipoProceso : String`
+  * `- fechaHoraInicio : DateTime`
+  * `- fechaHoraFin : DateTime`
+  * `- estadoSalud : String`
+  * `- totalGeneradas : int`
+  * `- totalOmitidas : int`
+  * `- totalErrores : int`
+  * `- detalleErrores : List<String>`
+* **Métodos:**
+  * `+ registrarResultado() : void` *(CU-19, CU-20 1a, CU-24, CU-29)*
+    
+### Clase `CopiaSeguridad`
+Representa los backups periódicos de datos y movimientos del sistema.
+* **Atributos:**
+  * `- idCopia : int`
+  * `- fechaCreacion : DateTime`
+  * `- rutaArchivo : String`
+  * `- tamanoBytes : long`
+  * `- verificadaCompleta : bool`
+* **Métodos:**
+  * `+ generarCopia() : bool` *(CU-24)*
+  * `+ verificarIntegridad() : bool` *(CU-24)*
+  * `+ descargar() : File` *(CU-20 1b)*
+  * `+ restaurar(superadmin : Usuario) : bool` *(CU-20 1b)*
 ---
 
 ## 3. Bloque de Clientes y Suscripciones
@@ -178,6 +217,19 @@ Contrato de facturación recurrente asociado a un cliente.
   * `+ calcularImporteMensual(mes : Date) : double` *(CU-29)*
   * `+ generarFacturaMensual(mes : Date) : Factura` *(CU-29)*
 
+### Clase `ExcepcionComercial`
+Condición especial sujeta a aprobación (descuento temporal, mes gratis, precio pactado o exención de prorrateo).
+* **Atributos:**
+  * `- idExcepcion : int`
+  * `- tipo : TipoExcepcion` *(Enum: DESCUENTO, MES_GRATIS, PRECIO_PACTADO, NO_PRORRATEAR)*
+  * `- valor : double`
+  * `- motivo : String`
+  * `- fechaFin : Date`
+  * `- vigente : bool`
+* **Métodos:**
+  * `+ solicitarAprobacion() : SolicitudAprobacion` *(CU-06 4a, CU-26)*
+  * `+ aplicarEnCuota(importeBase : double) : double` *(CU-26, CU-29)*
+
 ---
 
 ## 4. Bloque de Facturación, Presupuestos y Aprobaciones
@@ -242,6 +294,19 @@ Detalle de cada concepto facturado. Cada línea pertenece **o** a una `Factura` 
   * `- porcentajeImpuesto : double`
 * **Métodos:**
   * `+ calcularSubtotal() : double` *(CU-28)*
+
+### Clase `EnvioFactura`
+Historial de cada intento de entrega de una factura al cliente por email o WhatsApp.
+* **Atributos:**
+  * `- idEnvio : int`
+  * `- fechaHoraEnvio : DateTime`
+  * `- canalUtilizado : CanalNotificacion`
+  * `- destinatario : String`
+  * `- exitoso : bool`
+  * `- detalleErrorRebote : String`
+* **Métodos:**
+  * `+ enviar(plantilla : PlantillaMensaje) : bool` *(CU-10)*
+  * `+ reintentarEnvio() : bool` *(CU-10 4a)*
 
 ### Clase `SolicitudAprobacion`
 Bandeja de control para operaciones que superan umbrales o requieren validación de un Administrador.
