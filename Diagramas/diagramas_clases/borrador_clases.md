@@ -22,13 +22,29 @@ Representa a los empleados internos de Turbine (Usuario, Administrador, Superadm
   * `- bloqueadoHasta : DateTime` *(Bloqueo temporal tras varios intentos, CU-01)*
   * `- canalesPreferidos : List<CanalNotificacion>`
 * **Métodos:**
-  * `+ iniciarSesion(correo : String, pass : String) : bool` *(CU-01)*
+  * `+ iniciarSesion(correo : String, pass : String) : Sesion` *(CU-01)*
   * `+ cerrarSesion() : void` *(CU-01)*
   * `+ recuperarPassword() : void` *(CU-01)*
   * `+ enviarInvitacion() : bool` *(CU-02)*
   * `+ reactivarCuenta() : void` *(CU-02)*
   * `+ desactivarCuenta(motivo : String) : void` *(CU-13)*
+  * `+ invalidarSesionesActivas() : void` *(CU-13)*
   * `+ configurarCanales(canales : List<CanalNotificacion>) : void` *(CU-32)*
+
+### Clase `Sesion`
+Representa cada inicio de sesión activo de un usuario para permitir su gestión e invalidación centralizada.
+* **Atributos:**
+  * `- idSesion : String`
+  * `- token : String`
+  * `- fechaInicio : DateTime`
+  * `- ultimaActividad : DateTime`
+  * `- direccionIP : String`
+  * `- dispositivo : String`
+  * `- activa : bool`
+* **Métodos:**
+  * `+ esValida() : bool` *(CU-01)*
+  * `+ invalidar() : void` *(CU-01, CU-13)*
+  * `{static} + invalidarTodasDeUsuario(u : Usuario) : void` *(CU-13)*
 
 ### Clase `DelegacionTemporal`
 Permite delegar los clientes de un usuario a un sustituto durante una ausencia.
@@ -55,10 +71,22 @@ Avisos internos en la pantalla de trabajo diario.
   * `+ marcarComoAtendida() : void` *(CU-32)*
   * `+ enviar() : bool` *(CU-32)*
 
+### Clase `AlertaCorporativa`
+Reglas y condiciones del sistema para disparar alertas automáticas a grupos o roles de usuarios.
+* **Atributos:**
+  * `- idAlerta : int`
+  * `- nombre : String`
+  * `- condicionEvaluacion : String` *(ej. "Factura > 5000€" o "Impago > 15 días")*
+  * `- canal : CanalNotificacion`
+  * `- activa : bool`
+* **Métodos:**
+  * `+ evaluarCondicion(contexto : Object) : bool` *(CU-32 2b)*
+  * `+ dispararAlerta(destinatarios : List<Usuario>) : void` *(CU-32 2b)*
+
 ---
 
 ## 2. Bloque de Configuración, Auditoría y Datos
-*(Extraído de CU-03, CU-04, CU-20, CU-34)*
+*(Extraído de CU-03, CU-04, CU-19, CU-20, CU-24, CU-34)*
 
 ### Clase `ConfiguracionSistema`
 Parámetros globales modificables por el Superadministrador.
@@ -75,7 +103,53 @@ Parámetros globales modificables por el Superadministrador.
 * **Métodos:**
   * `+ actualizarParametros() : bool` *(CU-03)*
   * `+ validarUmbrales() : bool` *(CU-03)*
-  * `+ configurarPasarelaCobro(proveedor : String, credenciales : String) : bool` *(CU-04)*
+
+### Clase `ConexionPasarelaCobro`
+Gestión de integraciones con pasarelas de pago externas (Stripe, Revolut) mediante credenciales cifradas.
+* **Atributos:**
+  * `- idConexion : int`
+  * `- proveedor : ProveedorPasarela` *(Enum: STRIPE, REVOLUT)*
+  * `- apiKeyCifrada : String`
+  * `- webhookSecretCifrado : String`
+  * `- activa : bool`
+  * `- entorno : String` *(Enum: SANDBOX, PRODUCCION)*
+* **Métodos:**
+  * `+ guardarCredencialesCifradas(apiKey : String, secret : String) : bool` *(CU-04)*
+  * `+ probarConexion() : bool` *(CU-04)*
+  * `+ obtenerClienteAPI() : Object` *(CU-04, CU-11)*
+
+### Clase `PlantillaMensaje`
+Modelado de plantillas dinámicas por idioma y canal para comunicaciones con clientes e informes.
+* **Atributos:**
+  * `- idPlantilla : int`
+  * `- nombre : String`
+  * `- tipoEvento : TipoEvento` *(Enum: EMISION_FACTURA, RECORDATORIO_IMPAGO, NOTIFICACION_GENERAL)*
+  * `- idioma : String`
+  * `- canal : CanalNotificacion`
+  * `- asunto : String`
+  * `- cuerpo : String`
+  * `- variablesDisponibles : List<String>`
+* **Métodos:**
+  * `+ previsualizar(datosPrueba : Map<String, String>) : String` *(CU-03, CU-10)*
+  * `+ enviarPrueba(destinatarioTest : String) : bool` *(CU-03)*
+  * `+ renderizar(datos : Map<String, String>) : String` *(CU-10, CU-19)*
+
+### Clase `CalendarioLaboral`
+Definición del calendario de trabajo anual para el ajuste automático de fechas límite y recordatorios.
+* **Atributos:**
+  * `- anio : int`
+  * `- region : String`
+* **Métodos:**
+  * `+ esLaborable(fecha : Date) : bool` *(CU-19 2b)*
+  * `+ obtenerSiguienteDiaLaborable(fecha : Date) : Date` *(CU-03, CU-19 2b)*
+  * `+ agregarFestivo(festivo : DiaFestivo) : void` *(CU-03)*
+
+### Clase `DiaFestivo`
+Fecha concreta marcada como no laborable dentro del calendario.
+* **Atributos:**
+  * `- fecha : Date`
+  * `- descripcion : String`
+  * `- esNacional : bool`
 
 ### Clase `TarifaRango`
 Tabla de tramos de facturación anual para calcular automáticamente el rango y tarifa de cada cliente.
@@ -145,10 +219,11 @@ Representa los backups periódicos de datos y movimientos del sistema.
   * `+ verificarIntegridad() : bool` *(CU-24)*
   * `+ descargar() : File` *(CU-20 1b)*
   * `+ restaurar(superadmin : Usuario) : bool` *(CU-20 1b)*
+
 ---
 
 ## 3. Bloque de Clientes y Suscripciones
-*(Extraído de CU-05, CU-06, CU-08, CU-10, CU-14, CU-15, CU-17, CU-25, CU-26, CU-29, CU-35, CU-36)*
+*(Extraído de CU-05, CU-06, CU-08, CU-10, CU-14, CU-15, CU-17, CU-18, CU-25, CU-26, CU-29, CU-35, CU-36)*
 
 ### Clase `Cliente`
 Entidad principal sobre la que gira la facturación.
@@ -193,6 +268,24 @@ Persona de contacto dentro de la empresa cliente (separado para cumplir protecci
   * `+ anonimizarDatos() : void` *(CU-35)*
   * `+ eliminarDatos() : void` *(CU-35)*
 
+### Clase `ImportacionClientes`
+Gestión de cargas masivas de clientes desde archivos CSV/Excel, con mapeo e inspección de errores por fila.
+* **Atributos:**
+  * `- idImportacion : int`
+  * `- nombreArchivo : String`
+  * `- fechaEjecucion : DateTime`
+  * `- mapeoColumnas : Map<String, String>`
+  * `- totalFilas : int`
+  * `- filasExitosas : int`
+  * `- filasConError : int`
+  * `- erroresDetalle : List<String>`
+* **Métodos:**
+  * `+ cargarArchivo(archivo : File) : bool` *(CU-18)*
+  * `+ definirMapeo(mapeo : Map<String, String>) : void` *(CU-18)*
+  * `+ validarFilas() : bool` *(CU-18)*
+  * `+ procesarImportacion() : List<Cliente>` *(CU-18)*
+  * `+ obtenerResumen() : String` *(CU-18)*
+
 ### Clase `Suscripcion`
 Contrato de facturación recurrente asociado a un cliente.
 * **Atributos:**
@@ -235,6 +328,20 @@ Condición especial sujeta a aprobación (descuento temporal, mes gratis, precio
 ## 4. Bloque de Facturación, Presupuestos y Aprobaciones
 *(Extraído de CU-10, CU-11, CU-12, CU-14, CU-15, CU-16, CU-19, CU-21, CU-23, CU-27, CU-28, CU-29, CU-30)*
 
+### Clase `ProductoCatalogo`
+Catálogo maestro de productos y servicios reutilizables para confeccionar presupuestos y facturas.
+* **Atributos:**
+  * `- idProducto : int`
+  * `- codigoSKU : String`
+  * `- nombre : String`
+  * `- descripcion : String`
+  * `- precioUnitarioBase : double`
+  * `- porcentajeImpuestoDefecto : double`
+  * `- activo : bool`
+* **Métodos:**
+  * `+ crearLineaFactura(cantidad : int, descuento : double) : LineaFactura` *(CU-28)*
+  * `+ actualizarPrecio(nuevoPrecio : double) : void` *(CU-28)*
+
 ### Clase `Presupuesto`
 Propuesta comercial previa que puede convertirse en borrador de factura.
 * **Atributos:**
@@ -270,6 +377,7 @@ Documento contable (puntual, recurrente o rectificativa).
   * `- rutaPdf : String`
 * **Métodos:**
   * `+ calcularTotales() : void` *(CU-28)*
+  * `+ agregarLineaDesdeCatalogo(p : ProductoCatalogo, cantidad : int, dto : double) : void` *(CU-28)*
   * `+ modificarBorrador() : bool` *(CU-16)*
   * `+ eliminarBorrador() : bool` *(CU-14, solo si nunca se emitió)*
   * `+ emitir() : bool` *(CU-06, CU-28, CU-29)*
@@ -354,7 +462,7 @@ Avisos amistosos enviados automáticamente cuando una factura está próxima a v
   * `- canal : CanalNotificacion`
   * `- enviadoConExito : bool`
 * **Métodos:**
-  * `+ enviarRecordatorio() : bool` *(CU-19)*
+  * `+ enviarRecordatorio(plantilla : PlantillaMensaje) : bool` *(CU-19)*
 
 ### Clase `Incidencia`
 Ticket interno o disputa abierta sobre un cliente o una factura (detiene los recordatorios).
@@ -376,32 +484,94 @@ Ticket interno o disputa abierta sobre un cliente o una factura (detiene los rec
 
 ---
 
-## 6. Resumen de Relaciones Principales (UML)
+## 6. Bloque de Informes, Paquetes y Operaciones Masivas
+*(Extraído de CU-09, CU-33)*
+
+### Clase `Informe`
+Generación y exportación de reportes analíticos de facturación, impagos o IVA.
+* **Atributos:**
+  * `- idInforme : int`
+  * `- tipoInforme : TipoInforme` *(Enum: VENTAS, IMPAGOS, IVA, FACTURACION)*
+  * `- fechaDesde : Date`
+  * `- fechaHasta : Date`
+  * `- formatoExportacion : FormatoArchivo` *(Enum: CSV, PDF)*
+* **Métodos:**
+  * `+ generarReporte() : File` *(CU-09)*
+  * `+ exportarCSV() : File` *(CU-09)*
+  * `+ exportarPDF() : File` *(CU-09)*
+
+### Clase `PaqueteGestoria`
+Empaquetado periódico (mensual o trimestral) de facturas y documentos contables en un archivo comprimido listo para gestoría.
+* **Atributos:**
+  * `- idPaquete : int`
+  * `- periodo : String` *(ej. "2026-Q1")*
+  * `- tipoPeriodo : TipoPeriodo` *(Enum: MENSUAL, TRIMESTRAL)*
+  * `- fechaGeneracion : DateTime`
+  * `- rutaZip : String`
+  * `- totalFacturasIncluidas : int`
+* **Métodos:**
+  * `+ compilarPaquete(p : PeriodoContable) : File` *(CU-09, CU-33)*
+  * `+ descargarZip() : File` *(CU-09)*
+
+### Clase `AccionMasiva`
+Orquestador y registro de ejecución para tareas ejecutadas en bloque sobre múltiples elementos.
+* **Atributos:**
+  * `- idAccionMasiva : int`
+  * `- tipoAccion : TipoAccionMasiva` *(Enum: EMISION_FACTURAS, ENVIAR_NOTIFICACIONES, CAMBIO_ESTADO, DESCARGA_GESTORIA)*
+  * `- fechaEjecucion : DateTime`
+  * `- totalProcesados : int`
+  * `- totalExitosos : int`
+  * `- totalFallidos : int`
+  * `- resultadosPorElemento : Map<String, bool>`
+  * `- erroresDetalle : Map<String, String>`
+* **Métodos:**
+  * `+ ejecutar(elementos : List<Object>) : void` *(CU-33)*
+  * `+ obtenerInformeResultados() : String` *(CU-33)*
+
+---
+
+## 7. Resumen de Relaciones Principales (UML)
 1. **Composición (`*--`, rombo negro - ciclo de vida dependiente):**
+   * `Usuario "1" *-- "0..*" Sesion : -sesionesActivas` *(Al desactivar o invalidar las sesiones del usuario, CU-13).*
+   * `CalendarioLaboral "1" *-- "0..*" DiaFestivo : -festivos` *(El calendario contiene los días festivos).*
    * `Factura "0..1" *-- "1..*" LineaFactura` *(Si se borra un borrador de factura, desaparecen sus líneas).*
    * `Presupuesto "0..1" *-- "1..*" LineaFactura` *(`{xor}` con la anterior: cada línea pertenece a uno solo de los dos).*
    * `Cliente "1" *-- "1..*" ContactoCliente`
+
 2. **Agregación / Asociación (`o--` / `-->` - ciclo de vida independiente):**
+   * `ConfiguracionSistema "1" --> "0..*" ConexionPasarelaCobro : -pasarelasConfiguradas` *(CU-04).*
+   * `ConfiguracionSistema "1" --> "0..*" PlantillaMensaje : -plantillasNotificacion` *(CU-03).*
+   * `ConfiguracionSistema "1" --> "1" CalendarioLaboral : -calendarioVigente` *(CU-03).*
+   * `AlertaCorporativa "0..*" --> "0..*" Usuario : -destinatarios` *(CU-32 2b).*
    * `Usuario "0..1" --> "0..*" Cliente : -clientesAsignados` *(Un empleado gestiona varios clientes; un cliente puede quedar sin responsable, CU-08/CU-13).*
    * `Usuario "0..*" --> "0..*" Cliente : -favoritos` *(CU-22).*
    * `Usuario "1" --> "0..*" Notificacion : -notificaciones` *(CU-32).*
    * `DelegacionTemporal "0..*" --> "1" Usuario : -titular`
    * `DelegacionTemporal "0..*" --> "1" Usuario : -sustituto`
    * `DelegacionTemporal "0..*" --> "0..*" Cliente : -clientesDelegados` *(Si está vacía, se delegan todos, CU-07).*
+   * `ImportacionClientes "0..*" --> "1" Usuario : -ejecutadoPor` *(CU-18).*
    * `Cliente "1" --> "0..*" Suscripcion : -suscripciones`
    * `Cliente "1" --> "0..*" Factura : -facturas`
    * `Cliente "1" --> "0..*" Presupuesto : -presupuestos` *(CU-30).*
+   * `LineaFactura "0..*" --> "0..1" ProductoCatalogo : -productoOrigen` *(CU-28).*
    * `Suscripcion "0..1" --> "0..*" Factura : -facturasGeneradas` *(CU-06, CU-29).*
    * `Presupuesto "0..1" --> "0..1" Factura : -facturaGenerada` *(CU-30).*
    * `Factura "0..1" --> "0..*" Cobro : -cobros` *(Un cobro sin coincidencia clara queda sin factura hasta conciliarse, CU-11/CU-12).*
    * `Factura "1" --> "0..*" RecordatorioImpago : -recordatorios`
    * `Factura "0..1" <-- "0..*" Factura : -facturaOriginal` *(Asociación reflexiva: una original puede tener varias rectificativas, CU-21).*
+   * `EnvioFactura "0..*" --> "1" PlantillaMensaje : -plantillaUsada` *(CU-10).*
+   * `RecordatorioImpago "0..*" --> "1" PlantillaMensaje : -plantillaUsada` *(CU-19).*
    * `SolicitudAprobacion "0..*" --> "1" Usuario : -solicitante`
    * `SolicitudAprobacion "0..*" --> "0..1" Usuario : -aprobador` *(CU-27).*
    * `Incidencia "0..*" --> "0..1" Cliente` y `Incidencia "0..*" --> "0..1" Factura` *(`{xor}`: sobre un cliente o sobre una factura, CU-31).*
    * `Incidencia "0..*" --> "1" Usuario : -responsable` *(CU-31).*
    * `RegistroAuditoria "0..*" --> "0..1" Usuario : -autor` *(0..1 porque los procesos del Planificador no tienen usuario).*
+   * `PaqueteGestoria "0..*" --> "1" PeriodoContable : -periodoAsociado` *(CU-09, CU-33).*
+   * `AccionMasiva "0..*" --> "1" Usuario : -ejecutadoPor` *(CU-33).*
+
 3. **Dependencia (`..>`, línea discontinua - relación de uso):**
    * `Factura ..> PeriodoContable : <<uses>>` *(Comprueba si el periodo está abierto antes de editar, CU-16/CU-34).*
    * `Factura ..> ConfiguracionSistema : <<uses>>` *(Lee los impuestos y series vigentes al emitirse, CU-03/CU-28).*
+   * `RecordatorioImpago ..> CalendarioLaboral : <<uses>>` *(Salta festivos para posponer al siguiente día hábil, CU-19 2b).*
    * `SolicitudAprobacion ..> ConfiguracionSistema : <<uses>>` *(Lee los umbrales de aprobación, CU-27).*
+   * `PaqueteGestoria ..> Factura : <<uses>>` *(Recopila e incluye los PDF/CSV de facturas del periodo).*
