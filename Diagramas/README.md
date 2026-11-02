@@ -12,6 +12,10 @@ En este directorio se recopilan los diagramas que se han hecho en clase a lo lar
 
 En este directorio se recoplila el diagrama completo de los casos de uso, además de sus subdiagramas para una correcta visualización.
 
+### 3. Diagrama entidad-relación
+
+En el directorio `diagrama_entidad_relacion` está el diagrama físico Entidad-Relación de la base de datos, derivado del diagrama de clases. En `documentacion_er.md` se explican la notación y las decisiones de diseño.
+
 ---
 
 ## División del trabajo diagrama UML

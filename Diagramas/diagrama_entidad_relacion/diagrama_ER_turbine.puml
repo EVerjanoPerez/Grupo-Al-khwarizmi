@@ -1,0 +1,381 @@
+@startuml diagrama_ER_turbine
+' Diagrama físico Entidad-Relación de Turbine (notación IE, patas de gallo)
+' Derivado de Diagramas/diagramas_clases/borrador_clases.md
+' Qué clase va en qué tabla, los valores de los ENUM y las restricciones están en documentacion_er.md
+
+hide circle
+skinparam shadowing false
+
+legend top left
+  * = NOT NULL · PK clave primaria · FK clave foránea · UK valor único
+endlegend
+
+' ---------- Usuarios y trabajo diario ----------
+entity USUARIO {
+  * id_usuario : INT <<PK>>
+  --
+  * nombre : VARCHAR
+  * correo_corporativo : VARCHAR <<UK>>
+  * password_hash : VARCHAR
+  * rol : ENUM
+  * puede_gestionar_usuarios : BOOLEAN
+  * activo : BOOLEAN
+  * intentos_fallidos : INT
+  bloqueado_hasta : DATETIME
+  * canal_preferido : ENUM
+}
+
+entity DELEGACION_TEMPORAL {
+  * id_delegacion : INT <<PK>>
+  --
+  * id_usuario_titular : INT <<FK>>
+  * id_usuario_sustituto : INT <<FK>>
+  * fecha_inicio : DATE
+  * fecha_fin : DATE
+}
+
+entity NOTIFICACION {
+  * id_notificacion : INT <<PK>>
+  --
+  * id_usuario : INT <<FK>>
+  * mensaje : VARCHAR
+  * canal : ENUM
+  * estado : ENUM
+  * fecha_creacion : DATETIME
+}
+
+entity COMENTARIO {
+  * id_comentario : INT <<PK>>
+  --
+  * id_usuario_autor : INT <<FK>>
+  id_cliente : INT <<FK>>
+  id_factura : INT <<FK>>
+  id_incidencia : INT <<FK>>
+  * texto : TEXT
+  * restringido_solo_admin : BOOLEAN
+  * fecha_creacion : DATETIME
+}
+
+entity DOCUMENTO_ADJUNTO {
+  * id_documento : INT <<PK>>
+  --
+  id_cliente : INT <<FK>>
+  id_factura : INT <<FK>>
+  id_incidencia : INT <<FK>>
+  * nombre_archivo : VARCHAR
+  * ruta_archivo : VARCHAR
+  * fecha_subida : DATETIME
+}
+
+' ---------- Configuración y control ----------
+entity CONFIGURACION_SISTEMA {
+  * id_configuracion : INT <<PK>>
+  --
+  * plazo_pago_defecto : INT
+  * dia_primer_recordatorio : INT
+  * dia_segundo_recordatorio : INT
+  * dias_entre_recordatorios : INT
+  * impuesto_defecto : DECIMAL
+  * moneda_base : VARCHAR
+  * umbral_aprobacion_inferior : DECIMAL
+  * umbral_aprobacion_superior : DECIMAL
+  * serie_ordinaria : VARCHAR
+  * serie_rectificativa : VARCHAR
+  * periodicidad_copias : INT
+  * datos_emisor : TEXT
+  * datos_soporte : TEXT
+}
+
+entity PLANTILLA_MENSAJE {
+  * id_plantilla : INT <<PK>>
+  --
+  * tipo_evento : ENUM
+  * idioma : VARCHAR
+  * canal : ENUM
+  asunto : VARCHAR
+  * cuerpo : TEXT
+}
+
+entity FESTIVO {
+  * fecha : DATE <<PK>>
+  --
+  * descripcion : VARCHAR
+}
+
+entity TARIFA_RANGO {
+  * id_tarifa_rango : INT <<PK>>
+  --
+  * nombre : VARCHAR <<UK>>
+  * facturacion_minima : DECIMAL
+  facturacion_maxima : DECIMAL
+  * cuota_mensual : DECIMAL
+}
+
+entity PERIODO_CONTABLE {
+  * id_periodo : VARCHAR <<PK>>
+  --
+  * tipo : ENUM
+  * fecha_inicio : DATE
+  * fecha_fin : DATE
+  * cerrado : BOOLEAN
+  motivo_reapertura : VARCHAR
+}
+
+entity REGISTRO_AUDITORIA {
+  * id_registro : INT <<PK>>
+  --
+  id_usuario : INT <<FK>>
+  * fecha_hora : DATETIME
+  * tipo_operacion : VARCHAR
+  * entidad_afectada : VARCHAR
+  valor_anterior : TEXT
+  valor_nuevo : TEXT
+}
+
+' ---------- Clientes y suscripciones ----------
+entity CLIENTE {
+  * id_cliente : INT <<PK>>
+  --
+  id_usuario_responsable : INT <<FK>>
+  * id_tarifa_rango : INT <<FK>>
+  * razon_social : VARCHAR
+  * nif : VARCHAR
+  * direccion_fiscal : VARCHAR
+  * pais : VARCHAR
+  * sector : VARCHAR
+  * estado : ENUM
+  fecha_baja : DATE
+  * eliminado : BOOLEAN
+}
+
+entity CONTACTO_CLIENTE {
+  * id_contacto : INT <<PK>>
+  --
+  * id_cliente : INT <<FK>>
+  * nombre : VARCHAR
+  email : VARCHAR
+  telefono : VARCHAR
+  * funcion : VARCHAR
+  * idioma : VARCHAR
+  * consiente_whatsapp : BOOLEAN
+}
+
+entity CLIENTE_ETIQUETA {
+  * id_cliente : INT <<PK>> <<FK>>
+  * etiqueta : VARCHAR <<PK>>
+}
+
+entity FAVORITO {
+  * id_usuario : INT <<PK>> <<FK>>
+  * id_cliente : INT <<PK>> <<FK>>
+}
+
+entity REVISION_RANGO {
+  * id_revision : INT <<PK>>
+  --
+  * id_cliente : INT <<FK>>
+  * id_tarifa_rango_nueva : INT <<FK>>
+  * facturacion_anual : DECIMAL
+  * fuente_dato : VARCHAR
+  * fecha_revision : DATE
+  * fecha_efecto : DATE
+  motivo_correccion : VARCHAR
+}
+
+entity SUSCRIPCION {
+  * id_suscripcion : INT <<PK>>
+  --
+  * id_cliente : INT <<FK>>
+  * plan : VARCHAR
+  * cuota_mensual : DECIMAL
+  * dia_vencimiento : INT
+  * fecha_inicio : DATE
+  fecha_fin : DATE
+  * estado : ENUM
+  motivo_pausa : VARCHAR
+  fecha_inicio_pausa : DATE
+  fecha_reactivacion_prevista : DATE
+}
+
+entity EXCEPCION_COMERCIAL {
+  * id_excepcion : INT <<PK>>
+  --
+  * id_suscripcion : INT <<FK>>
+  * tipo : ENUM
+  valor : DECIMAL
+  * motivo : VARCHAR
+  * fecha_inicio : DATE
+  * fecha_fin : DATE
+}
+
+' ---------- Facturación ----------
+entity PRODUCTO_CATALOGO {
+  * id_producto : INT <<PK>>
+  --
+  * nombre : VARCHAR
+  * precio_unitario : DECIMAL
+  * porcentaje_impuesto : DECIMAL
+  * activo : BOOLEAN
+}
+
+entity PRESUPUESTO {
+  * id_presupuesto : INT <<PK>>
+  --
+  * id_cliente : INT <<FK>>
+  id_factura : INT <<FK>>
+  * fecha_creacion : DATE
+  * estado : ENUM
+  ruta_evidencia : VARCHAR
+}
+
+entity FACTURA {
+  * id_factura : INT <<PK>>
+  --
+  * id_cliente : INT <<FK>>
+  id_suscripcion : INT <<FK>>
+  id_factura_original : INT <<FK>>
+  serie : VARCHAR
+  numero : INT
+  * tipo : ENUM
+  * estado : ENUM
+  fecha_emision : DATE
+  fecha_vencimiento : DATE
+  mes_facturado : VARCHAR
+  * moneda : VARCHAR
+  centro_coste : VARCHAR
+  * base_imponible : DECIMAL
+  * total_impuestos : DECIMAL
+  * importe_total : DECIMAL
+  ruta_pdf : VARCHAR
+}
+
+entity LINEA_FACTURA {
+  * id_linea : INT <<PK>>
+  --
+  id_factura : INT <<FK>>
+  id_presupuesto : INT <<FK>>
+  id_producto : INT <<FK>>
+  * concepto : VARCHAR
+  * cantidad : INT
+  * precio_unitario : DECIMAL
+  * porcentaje_descuento : DECIMAL
+  * porcentaje_impuesto : DECIMAL
+}
+
+entity ENVIO {
+  * id_envio : INT <<PK>>
+  --
+  * id_factura : INT <<FK>>
+  * tipo : ENUM
+  * canal : ENUM
+  * destinatario : VARCHAR
+  * fecha_envio : DATETIME
+  * exitoso : BOOLEAN
+  detalle_error : VARCHAR
+}
+
+entity SOLICITUD_APROBACION {
+  * id_solicitud : INT <<PK>>
+  --
+  * id_usuario_solicitante : INT <<FK>>
+  id_usuario_aprobador : INT <<FK>>
+  id_factura : INT <<FK>>
+  id_suscripcion : INT <<FK>>
+  id_excepcion : INT <<FK>>
+  id_revision : INT <<FK>>
+  * tipo : ENUM
+  importe : DECIMAL
+  * motivo : VARCHAR
+  comentario_resolucion : VARCHAR
+  * estado : ENUM
+  * fecha_solicitud : DATETIME
+  fecha_resolucion : DATETIME
+}
+
+' ---------- Cobros, incidencias e informes ----------
+entity COBRO {
+  * id_cobro : INT <<PK>>
+  --
+  id_factura : INT <<FK>>
+  referencia_externa : VARCHAR <<UK>>
+  * origen : ENUM
+  * fecha_cobro : DATE
+  * importe : DECIMAL
+  ruta_justificante : VARCHAR
+}
+
+entity INCIDENCIA {
+  * id_incidencia : INT <<PK>>
+  --
+  * id_usuario_responsable : INT <<FK>>
+  id_cliente : INT <<FK>>
+  id_factura : INT <<FK>>
+  * descripcion : TEXT
+  * prioridad : ENUM
+  * es_disputa : BOOLEAN
+  * fecha_apertura : DATETIME
+  fecha_revision : DATE
+  resolucion : TEXT
+  fecha_cierre : DATETIME
+}
+
+entity INFORME {
+  * id_informe : INT <<PK>>
+  --
+  * id_usuario : INT <<FK>>
+  id_periodo : VARCHAR <<FK>>
+  * tipo : ENUM
+  * formato : ENUM
+  filtros : JSON
+  * ruta_archivo : VARCHAR
+  * fecha_generacion : DATETIME
+}
+
+' ---------- Relaciones (izquierda = tabla referenciada, derecha = tabla con la FK) ----------
+USUARIO ||--o{ DELEGACION_TEMPORAL : titular
+USUARIO ||--o{ DELEGACION_TEMPORAL : sustituto
+USUARIO ||--o{ NOTIFICACION
+USUARIO ||--o{ COMENTARIO
+CLIENTE |o--o{ COMENTARIO
+FACTURA |o--o{ COMENTARIO
+INCIDENCIA |o--o{ COMENTARIO
+CLIENTE |o--o{ DOCUMENTO_ADJUNTO
+FACTURA |o--o{ DOCUMENTO_ADJUNTO
+INCIDENCIA |o--o{ DOCUMENTO_ADJUNTO
+USUARIO |o--o{ REGISTRO_AUDITORIA
+
+USUARIO |o--o{ CLIENTE
+TARIFA_RANGO ||--o{ CLIENTE
+CLIENTE ||--|{ CONTACTO_CLIENTE
+CLIENTE ||--o{ CLIENTE_ETIQUETA
+USUARIO ||--o{ FAVORITO
+CLIENTE ||--o{ FAVORITO
+CLIENTE ||--o{ REVISION_RANGO
+TARIFA_RANGO ||--o{ REVISION_RANGO
+CLIENTE ||--o{ SUSCRIPCION
+SUSCRIPCION ||--o{ EXCEPCION_COMERCIAL
+
+CLIENTE ||--o{ PRESUPUESTO
+FACTURA |o--o| PRESUPUESTO
+CLIENTE ||--o{ FACTURA
+SUSCRIPCION |o--o{ FACTURA
+FACTURA |o--o{ FACTURA : rectifica
+FACTURA |o--|{ LINEA_FACTURA
+PRESUPUESTO |o--|{ LINEA_FACTURA
+PRODUCTO_CATALOGO |o--o{ LINEA_FACTURA
+FACTURA ||--o{ ENVIO
+USUARIO ||--o{ SOLICITUD_APROBACION : solicita
+USUARIO |o--o{ SOLICITUD_APROBACION : aprueba
+FACTURA |o--o{ SOLICITUD_APROBACION
+SUSCRIPCION |o--o{ SOLICITUD_APROBACION
+EXCEPCION_COMERCIAL |o--o| SOLICITUD_APROBACION
+REVISION_RANGO |o--o| SOLICITUD_APROBACION
+
+FACTURA |o--o{ COBRO
+USUARIO ||--o{ INCIDENCIA
+CLIENTE |o--o{ INCIDENCIA
+FACTURA |o--o{ INCIDENCIA
+USUARIO ||--o{ INFORME
+PERIODO_CONTABLE |o--o{ INFORME
+
+@enduml
