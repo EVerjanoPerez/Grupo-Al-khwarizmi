@@ -82,7 +82,29 @@ Reglas y condiciones del sistema para disparar alertas automáticas a grupos o r
 * **Métodos:**
   * `+ evaluarCondicion(contexto : Object) : bool` *(CU-32 2b)*
   * `+ dispararAlerta(destinatarios : List<Usuario>) : void` *(CU-32 2b)*
+### Clase `Comentario`
+Notas internas con soporte de menciones y visibilidad restringida en clientes, facturas o incidencias.
+- **Atributos:**
+  * `- idComentario : int`
+  * `- texto : String`
+  * `- fechaCreacion : DateTime`
+  * `- restringidoSoloAdmin : bool`
+- **Métodos:**
+  * `+ publicar() : void` *(CU-31, CU-32)*
+  * `+ notificarMencionados(mencionados : List<Usuario>) : void` *(CU-32)*
 
+### Clase `DocumentoAdjunto`
+Archivo adjunto (sustituye a los String de justificante de cobro, evidencia de presupuesto, PDF o adjuntos generales).
+- **Atributos:**
+  * `- idDocumento : int`
+  * `- nombreArchivo : String`
+  * `- formato : FormatoArchivo` *(Enum: PDF, CSV, PNG, JPG, ZIP)*
+  * `- tamanoBytes : long`
+  * `- rutaAlmacenamiento : String`
+  * `- fechaSubida : DateTime`
+- **Métodos:**
+  * `+ validarFormatoYTamano() : bool` *(CU-32)*
+  * `+ descargar() : File` *(CU-12, CU-23, CU-30, CU-32)*
 ---
 
 ## 2. Bloque de Configuración, Auditoría y Datos
@@ -161,6 +183,16 @@ Tabla de tramos de facturación anual para calcular automáticamente el rango y 
   * `- cuotaBaseAsociada : double`
 * **Métodos:**
   * `+ calcularRangoCorrespondiente(facturacionAnual : double) : TarifaRango` *(CU-03, CU-05)*
+
+### Clase `SerieFacturacion`
+Controla la numeración correlativa obligatoria para facturas ordinarias y rectificativas.
+- **Atributos:**
+  * `- codigoSerie : String`
+  * `- tipoSerie : TipoSerie` *(Enum: ORDINARIA, RECTIFICATIVA)*
+  * `- anio : int`
+  * `- ultimoNumeroAsignado : int`
+- **Métodos:**
+  * `+ siguienteNumeroCorrelativo() : String` *(CU-03, CU-21, CU-28)*
 
 ### Clase `RegistroAuditoria`
 Trazabilidad inmutable de todas las operaciones críticas del sistema (no tiene métodos de modificación).
@@ -252,6 +284,19 @@ Entidad principal sobre la que gira la facturación.
   * `+ calcularDeudaTotal() : double` *(CU-15)*
   * `+ darDeBaja(fechaEfectiva : Date) : void` *(CU-17)*
   * `+ borradoLogico(motivo : String) : void` *(CU-14)*
+
+### Clase `RevisionRango`
+Historial de la facturación anual del cliente con su fuente y el rango anterior y nuevo.
+- **Atributos:**
+  * `- idRevision : int`
+  * `- fechaRevision : Date`
+  * `- facturacionAnualRegistrada : double`
+  * `- fuenteDato : String`
+  * `- fechaEfecto : Date`
+  * `- motivoCorreccion : String`
+- **Métodos:**
+  * `+ solicitarAprobacionCambio() : SolicitudAprobacion` *(CU-05, CU-27)*
+  * `+ aplicarCambioRango() : void` *(CU-05)*
 
 ### Clase `ContactoCliente`
 Persona de contacto dentro de la empresa cliente (separado para cumplir protección de datos CU-35).
@@ -542,36 +587,54 @@ Orquestador y registro de ejecución para tareas ejecutadas en bloque sobre múl
    * `ConfiguracionSistema "1" --> "0..*" ConexionPasarelaCobro : -pasarelasConfiguradas` *(CU-04).*
    * `ConfiguracionSistema "1" --> "0..*" PlantillaMensaje : -plantillasNotificacion` *(CU-03).*
    * `ConfiguracionSistema "1" --> "1" CalendarioLaboral : -calendarioVigente` *(CU-03).*
+   * `ConfiguracionSistema "1" --> "1..*" TarifaRango : -tablaTarifas` *(CU-03, CU-05).*
+   * `ConfiguracionSistema "1" --> "1..*" SerieFacturacion : -seriesConfiguradas` *(CU-03).*
    * `AlertaCorporativa "0..*" --> "0..*" Usuario : -destinatarios` *(CU-32 2b).*
    * `Usuario "0..1" --> "0..*" Cliente : -clientesAsignados` *(Un empleado gestiona varios clientes; un cliente puede quedar sin responsable, CU-08/CU-13).*
    * `Usuario "0..*" --> "0..*" Cliente : -favoritos` *(CU-22).*
    * `Usuario "1" --> "0..*" Notificacion : -notificaciones` *(CU-32).*
-   * `DelegacionTemporal "0..*" --> "1" Usuario : -titular`
-   * `DelegacionTemporal "0..*" --> "1" Usuario : -sustituto`
+   * `DelegacionTemporal "0..*" --> "1" Usuario : -titular` *(CU-07).*
+   * `DelegacionTemporal "0..*" --> "1" Usuario : -sustituto` *(CU-07).*
    * `DelegacionTemporal "0..*" --> "0..*" Cliente : -clientesDelegados` *(Si está vacía, se delegan todos, CU-07).*
+   * `Comentario "0..*" --> "1" Usuario : -autor` y `Comentario "0..*" --> "0..*" Usuario : -mencionados` *(CU-32).*
+   * `Comentario "0..*" --> "0..1" Cliente`, `--> "0..1" Factura` y `--> "0..1" Incidencia` *(`{xor}`: sobre un cliente, una factura o una incidencia, CU-31/CU-32).*
+   * `DocumentoAdjunto "0..*" --> "1" Usuario : -subidoPor` *(CU-32).*
+   * `DocumentoAdjunto "0..*" <-- "0..1" Cliente`, `<-- "0..1" Factura` y `<-- "0..1" Incidencia` *(Adjuntos generales asociados al elemento, CU-31/CU-32).*
+   * `RegistroAuditoria "0..*" --> "0..1" Usuario : -autor` *(0..1 porque los procesos del Planificador no tienen usuario, CU-20).*
+   * `CopiaSeguridad "0..*" --> "0..1" EjecucionProceso : -ejecucionOrigen` *(CU-20 1a, CU-24).*
+   * `CopiaSeguridad "0..*" --> "0..1" Usuario : -restauradaPor` *(CU-20 1b).*
+   * `Cliente "0..*" --> "1" TarifaRango : -rangoActual` *(CU-05, CU-36).*
+   * `Cliente "1" --> "0..*" RevisionRango : -historialRevisiones` *(CU-05).*
+   * `RevisionRango "0..*" --> "1" TarifaRango : -rangoAnterior` y `RevisionRango "0..*" --> "1" TarifaRango : -rangoNuevo` *(CU-05).*
    * `ImportacionClientes "0..*" --> "1" Usuario : -ejecutadoPor` *(CU-18).*
-   * `Cliente "1" --> "0..*" Suscripcion : -suscripciones`
-   * `Cliente "1" --> "0..*" Factura : -facturas`
+   * `Cliente "1" --> "0..*" Suscripcion : -suscripciones` *(CU-06).*
+   * `Suscripcion "1" --> "0..*" ExcepcionComercial : -excepciones` *(CU-06 4a, CU-26, CU-29).*
    * `Cliente "1" --> "0..*" Presupuesto : -presupuestos` *(CU-30).*
-   * `LineaFactura "0..*" --> "0..1" ProductoCatalogo : -productoOrigen` *(CU-28).*
-   * `Suscripcion "0..1" --> "0..*" Factura : -facturasGeneradas` *(CU-06, CU-29).*
+   * `Cliente "1" --> "0..*" Factura : -facturas` *(CU-28, CU-29).*
+   * `Presupuesto "1" --> "0..1" DocumentoAdjunto : -evidenciaAceptacion` *(Sustituye al String de evidencia, CU-30).*
    * `Presupuesto "0..1" --> "0..1" Factura : -facturaGenerada` *(CU-30).*
-   * `Factura "0..1" --> "0..*" Cobro : -cobros` *(Un cobro sin coincidencia clara queda sin factura hasta conciliarse, CU-11/CU-12).*
-   * `Factura "1" --> "0..*" RecordatorioImpago : -recordatorios`
+   * `Suscripcion "0..1" --> "0..*" Factura : -facturasGeneradas` *(CU-06, CU-29).*
+   * `LineaFactura "0..*" --> "0..1" ProductoCatalogo : -productoOrigen` *(CU-28).*
+   * `Factura "0..*" --> "0..1" SerieFacturacion : -serie` *(0..1 porque en borrador aún no tiene serie asignada, CU-21/CU-28).*
+   * `Factura "1" --> "0..1" DocumentoAdjunto : -pdfEmitido` *(Sustituye al String rutaPdf, CU-23/CU-28).*
    * `Factura "0..1" <-- "0..*" Factura : -facturaOriginal` *(Asociación reflexiva: una original puede tener varias rectificativas, CU-21).*
+   * `Factura "1" --> "0..*" EnvioFactura : -historialEnvios` *(CU-09, CU-10).*
    * `EnvioFactura "0..*" --> "1" PlantillaMensaje : -plantillaUsada` *(CU-10).*
-   * `RecordatorioImpago "0..*" --> "1" PlantillaMensaje : -plantillaUsada` *(CU-19).*
-   * `SolicitudAprobacion "0..*" --> "1" Usuario : -solicitante`
+   * `SolicitudAprobacion "0..*" --> "1" Usuario : -solicitante` *(CU-27).*
    * `SolicitudAprobacion "0..*" --> "0..1" Usuario : -aprobador` *(CU-27).*
+   * `SolicitudAprobacion "0..1" <-- "0..1" RevisionRango`, `<-- "0..1" ExcepcionComercial` y `<-- "0..1" Factura` *(Operación sensible sujeta a aprobación, CU-05/CU-21/CU-26/CU-27/CU-28).*
+   * `Factura "0..1" --> "0..*" Cobro : -cobros` *(Un cobro sin coincidencia clara queda sin factura hasta conciliarse, CU-11/CU-12).*
+   * `Cobro "1" --> "0..1" DocumentoAdjunto : -justificante` *(Sustituye al String justificanteAdjunto, CU-12).*
+   * `Factura "1" --> "0..*" RecordatorioImpago : -recordatorios` *(CU-19).*
+   * `RecordatorioImpago "0..*" --> "1" PlantillaMensaje : -plantillaUsada` *(CU-19).*
    * `Incidencia "0..*" --> "0..1" Cliente` y `Incidencia "0..*" --> "0..1" Factura` *(`{xor}`: sobre un cliente o sobre una factura, CU-31).*
    * `Incidencia "0..*" --> "1" Usuario : -responsable` *(CU-31).*
-   * `RegistroAuditoria "0..*" --> "0..1" Usuario : -autor` *(0..1 porque los procesos del Planificador no tienen usuario).*
-   * `PaqueteGestoria "0..*" --> "1" PeriodoContable : -periodoAsociado` *(CU-09, CU-33).*
+   * `Informe "0..*" --> "1" Usuario : -generadoPor` *(CU-09).*
+   * `PaqueteGestoria "0..*" --> "1" PeriodoContable : -periodoAsociado` *(CU-09 1b, CU-33).*
+   * `PaqueteGestoria "0..*" --> "1" Usuario : -generadoPor` *(CU-09 1b).*
    * `AccionMasiva "0..*" --> "1" Usuario : -ejecutadoPor` *(CU-33).*
 
 3. **Dependencia (`..>`, línea discontinua - relación de uso):**
    * `Factura ..> PeriodoContable : <<uses>>` *(Comprueba si el periodo está abierto antes de editar, CU-16/CU-34).*
    * `Factura ..> ConfiguracionSistema : <<uses>>` *(Lee los impuestos y series vigentes al emitirse, CU-03/CU-28).*
    * `RecordatorioImpago ..> CalendarioLaboral : <<uses>>` *(Salta festivos para posponer al siguiente día hábil, CU-19 2b).*
-   * `SolicitudAprobacion ..> ConfiguracionSistema : <<uses>>` *(Lee los umbrales de aprobación, CU-27).*
-   * `PaqueteGestoria ..> Factura : <<uses>>` *(Recopila e incluye los PDF/CSV de facturas del periodo).*
