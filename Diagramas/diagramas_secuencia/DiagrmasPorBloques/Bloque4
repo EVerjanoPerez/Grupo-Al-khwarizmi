@@ -1,0 +1,88 @@
+@startuml
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+skinparam MaxMessageWidth 250
+
+title Bloque 4: Cobros, Impagos e Incidencias (Turbine)
+
+actor "Usuario" as UsuarioActor
+actor "Planificador (Tiempo)" as Cron
+actor "Pasarela de Cobros\n(Stripe/Revolut)" as Pasarela
+actor "Servicio Mensajería\n(Email/WhatsApp)" as Mensajeria
+
+participant ":Controlador / Interfaz" as UI
+participant ":ConfiguracionSistema" as Config
+participant ":CalendarioLaboral" as Calendario
+participant ":ConexionPasarela" as PasarelaConf
+participant ":PlantillaMensaje" as Plantilla
+participant ":Factura" as Factura
+participant ":Cobro" as Cobro
+participant ":RecordatorioImpago" as Recordatorio
+participant ":Incidencia" as Incidencia
+participant ":EnvioFactura" as Envio
+participant ":DocumentoAdjunto" as Documento
+participant ":Comentario" as Comentario
+
+alt Cobro Automático Notificado por Pasarela (CU-11)
+    Pasarela -> UI: webhookNotificaciónPago(referencia, importe)
+    activate UI
+    UI -> PasarelaConf: obtenerClienteAPI()
+    create Cobro
+    UI -> Cobro: create(referenciaExterna, origen=STRIPE/REVOLUT, importe)
+    UI -> Cobro: procesarCobroAutomatico()
+    Cobro -> Factura: marcarComoPagada(Cobro)
+    UI --> Pasarela: HTTP 200 OK
+    deactivate UI
+
+else Registro Manual de Pago (CU-12)
+    UsuarioActor -> UI: registrarPagoManual(idFactura, importe, justificanteDoc)
+    activate UI
+    create Documento
+    UI -> Documento: create(justificante)
+    create Cobro
+    UI -> Cobro: create(origen=MANUAL, importe, justificante)
+    UI -> Cobro: conciliarManualmente(Factura, Documento)
+    Cobro -> Factura: marcarComoPagada(Cobro)
+    
+    UsuarioActor -> UI: deshacerConciliacion(idCobro) (CU-12)
+    UI -> Cobro: deshacerConciliacion(motivo)
+    deactivate UI
+end
+
+Cron -> UI: ejecucionProcesoGestionImpagos() (CU-19)
+activate UI
+UI -> Factura: obtenerFacturasVencidas()
+loop Para cada factura vencida
+    UI -> Factura: requiereRecordatorio(hoy)
+    alt Requiere y NO tiene Disputa
+        UI -> Config: obtenerDiasRecordatorio()
+        create Recordatorio
+        UI -> Recordatorio: create()
+        Recordatorio -> Calendario: esLaborable(hoy)
+        alt No es hábil
+            Calendario -> Calendario: obtenerSiguienteDiaLaborable(hoy)
+        else Es hábil
+            UI -> Plantilla: renderizar(datos)
+            UI -> Recordatorio: enviarRecordatorio()
+            create Envio
+            Recordatorio -> Envio: create(tipo=RECORDATORIO)
+            Envio -> Mensajeria: enviarRecordatorioImpago()
+        end
+    else Con disputa o incidencia abierta (CU-31)
+        UI -> Incidencia: pausarSeguimientoImpago(motivo, fechaRevision)
+    end
+end
+deactivate UI
+
+UsuarioActor -> UI: gestionIncidenciasYDisputas(idFactura, descripcion) (CU-31)
+activate UI
+create Incidencia
+UI -> Incidencia: abrirIncidencia()
+create Comentario
+UI -> Comentario: create(texto="Disputa abierta")
+UI -> Comentario: publicar()
+UsuarioActor -> UI: resolverIncidencia(idIncidencia, resolucion)
+UI -> Incidencia: resolverYCerrar(resolucion)
+UI -> Incidencia: reanudarSeguimientoImpago()
+deactivate UI
+@enduml
