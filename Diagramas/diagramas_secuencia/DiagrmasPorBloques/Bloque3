@@ -1,0 +1,158 @@
+@startuml
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+skinparam MaxMessageWidth 250
+
+title Bloque 3: Facturación, Presupuestos y Rectificativas (Turbine)
+
+actor "Usuario" as UsuarioActor
+actor "Administrador" as AdminActor
+actor "Superadministrador" as SuperAdminActor
+actor "Planificador (Tiempo)" as Cron
+actor "Servicio Mensajería" as Mensajeria
+
+participant ":Controlador / Interfaz" as UI
+participant ":ConfiguracionSistema" as Config
+participant ":SerieFacturacion" as Serie
+participant ":PeriodoContable" as Periodo
+participant ":ContactoCliente" as Contacto
+participant ":Suscripcion" as Suscripcion
+participant ":ProductoCatalogo" as Catalogo
+participant ":Presupuesto" as Presupuesto
+participant ":Factura" as Factura
+participant ":LineaFactura" as Linea
+participant ":EnvioFactura" as Envio
+participant ":SolicitudAprobacion" as Solicitud
+participant ":DocumentoAdjunto" as Documento
+
+SuperAdminActor -> UI: actualizarCatalogo() (Mantenimiento Catalogo)
+activate UI
+UI -> Catalogo: actualizarPrecio(nuevoPrecio)
+
+UsuarioActor -> UI: crearYEnviarPresupuesto(idCliente, lineas) (CU-30)
+create Presupuesto
+UI -> Presupuesto: create(idCliente)
+create Linea
+UI -> Linea: create(concepto, precio)
+UI -> Linea: calcularSubtotal()
+UI -> Presupuesto: calcularTotal()
+UI -> Contacto: obtenerCanalEnvio()
+UI -> Presupuesto: enviar()
+Presupuesto -> Mensajeria: enviarPresupuesto()
+
+UsuarioActor -> UI: gestionarPresupuesto(idPresupuesto, decision) (CU-30)
+create Documento
+UI -> Documento: create(evidencia)
+alt Aceptado
+    UI -> Presupuesto: aceptar(Documento)
+    UI -> Presupuesto: convertirEnFactura()
+    create Factura
+    Presupuesto -> Factura: create(PUNTUAL)
+else Rechazado
+    UI -> Presupuesto: rechazar(Documento)
+end
+
+UsuarioActor -> UI: crearFacturaPuntual(idCliente, conceptos) (CU-28)
+create Factura
+UI -> Factura: create(PUNTUAL)
+UI -> Factura: agregarLineaDesdeCatalogo(ProductoCatalogo, cantidad, dto)
+create Linea
+Factura -> Linea: create(datosCatalogo)
+UI -> Linea: calcularSubtotal()
+UI -> Factura: calcularTotales()
+
+alt Importe supera umbral o requiere descuento (CU-27 / CU-28)
+    create Solicitud
+    UI -> Solicitud: create(tipo=FACTURA_IMPORTE_ALTO, importe)
+    UI -> Solicitud: requiereSuperadmin()
+    Solicitud -> Config: leerUmbralesAprobacion()
+    
+    AdminActor -> UI: gestionarAprobacion(idSolicitud, accion) (CU-27)
+    alt Aprobar
+        UI -> Solicitud: aprobar(aprobador, comentario)
+        UI -> Factura: emitir()
+    else Rechazar
+        UI -> Solicitud: rechazar(aprobador, comentario)
+    else Reasignar
+        UI -> Solicitud: reasignar(suplente)
+    end
+else Sin aprobacion previa
+    UI -> Factura: emitir()
+end
+
+Factura -> Config: leerImpuestosYMoneda()
+Factura -> Serie: siguienteNumeroCorrelativo()
+Factura -> Factura: generarPdf()
+create Documento
+Factura -> Documento: create(pdfEmitido)
+
+UI -> Contacto: obtenerCanalEnvio()
+UI -> Factura: enviarAlCliente()
+create Envio
+Factura -> Envio: create(canal, destinatario)
+Envio -> Envio: enviar()
+Envio -> Mensajeria: enviarFacturaAlCliente()
+alt Falla envío
+    UI -> Envio: reintentarEnvio() (CU-10 4a)
+end
+
+Cron -> UI: generacionMensualFacturasRecurrentes() (CU-29)
+UI -> Suscripcion: obtenerSuscripcionesActivas()
+loop Para cada suscripcion activa
+    UI -> Suscripcion: obtenerExcepcionesVigentes(mes)
+    UI -> Excepcion: aplicarEnCuota(importeBase)
+    UI -> Suscripcion: calcularImporteMensual(mes)
+    UI -> Suscripcion: generarFacturaMensual(mes)
+    create Factura
+    Suscripcion -> Factura: create(RECURRENTE)
+    UI -> Factura: emitir()
+    Factura -> Config: leerImpuestosYMoneda()
+    UI -> Factura: enviarAlCliente()
+end
+
+UsuarioActor -> UI: consultarFacturasPendientes() (CU-15)
+UI -> Cliente: obtenerFacturasPendientes()
+UI -> Cliente: calcularDeudaTotal()
+UI -> Factura: calcularDiasRetraso()
+
+UsuarioActor -> UI: modificacionBorradorFactura(idFactura) (CU-16)
+UI -> Factura: modificarBorrador()
+Factura -> Periodo: contieneFecha(fechaEmision)
+alt Periodo Abierto
+    Factura --> UI: Ok
+    UsuarioActor -> UI: eliminarBorradorFactura() (CU-14)
+    UI -> Factura: eliminarBorrador()
+    Factura -> Periodo: contieneFecha(fechaEmision)
+else Periodo Cerrado
+    Factura --> UI: Error
+end
+
+AdminActor -> UI: rectificaciónYAnulacionFactura(idFactura, motivo) (CU-21)
+alt Rectificar
+    create Solicitud
+    UI -> Solicitud: create(tipo=RECTIFICATIVA)
+    AdminActor -> UI: aprobarRectificativa(idSolicitud) (CU-27)
+    UI -> Solicitud: aprobar(aprobador, comentario)
+    UI -> Factura: crearRectificativa(motivo)
+    create Factura as Rectificativa
+    Factura -> Rectificativa: create(RECTIFICATIVA, facturaOriginal)
+    Rectificativa -> Serie: siguienteNumeroCorrelativo(SerieRectificativa)
+else Anular
+    UI -> Factura: anular(motivo)
+else Incobrable
+    UI -> Factura: declararIncobrable(motivo)
+end
+
+UsuarioActor -> UI: descargarFacturaPDF(idFactura) (CU-23)
+UI -> Factura: obtenerPdf()
+UI -> Documento: descargar()
+
+AdminActor -> UI: cierreYReaperturaPeriodo(idPeriodo, accion) (CU-34)
+alt Cierre
+    UI -> Periodo: obtenerAvisosPendientes()
+    UI -> Periodo: cerrarPeriodo(AdminActor)
+else Reapertura
+    UI -> Periodo: reabrirPeriodo(SuperAdminActor, motivo)
+end
+deactivate UI
+@enduml
