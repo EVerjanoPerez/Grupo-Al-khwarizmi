@@ -1,0 +1,499 @@
+@startuml
+skinparam maxSvgSize 0
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+skinparam MaxMessageWidth 250
+
+title Diagrama de Secuencia Maestro (Turbine - 100% Completo y Definitivo)
+
+' ==========================================
+' ACTORES Y PARTICIPANTES
+' ==========================================
+actor "Usuario" as UsuarioActor
+actor "Administrador" as AdminActor
+actor "Superadministrador" as SuperAdminActor
+
+actor "Planificador (Tiempo)" as Cron
+actor "Pasarela de Cobros\n(Stripe/Revolut)" as Pasarela
+actor "Servicio Mensajería\n(Email/WhatsApp)" as Mensajeria
+
+box "Capa de Presentación y Control" #LightBlue
+  participant ":Controlador / Interfaz" as UI
+end box
+
+box "Módulo de Usuarios, Seguridad y Auditoría" #LightGray
+  participant ":Usuario" as Usuario
+  participant ":Sesion" as Sesion
+  participant ":DelegacionTemporal" as Delegacion
+  participant ":Notificacion" as Notificacion
+  participant ":AlertaCorporativa" as Alerta
+  participant ":Comentario" as Comentario
+  participant ":DocumentoAdjunto" as Documento
+  participant ":RegistroAuditoria" as Auditoria
+  participant ":CopiaSeguridad" as Copia
+  participant ":EjecucionProceso" as Proceso
+end box
+
+box "Módulo de Configuración y Control Contable" #LightYellow
+  participant ":ConfiguracionSistema" as Config
+  participant ":CalendarioLaboral" as Calendario
+  participant ":ConexionPasarela" as PasarelaConf
+  participant ":PlantillaMensaje" as Plantilla
+  participant ":TarifaRango" as Tarifa
+  participant ":SerieFacturacion" as Serie
+  participant ":PeriodoContable" as Periodo
+end box
+
+box "Módulo de Clientes y Suscripciones" #LightGreen
+  participant ":Cliente" as Cliente
+  participant ":ContactoCliente" as Contacto
+  participant ":ImportacionClientes" as Importacion
+  participant ":Suscripcion" as Suscripcion
+  participant ":ExcepcionComercial" as Excepcion
+  participant ":RevisionRango" as Revision
+end box
+
+box "Módulo de Facturación, Cobros e Incidencias" #LightCyan
+  participant ":ProductoCatalogo" as Catalogo
+  participant ":Presupuesto" as Presupuesto
+  participant ":Factura" as Factura
+  participant ":LineaFactura" as Linea
+  participant ":EnvioFactura" as Envio
+  participant ":SolicitudAprobacion" as Solicitud
+  participant ":Cobro" as Cobro
+  participant ":RecordatorioImpago" as Recordatorio
+  participant ":Incidencia" as Incidencia
+  participant ":Informe" as Informe
+  participant ":PaqueteGestoria" as Paquete
+  participant ":AccionMasiva" as Masiva
+end box
+
+' ==========================================
+' BLOQUE 1: ACCESO, SESIÓN Y CONFIGURACIÓN
+' ==========================================
+== 1. Gestión de Accesos, Seguridad, Delegaciones y Configuración ==
+
+UsuarioActor -> UI: login(correo, password) (CU-01)
+activate UI
+UI -> Usuario: iniciarSesion(correo, pass)
+activate Usuario
+alt Credenciales válidas
+    create Sesion
+    Usuario -> Sesion: create()
+    Usuario -> Mensajeria: enviarCodigo2FA()
+    Usuario --> UI: sesionIniciada
+else Varios intentos fallidos
+    Usuario -> Usuario: bloquearCuentaTemporante()
+    Usuario --> UI: errorCuentaBloqueada
+end
+deactivate Usuario
+
+UsuarioActor -> UI: recuperarPassword() (CU-01)
+UI -> Usuario: recuperarPassword()
+UI -> Mensajeria: enviarEmailRecuperacion()
+
+UsuarioActor -> UI: cerrarSesion() (CU-01)
+UI -> Usuario: cerrarSesion()
+
+AdminActor -> UI: registrarUsuarioInterno(datos) (CU-02)
+create Usuario
+UI -> Usuario: create(datos)
+UI -> Usuario: enviarInvitacion()
+Usuario -> Mensajeria: enviarInvitacion()
+
+AdminActor -> UI: reactivarCuenta(idUsuario) (CU-02)
+UI -> Usuario: reactivarCuenta()
+
+AdminActor -> UI: delegarClientesTemporales(sustituto, fechaini, fechaFin) (CU-07)
+create Delegacion
+UI -> Delegacion: create(titular, sustituto, rangoFechas)
+UI -> Delegacion: activarDelegacion()
+UI -> Delegacion: estaVigente(hoy)
+AdminActor -> UI: cancelarDelegacion() (CU-07)
+UI -> Delegacion: cancelarDelegacion()
+
+AdminActor -> UI: desactivarCuenta(idUsuario, motivo) (CU-13)
+UI -> Usuario: desactivarCuenta(motivo)
+UI -> Usuario: invalidarSesionesActivas()
+Usuario -> Sesion: invalidar()
+
+SuperAdminActor -> UI: configurarParametrosGlobales(config) (CU-03)
+UI -> Config: actualizarParametros()
+UI -> Config: validarUmbrales()
+UI -> Plantilla: actualizarPlantillas()
+UI -> Plantilla: previsualizar(datosPrueba)
+UI -> Plantilla: enviarPrueba(destinatarioTest)
+UI -> Calendario: agregarFestivo(DiaFestivo)
+create Auditoria
+UI -> Auditoria: registrarEvento(Usuario, "CONFIGURACION_MODIFICADA")
+
+SuperAdminActor -> UI: administrarCuentaRecepcionPagos(credenciales) (CU-04)
+UI -> PasarelaConf: guardarCredencialesCifradas(apiKey, secret)
+UI -> PasarelaConf: probarConexion()
+
+Cron -> UI: ejecutarCopiaSeguridadAutomática() (CU-24)
+create Copia
+UI -> Copia: generarCopia()
+UI -> Copia: verificarIntegridad()
+create Proceso
+UI -> Proceso: registrarResultado()
+
+SuperAdminActor -> UI: consultarAuditoriaYRestaurarCopia(idCopia) (CU-20)
+UI -> Auditoria: consultar(filtros)
+UI -> Copia: descargar()
+UI -> Copia: restaurar(SuperAdminActor)
+
+UsuarioActor -> UI: trabajoDiario_PublicarYAlertas() (CU-32)
+UI -> Sesion: esValida()
+UI -> Usuario: configurarCanales(canales)
+UI -> Notificacion: marcarComoLeida()
+UI -> Notificacion: marcarComoAtendida()
+create Comentario
+UI -> Comentario: create(texto, autor)
+UI -> Comentario: publicar()
+UI -> Comentario: notificarMencionados()
+create Notificacion
+Comentario -> Notificacion: create(destinatario, mensaje)
+Notificacion -> Notificacion: enviar()
+UI -> Documento: validarFormatoYTamano()
+UI -> Alerta: evaluarCondicion(contexto)
+alt Condición Cumplida
+    Alerta -> Alerta: dispararAlerta()
+end
+
+AdminActor -> UI: gestionarDatosPersonales/Anonimizar(idContacto) (CU-35)
+UI -> Contacto: anonimizarDatos()
+UI -> Contacto: eliminarDatos()
+deactivate UI
+
+' ==========================================
+' BLOQUE 2: GESTIÓN DE CLIENTES Y SUSCRIPCIONES
+' ==========================================
+== 2. Administración de Clientes y Suscripciones ==
+
+AdminActor -> UI: darDeAltaCliente(datosCliente) (CU-36)
+activate UI
+create Cliente
+UI -> Cliente: darDeAlta()
+create Contacto
+UI -> Contacto: create(datosContacto)
+AdminActor -> UI: reactivarClienteAnterior() (CU-36)
+UI -> Cliente: reactivar()
+
+AdminActor -> UI: importacionMasivaClientes(archivoCSV) (CU-18)
+create Importacion
+UI -> Importacion: create()
+UI -> Importacion: cargarArchivo(archivoCSV)
+UI -> Importacion: definirMapeo(columnas)
+UI -> Importacion: validarFilas()
+UI -> Importacion: procesarImportacion()
+create Cliente
+Importacion -> Cliente: createMultiple()
+UI -> Importacion: obtenerResumen()
+
+UsuarioActor -> UI: buscarYConsultarClientes(etiquetas, favoritos) (CU-22)
+UI -> Cliente: obtenerListadoFiltrado()
+
+AdminActor -> UI: asignarClientesAUsuario(idUsuario, listaClientes) (CU-08)
+UI -> Cliente: asignarResponsable(Usuario)
+AdminActor -> UI: desasignarResponsable(idCliente) (CU-08)
+UI -> Cliente: desasignarResponsable()
+
+UsuarioActor -> UI: edicionYBajaCliente(idCliente) (CU-17)
+UI -> Cliente: modificarDatosFiscales()
+UI -> Cliente: darDeBaja(fechaEfectiva)
+UI -> Suscripcion: cancelar(fechaEfectiva)
+
+AdminActor -> UI: borradoLogicoClienteOFactura(idEntidad) (CU-14)
+UI -> Cliente: borradoLogico(motivo)
+
+UsuarioActor -> UI: activarFacturacionRecurrente(idCliente, plan) (CU-06)
+create Suscripcion
+UI -> Suscripcion: create(plan, cuota)
+UI -> Suscripcion: calcularProrrateo(fechaAlta)
+UI -> Suscripcion: activar()
+
+UsuarioActor -> UI: pausarOReactivarSuscripcion(idSuscripcion, opcion) (CU-25)
+alt Pausar
+    UI -> Suscripcion: pausar(fechas, motivo)
+else Reactivar
+    UI -> Suscripcion: reactivar()
+end
+
+UsuarioActor -> UI: solicitarExcepcionComercial(idSuscripcion, tipo, valor) (CU-26)
+create Excepcion
+UI -> Excepcion: create(tipo, valor)
+UI -> Suscripcion: agregarExcepcion(ExcepcionComercial)
+UI -> Excepcion: solicitarAprobacion()
+create Solicitud
+Excepcion -> Solicitud: create(tipo=EXCEPCION_COMERCIAL)
+
+Cron -> UI: revisionAnualRangoFacturacion() (CU-05)
+UI -> Cliente: obtenerFacturacionAnual()
+UI -> Cliente: iniciarRevisionRango(importe, fuente, fecha)
+create Revision
+Cliente -> Revision: create(rangoAnterior, rangoNuevo)
+Revision -> Config: obtenerRangoPara(facturacionAnual)
+Config -> Tarifa: contiene(facturacionAnual)
+alt Cambio de rango requiere aprobacion
+    UI -> Revision: solicitarAprobacionCambio()
+    create Solicitud
+    Revision -> Solicitud: create(tipo=CAMBIO_RANGO)
+else Aplicacion directa
+    UI -> Revision: aplicarCambioRango()
+    UI -> Suscripcion: actualizarTarifa(nuevoRango, fechaEfecto)
+end
+deactivate UI
+
+' ==========================================
+' BLOQUE 3: PRESUPUESTOS Y CICLO DE FACTURACIÓN
+' ==========================================
+== 3. Presupuestos, Facturación Puntual, Recurrente y Rectificativas ==
+
+SuperAdminActor -> UI: actualizarCatalogo() (Mantenimiento Catalogo)
+activate UI
+UI -> Catalogo: actualizarPrecio(nuevoPrecio)
+
+UsuarioActor -> UI: crearYEnviarPresupuesto(idCliente, lineas) (CU-30)
+create Presupuesto
+UI -> Presupuesto: create(idCliente)
+create Linea
+UI -> Linea: create(concepto, precio)
+UI -> Linea: calcularSubtotal()
+UI -> Presupuesto: calcularTotal()
+UI -> Contacto: obtenerCanalEnvio()
+UI -> Presupuesto: enviar()
+Presupuesto -> Mensajeria: enviarPresupuesto()
+
+UsuarioActor -> UI: gestionarPresupuesto(idPresupuesto, decision) (CU-30)
+create Documento
+UI -> Documento: create(evidencia)
+alt Aceptado
+    UI -> Presupuesto: aceptar(Documento)
+    UI -> Presupuesto: convertirEnFactura()
+    create Factura
+    Presupuesto -> Factura: create(PUNTUAL)
+else Rechazado
+    UI -> Presupuesto: rechazar(Documento)
+end
+
+UsuarioActor -> UI: crearFacturaPuntual(idCliente, conceptos) (CU-28)
+create Factura
+UI -> Factura: create(PUNTUAL)
+UI -> Factura: agregarLineaDesdeCatalogo(ProductoCatalogo, cantidad, dto)
+create Linea
+Factura -> Linea: create(datosCatalogo)
+UI -> Linea: calcularSubtotal()
+UI -> Factura: calcularTotales()
+
+alt Importe supera umbral o requiere descuento (CU-27 / CU-28)
+    create Solicitud
+    UI -> Solicitud: create(tipo=FACTURA_IMPORTE_ALTO, importe)
+    UI -> Solicitud: requiereSuperadmin()
+    Solicitud -> Config: leerUmbralesAprobacion()
+    
+    AdminActor -> UI: gestionarAprobacion(idSolicitud, accion) (CU-27)
+    alt Aprobar
+        UI -> Solicitud: aprobar(aprobador, comentario)
+        UI -> Factura: emitir()
+    else Rechazar
+        UI -> Solicitud: rechazar(aprobador, comentario)
+    else Reasignar
+        UI -> Solicitud: reasignar(suplente)
+    end
+else Sin aprobacion previa
+    UI -> Factura: emitir()
+end
+
+Factura -> Config: leerImpuestosYMoneda()
+Factura -> Serie: siguienteNumeroCorrelativo()
+Factura -> Factura: generarPdf()
+create Documento
+Factura -> Documento: create(pdfEmitido)
+
+UI -> Contacto: obtenerCanalEnvio()
+UI -> Factura: enviarAlCliente()
+create Envio
+Factura -> Envio: create(canal, destinatario)
+Envio -> Envio: enviar()
+Envio -> Mensajeria: enviarFacturaAlCliente()
+alt Falla envío
+    UI -> Envio: reintentarEnvio() (CU-10 4a)
+end
+
+Cron -> UI: generacionMensualFacturasRecurrentes() (CU-29)
+UI -> Suscripcion: obtenerSuscripcionesActivas()
+loop Para cada suscripcion activa
+    UI -> Suscripcion: obtenerExcepcionesVigentes(mes)
+    UI -> Excepcion: aplicarEnCuota(importeBase)
+    UI -> Suscripcion: calcularImporteMensual(mes)
+    UI -> Suscripcion: generarFacturaMensual(mes)
+    create Factura
+    Suscripcion -> Factura: create(RECURRENTE)
+    UI -> Factura: emitir()
+    Factura -> Config: leerImpuestosYMoneda()
+    UI -> Factura: enviarAlCliente()
+end
+
+UsuarioActor -> UI: consultarFacturasPendientes() (CU-15)
+UI -> Cliente: obtenerFacturasPendientes()
+UI -> Cliente: calcularDeudaTotal()
+UI -> Factura: calcularDiasRetraso()
+
+UsuarioActor -> UI: modificacionBorradorFactura(idFactura) (CU-16)
+UI -> Factura: modificarBorrador()
+Factura -> Periodo: contieneFecha(fechaEmision)
+alt Periodo Abierto
+    Factura --> UI: Ok
+    UsuarioActor -> UI: eliminarBorradorFactura() (CU-14)
+    UI -> Factura: eliminarBorrador()
+    Factura -> Periodo: contieneFecha(fechaEmision)
+else Periodo Cerrado
+    Factura --> UI: Error
+end
+
+AdminActor -> UI: rectificaciónYAnulacionFactura(idFactura, motivo) (CU-21)
+alt Rectificar
+    create Solicitud
+    UI -> Solicitud: create(tipo=RECTIFICATIVA)
+    AdminActor -> UI: aprobarRectificativa(idSolicitud) (CU-27)
+    UI -> Solicitud: aprobar(aprobador, comentario)
+    UI -> Factura: crearRectificativa(motivo)
+    create Factura as Rectificativa
+    Factura -> Rectificativa: create(RECTIFICATIVA, facturaOriginal)
+    Rectificativa -> Serie: siguienteNumeroCorrelativo(SerieRectificativa)
+else Anular
+    UI -> Factura: anular(motivo)
+else Incobrable
+    UI -> Factura: declararIncobrable(motivo)
+end
+
+UsuarioActor -> UI: descargarFacturaPDF(idFactura) (CU-23)
+UI -> Factura: obtenerPdf()
+UI -> Documento: descargar()
+
+AdminActor -> UI: cierreYReaperturaPeriodo(idPeriodo, accion) (CU-34)
+alt Cierre
+    UI -> Periodo: obtenerAvisosPendientes()
+    UI -> Periodo: cerrarPeriodo(AdminActor)
+else Reapertura
+    UI -> Periodo: reabrirPeriodo(SuperAdminActor, motivo)
+end
+deactivate UI
+
+' ==========================================
+' BLOQUE 4: COBROS, IMPAGOS Y GESTIÓN DE INCIDENCIAS
+' ==========================================
+== 4. Cobros, Impagos e Incidencias ==
+
+alt Cobro Automático Notificado por Pasarela (CU-11)
+    Pasarela -> UI: webhookNotificaciónPago(referencia, importe)
+    activate UI
+    UI -> PasarelaConf: obtenerClienteAPI()
+    create Cobro
+    UI -> Cobro: create(referenciaExterna, origen=STRIPE/REVOLUT, importe)
+    UI -> Cobro: procesarCobroAutomatico()
+    Cobro -> Factura: marcarComoPagada(Cobro)
+    UI --> Pasarela: HTTP 200 OK
+    deactivate UI
+
+else Registro Manual de Pago (CU-12)
+    UsuarioActor -> UI: registrarPagoManual(idFactura, importe, justificanteDoc)
+    activate UI
+    create Documento
+    UI -> Documento: create(justificante)
+    create Cobro
+    UI -> Cobro: create(origen=MANUAL, importe, justificante)
+    UI -> Cobro: conciliarManualmente(Factura, Documento)
+    Cobro -> Factura: marcarComoPagada(Cobro)
+    
+    UsuarioActor -> UI: deshacerConciliacion(idCobro) (CU-12)
+    UI -> Cobro: deshacerConciliacion(motivo)
+    deactivate UI
+end
+
+Cron -> UI: ejecucionProcesoGestionImpagos() (CU-19)
+activate UI
+UI -> Factura: obtenerFacturasVencidas()
+loop Para cada factura vencida
+    UI -> Factura: requiereRecordatorio(hoy)
+    alt Requiere y NO tiene Disputa
+        UI -> Config: obtenerDiasRecordatorio()
+        create Recordatorio
+        UI -> Recordatorio: create()
+        Recordatorio -> Calendario: esLaborable(hoy)
+        alt No es hábil
+            Calendario -> Calendario: obtenerSiguienteDiaLaborable(hoy)
+        else Es hábil
+            UI -> Plantilla: renderizar(datos)
+            UI -> Recordatorio: enviarRecordatorio()
+            create Envio
+            Recordatorio -> Envio: create(tipo=RECORDATORIO)
+            Envio -> Mensajeria: enviarRecordatorioImpago()
+        end
+    else Con disputa o incidencia abierta (CU-31)
+        UI -> Incidencia: pausarSeguimientoImpago(motivo, fechaRevision)
+    end
+end
+deactivate UI
+
+UsuarioActor -> UI: gestionIncidenciasYDisputas(idFactura, descripcion) (CU-31)
+activate UI
+create Incidencia
+UI -> Incidencia: abrirIncidencia()
+create Comentario
+UI -> Comentario: create(texto="Disputa abierta")
+UI -> Comentario: publicar()
+UsuarioActor -> UI: resolverIncidencia(idIncidencia, resolucion)
+UI -> Incidencia: resolverYCerrar(resolucion)
+UI -> Incidencia: reanudarSeguimientoImpago()
+deactivate UI
+
+' ==========================================
+' BLOQUE 5: INFORMES, PAQUETES DE GESTORÍA Y MÉTRICAS
+' ==========================================
+== 5. Informes, Paquetes de Gestoría y Métricas ==
+
+UsuarioActor -> UI: consultaCobrosMetricasEInformes(filtros, formato) (CU-09)
+activate UI
+create Informe
+UI -> Informe: create(filtros, formato)
+UI -> Informe: generar()
+create Documento
+Informe -> Documento: create(archivoGenerado)
+UI -> Informe: notificarListo()
+UI --> UsuarioActor: Entrega de informe generado
+
+UsuarioActor -> UI: solicitarPaqueteGestoria(idPeriodo) (CU-09 1b)
+create Paquete
+UI -> Paquete: create(idPeriodo)
+UI -> Paquete: compilarPaquete()
+create Documento
+Paquete -> Documento: create(archivoZip)
+UI -> Paquete: descargarZip()
+UI --> UsuarioActor: Descarga de archivo comprimido
+deactivate UI
+
+' ==========================================
+' BLOQUE 6: ACCIONES MASIVAS
+' ==========================================
+== 6. Acciones Masivas ==
+
+AdminActor -> UI: ejecutarAccionesMasivas(seleccion, tipoAccion) (CU-33)
+activate UI
+create Masiva
+UI -> Masiva: create(tipoAccion)
+UI -> Masiva: previsualizarAfectados(seleccion)
+UI -> Masiva: esSensible()
+AdminActor -> UI: confirmar()
+UI -> Masiva: ejecutar(seleccion)
+alt Tipo de Acción = GENERAR_INFORMES
+    Masiva -> Informe: generar()
+else Otros tipos (Reasignar, Cambiar Sector)
+    Masiva -> Cliente: actualizarEnBloque()
+end
+UI -> Masiva: obtenerInformeResultados()
+UI --> AdminActor: Resumen de resultados emitido
+deactivate UI
+
+@enduml
