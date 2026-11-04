@@ -4,8 +4,7 @@ skinparam style strictuml
 skinparam sequenceMessageAlign center
 skinparam MaxMessageWidth 250
 
-title Diagrama de Secuencia Maestro (Turbine - 100% Completo y Definitivo)
-
+title Diagrama de Secuencia Maestro 
 ' ==========================================
 ' ACTORES Y PARTICIPANTES
 ' ==========================================
