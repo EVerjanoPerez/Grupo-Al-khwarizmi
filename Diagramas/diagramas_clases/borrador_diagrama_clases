@@ -1,762 +1,886 @@
 @startuml
-' ---------- Bloque 1: Usuarios, accesos y trabajo diario ----------
-Class Usuario {
-- int idUsuario
-- String nombre
-- String correoCorporativo
-- String passwordHash
-- RolUsuario rol
-- bool puedeGestionarUsuarios
-- bool activo
-- int intentosFallidos
-- DateTime bloqueadoHasta
-- List<CanalNotificacion> canalesPreferidos
+' =====================================================
+'  DIAGRAMA DE CLASES · Sistema de facturación y cobros de Turbine
+'  Cada bloque tiene su color. El color de cada línea indica
+'  el bloque del que sale. Los comentarios explican las relaciones.
+' =====================================================
 
-+ Sesion iniciarSesion(String correo, String pass)
-+ void cerrarSesion()
-+ void recuperarPassword()
-+ bool enviarInvitacion()
-+ void reactivarCuenta()
-+ void desactivarCuenta(String motivo)
-+ void invalidarSesionesActivas()
-+ void configurarCanales(List<CanalNotificacion> canales)
+title Sistema de facturación y cobros de Turbine · Diagrama de clases
+
+' ---------- Aspecto (colores y espacios) ----------
+skinparam shadowing false
+skinparam roundCorner 10
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam packageBorderColor #BBBBBB
+skinparam packageFontSize 15
+skinparam packageFontStyle bold
+skinparam noteBackgroundColor #FFFBE6
+skinparam noteBorderColor #C9B458
+skinparam legendBackgroundColor #FFFFFF
+skinparam legendBorderColor #BBBBBB
+hide circle
+hide stereotype
+
+' ---------- Líneas más ordenadas ----------
+' Las líneas van en ángulo recto y con más espacio entre cajas.
+' Si algún texto de una línea se ve mal, cambia "ortho" por "polyline".
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 90
+skinparam ArrowThickness 1.2
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #333333
+
+skinparam class {
+  BorderThickness 1.3
+  BackgroundColor<<B1>> #DCEBFA
+  BorderColor<<B1>>     #2F6DB5
+  BackgroundColor<<B2>> #E9E4F5
+  BorderColor<<B2>>     #6A4FB0
+  BackgroundColor<<B3>> #DFF2E1
+  BorderColor<<B3>>     #2E8B57
+  BackgroundColor<<B4>> #FDE9D3
+  BorderColor<<B4>>     #D9822B
+  BackgroundColor<<B5>> #FBE0E0
+  BorderColor<<B5>>     #C0392B
+  BackgroundColor<<B6>> #FFF4C9
+  BorderColor<<B6>>     #B8960C
+  BackgroundColor<<EN>> #ECECEC
+  BorderColor<<EN>>     #7F7F7F
 }
 
-Class Sesion {
-- String idSesion
-- String token
-- DateTime fechaInicio
-- DateTime ultimaActividad
-- String direccionIP
-- String dispositivo
-- bool activa
+legend left
+  |= Color |= Bloque (y color de sus líneas) |
+  |<#DCEBFA>     | 1 · Usuarios, accesos y trabajo diario |
+  |<#E9E4F5>     | 2 · Configuración, auditoría y datos |
+  |<#DFF2E1>     | 3 · Clientes y suscripciones |
+  |<#FDE9D3>     | 4 · Facturación, presupuestos y aprobaciones |
+  |<#FBE0E0>     | 5 · Cobros, impagos e incidencias |
+  |<#FFF4C9>     | 6 · Informes, paquetes y operaciones masivas |
+  |<#ECECEC>     | Enumeraciones (listas de valores posibles) |
+endlegend
 
-+ bool esValida()
-+ void invalidar()
+' =====================================================
+'  BLOQUE 1 · USUARIOS, ACCESOS Y TRABAJO DIARIO
+' =====================================================
+package "1 · Usuarios, accesos y trabajo diario" #F4F8FD {
+
+  Class Usuario <<B1>> {
+  - int idUsuario
+  - String nombre
+  - String correoCorporativo
+  - String passwordHash
+  - RolUsuario rol
+  - bool puedeGestionarUsuarios
+  - bool activo
+  - int intentosFallidos
+  - DateTime bloqueadoHasta
+  - List<CanalNotificacion> canalesPreferidos
+
+  + Sesion iniciarSesion(String correo, String pass)
+  + void cerrarSesion()
+  + void recuperarPassword()
+  + bool enviarInvitacion()
+  + void reactivarCuenta()
+  + void desactivarCuenta(String motivo)
+  + void invalidarSesionesActivas()
+  + void configurarCanales(List<CanalNotificacion> canales)
+  }
+
+  Class Sesion <<B1>> {
+  - String idSesion
+  - String token
+  - DateTime fechaInicio
+  - DateTime ultimaActividad
+  - String direccionIP
+  - String dispositivo
+  - bool activa
+
+  + bool esValida()
+  + void invalidar()
+  }
+
+  Class DelegacionTemporal <<B1>> {
+  - int idDelegacion
+  - Date fechaInicio
+  - Date fechaFin
+  - bool activa
+
+  + void activarDelegacion()
+  + void cancelarDelegacion()
+  + bool estaVigente(Date fecha)
+  }
+
+  Class Notificacion <<B1>> {
+  - int idNotificacion
+  - String mensaje
+  - DateTime fechaCreacion
+  - EstadoNotificacion estado
+  - CanalNotificacion canal
+
+  + void marcarComoLeida()
+  + void marcarComoAtendida()
+  + bool enviar()
+  }
+
+  Class AlertaCorporativa <<B1>> {
+  - int idAlerta
+  - String nombre
+  - String condicionEvaluacion
+  - CanalNotificacion canal
+  - bool activa
+
+  + bool evaluarCondicion(Object contexto)
+  + void dispararAlerta()
+  }
+
+  Class Comentario <<B1>> {
+  - int idComentario
+  - String texto
+  - DateTime fechaCreacion
+  - bool restringidoSoloAdmin
+
+  + void publicar()
+  + void notificarMencionados()
+  }
+
+  Class DocumentoAdjunto <<B1>> {
+  - int idDocumento
+  - String nombreArchivo
+  - FormatoArchivo formato
+  - long tamanoBytes
+  - String rutaAlmacenamiento
+  - DateTime fechaSubida
+
+  + bool validarFormatoYTamano()
+  + File descargar()
+  }
 }
 
-Class DelegacionTemporal {
-- int idDelegacion
-- Date fechaInicio
-- Date fechaFin
-- bool activa
+' =====================================================
+'  BLOQUE 2 · CONFIGURACIÓN, AUDITORÍA Y DATOS
+' =====================================================
+package "2 · Configuración, auditoría y datos" #F7F4FC {
 
-+ void activarDelegacion()
-+ void cancelarDelegacion()
-+ bool estaVigente(Date fecha)
+  Class ConfiguracionSistema <<B2>> {
+  - int plazoPagoDefecto
+  - List<int> diasRecordatorio
+  - double impuestoDefecto
+  - String monedaBase
+  - double umbralAprobacionInferior
+  - double umbralAprobacionSuperior
+  - int periodicidadCopias
+  - String datosEmisor
+  - String datosSoporte
+
+  + bool actualizarParametros()
+  + bool validarUmbrales()
+  + TarifaRango obtenerRangoPara(double facturacionAnual)
+  }
+
+  Class ConexionPasarelaCobro <<B2>> {
+  - int idConexion
+  - ProveedorPasarela proveedor
+  - String apiKeyCifrada
+  - String webhookSecretCifrado
+  - bool activa
+  - EntornoPasarela entorno
+
+  + bool guardarCredencialesCifradas(String apiKey, String secret)
+  + bool probarConexion()
+  + Object obtenerClienteAPI()
+  }
+
+  Class PlantillaMensaje <<B2>> {
+  - int idPlantilla
+  - String nombre
+  - TipoEvento tipoEvento
+  - String idioma
+  - CanalNotificacion canal
+  - String asunto
+  - String cuerpo
+  - List<String> variablesDisponibles
+
+  + String previsualizar(Map<String, String> datosPrueba)
+  + bool enviarPrueba(String destinatarioTest)
+  + String renderizar(Map<String, String> datos)
+  }
+
+  Class CalendarioLaboral <<B2>> {
+  - int anio
+  - String region
+
+  + bool esLaborable(Date fecha)
+  + Date obtenerSiguienteDiaLaborable(Date fecha)
+  + void agregarFestivo(DiaFestivo festivo)
+  }
+
+  Class DiaFestivo <<B2>> {
+  - Date fecha
+  - String descripcion
+  - bool esNacional
+  }
+
+  Class TarifaRango <<B2>> {
+  - int idTarifaRango
+  - String nombreRango
+  - double facturacionMinima
+  - double facturacionMaxima
+  - double cuotaBaseAsociada
+
+  + bool contiene(double facturacionAnual)
+  }
+
+  Class SerieFacturacion <<B2>> {
+  - String codigoSerie
+  - TipoSerie tipoSerie
+  - int anio
+  - int ultimoNumeroAsignado
+
+  + String siguienteNumeroCorrelativo()
+  }
+
+  Class RegistroAuditoria <<B2>> {
+  - int idRegistro
+  - DateTime fechaHora
+  - String tipoOperacion
+  - String entidadAfectada
+  - String valorAnterior
+  - String valorNuevo
+
+  {static} + RegistroAuditoria registrarEvento(Usuario u, String tipoOperacion, String entidad, String valorAnterior, String valorNuevo)
+  {static} + List<RegistroAuditoria> consultar(Usuario usuario, String tipoOperacion, String entidad, Date desde, Date hasta)
+  }
+
+  Class PeriodoContable <<B2>> {
+  - String idPeriodo
+  - TipoPeriodo tipo
+  - Date fechaInicio
+  - Date fechaFin
+  - bool cerrado
+  - DateTime fechaCierre
+  - String motivoReapertura
+
+  + List<String> obtenerAvisosPendientes()
+  + bool cerrarPeriodo(Usuario admin)
+  + bool reabrirPeriodo(Usuario superadmin, String motivo)
+  + bool contieneFecha(Date fecha)
+  }
+
+  Class EjecucionProceso <<B2>> {
+  - int idEjecucion
+  - TipoProceso tipoProceso
+  - DateTime fechaHoraInicio
+  - DateTime fechaHoraFin
+  - String estadoSalud
+  - int totalGeneradas
+  - int totalOmitidas
+  - int totalErrores
+  - List<String> detalleErrores
+
+  + void registrarResultado()
+  }
+
+  Class CopiaSeguridad <<B2>> {
+  - int idCopia
+  - DateTime fechaCreacion
+  - String rutaArchivo
+  - long tamanoBytes
+  - bool verificadaCompleta
+
+  + bool generarCopia()
+  + bool verificarIntegridad()
+  + File descargar()
+  + bool restaurar(Usuario superadmin)
+  }
 }
 
-Class Notificacion {
-- int idNotificacion
-- String mensaje
-- DateTime fechaCreacion
-- EstadoNotificacion estado
-- CanalNotificacion canal
+' =====================================================
+'  BLOQUE 3 · CLIENTES Y SUSCRIPCIONES
+' =====================================================
+package "3 · Clientes y suscripciones" #F4FBF5 {
 
-+ void marcarComoLeida()
-+ void marcarComoAtendida()
-+ bool enviar()
+  Class Cliente <<B3>> {
+  - int idCliente
+  - String razonSocial
+  - String nif
+  - String direccionFiscal
+  - String pais
+  - String sector
+  - List<String> etiquetas
+  - EstadoCliente estado
+  - Date fechaBaja
+  - bool eliminadoLogico
+
+  + bool darDeAlta()
+  + void reactivar()
+  + void modificarDatosFiscales()
+  + void asignarResponsable(Usuario u)
+  + void desasignarResponsable()
+  + RevisionRango iniciarRevisionRango(double importe, String fuente, Date fecha)
+  + List<Factura> obtenerFacturasPendientes()
+  + double calcularDeudaTotal()
+  + void darDeBaja(Date fechaEfectiva)
+  + void borradoLogico(String motivo)
+  }
+
+  Class RevisionRango <<B3>> {
+  - int idRevision
+  - Date fechaRevision
+  - double facturacionAnualRegistrada
+  - String fuenteDato
+  - Date fechaEfecto
+  - String motivoCorreccion
+
+  + SolicitudAprobacion solicitarAprobacionCambio()
+  + void aplicarCambioRango()
+  }
+
+  Class ContactoCliente <<B3>> {
+  - int idContacto
+  - String nombre
+  - String email
+  - String telefono
+  - String funcion
+  - String idioma
+  - bool consienteWhatsApp
+
+  + CanalNotificacion obtenerCanalEnvio()
+  + void anonimizarDatos()
+  + void eliminarDatos()
+  }
+
+  Class ImportacionClientes <<B3>> {
+  - int idImportacion
+  - String nombreArchivo
+  - DateTime fechaEjecucion
+  - Map<String, String> mapeoColumnas
+  - int totalFilas
+  - int filasExitosas
+  - int filasConError
+  - int filasDuplicadas
+  - List<String> erroresDetalle
+
+  + bool cargarArchivo(File archivo)
+  + void definirMapeo(Map<String, String> mapeo)
+  + bool validarFilas()
+  + List<Cliente> procesarImportacion()
+  + String obtenerResumen()
+  }
+
+  Class Suscripcion <<B3>> {
+  - int idSuscripcion
+  - String plan
+  - double cuotaMensual
+  - int diaVencimientoPactado
+  - Date fechaInicio
+  - Date fechaFin
+  - EstadoSuscripcion estado
+  - String motivoPausa
+  - Date fechaInicioPausa
+  - Date fechaReactivacionPrevista
+
+  + void activar()
+  + double calcularProrrateo(Date fechaAlta)
+  + void pausar(Date fechaInicio, Date fechaReactivacion, String motivo)
+  + void reactivar()
+  + void cancelar(Date fechaEfectiva)
+  + void actualizarTarifa(TarifaRango nuevoRango, Date fechaEfecto)
+  + void agregarExcepcion(ExcepcionComercial e)
+  + List<ExcepcionComercial> obtenerExcepcionesVigentes(Date mes)
+  + double calcularImporteMensual(Date mes)
+  + Factura generarFacturaMensual(Date mes)
+  }
+
+  Class ExcepcionComercial <<B3>> {
+  - int idExcepcion
+  - TipoExcepcion tipo
+  - double valor
+  - String motivo
+  - Date fechaInicio
+  - Date fechaFin
+  - bool vigente
+
+  + SolicitudAprobacion solicitarAprobacion()
+  + double aplicarEnCuota(double importeBase)
+  }
 }
 
-Class AlertaCorporativa {
-- int idAlerta
-- String nombre
-- String condicionEvaluacion
-- CanalNotificacion canal
-- bool activa
+' =====================================================
+'  BLOQUE 4 · FACTURACIÓN, PRESUPUESTOS Y APROBACIONES
+' =====================================================
+package "4 · Facturación, presupuestos y aprobaciones" #FFF8F0 {
 
-+ bool evaluarCondicion(Object contexto)
-+ void dispararAlerta()
+  Class ProductoCatalogo <<B4>> {
+  - int idProducto
+  - String codigoSKU
+  - String nombre
+  - String descripcion
+  - double precioUnitarioBase
+  - double porcentajeImpuestoDefecto
+  - bool activo
+
+  + void actualizarPrecio(double nuevoPrecio)
+  }
+
+  Class Presupuesto <<B4>> {
+  - String idPresupuesto
+  - Date fechaCreacion
+  - EstadoPresupuesto estado
+
+  + double calcularTotal()
+  + bool enviar()
+  + void aceptar(DocumentoAdjunto evidencia)
+  + void rechazar(DocumentoAdjunto evidencia)
+  + Factura convertirEnFactura()
+  }
+
+  Class Factura <<B4>> {
+  - int idFactura
+  - String numeroFactura
+  - TipoFactura tipo
+  - Date fechaEmision
+  - Date fechaVencimiento
+  - String mesFacturado
+  - String moneda
+  - String centroCoste
+  - double baseImponible
+  - double totalImpuestos
+  - double importeTotal
+  - double saldoPendiente
+  - EstadoFactura estado
+  - bool enDisputa
+
+  + void calcularTotales()
+  + void agregarLineaDesdeCatalogo(ProductoCatalogo p, int cantidad, double dto)
+  + bool modificarBorrador()
+  + bool eliminarBorrador()
+  + bool emitir()
+  + DocumentoAdjunto generarPdf()
+  + DocumentoAdjunto obtenerPdf()
+  + bool enviarAlCliente()
+  + void marcarComoPagada(Cobro c)
+  + int calcularDiasRetraso()
+  + bool requiereRecordatorio(Date fecha)
+  + Factura crearRectificativa(String motivo)
+  + bool anular(String motivo)
+  + void declararIncobrable(String motivo)
+  }
+
+  Class LineaFactura <<B4>> {
+  - int numeroLinea
+  - String concepto
+  - int cantidad
+  - double precioUnitario
+  - double porcentajeDescuento
+  - double porcentajeImpuesto
+
+  + double calcularSubtotal()
+  }
+
+  Class EnvioFactura <<B4>> {
+  - int idEnvio
+  - DateTime fechaHoraEnvio
+  - CanalNotificacion canalUtilizado
+  - String destinatario
+  - bool exitoso
+  - String detalleErrorRebote
+
+  + bool enviar()
+  + bool reintentarEnvio()
+  }
+
+  Class SolicitudAprobacion <<B4>> {
+  - int idSolicitud
+  - TipoAprobacion tipoOperacion
+  - double importeAfectado
+  - String motivoSolicitud
+  - String comentarioResolucion
+  - DateTime fechaSolicitud
+  - DateTime fechaResolucion
+  - EstadoAprobacion estado
+
+  + bool requiereSuperadmin()
+  + bool aprobar(Usuario aprobador, String comentario)
+  + void rechazar(Usuario aprobador, String comentario)
+  + void reasignar(Usuario suplente)
+  }
 }
 
-Class Comentario {
-- int idComentario
-- String texto
-- DateTime fechaCreacion
-- bool restringidoSoloAdmin
+' =====================================================
+'  BLOQUE 5 · COBROS, IMPAGOS E INCIDENCIAS
+' =====================================================
+package "5 · Cobros, impagos e incidencias" #FEF6F6 {
 
-+ void publicar()
-+ void notificarMencionados()
+  Class Cobro <<B5>> {
+  - int idCobro
+  - String referenciaExterna
+  - Date fechaCobro
+  - double importe
+  - OrigenCobro origen
+  - bool conciliado
+
+  + bool procesarCobroAutomatico()
+  + bool conciliarManualmente(Factura f, DocumentoAdjunto justificante)
+  + void deshacerConciliacion(String motivo)
+  }
+
+  Class RecordatorioImpago <<B5>> {
+  - int idRecordatorio
+  - DateTime fechaEnvio
+  - int numeroIntento
+  - CanalNotificacion canal
+  - bool enviadoConExito
+
+  + bool enviarRecordatorio()
+  }
+
+  Class Incidencia <<B5>> {
+  - int idIncidencia
+  - String descripcion
+  - Prioridad prioridad
+  - DateTime fechaApertura
+  - bool esDisputaFactura
+  - Date fechaRevision
+  - String resolucion
+  - bool resuelta
+
+  + void abrirIncidencia()
+  + void pausarSeguimientoImpago(String motivo, Date fechaRevision)
+  + void reanudarSeguimientoImpago()
+  + void resolverYCerrar(String resolucion)
+  }
 }
 
-Class DocumentoAdjunto {
-- int idDocumento
-- String nombreArchivo
-- FormatoArchivo formato
-- long tamanoBytes
-- String rutaAlmacenamiento
-- DateTime fechaSubida
+' =====================================================
+'  BLOQUE 6 · INFORMES, PAQUETES Y OPERACIONES MASIVAS
+' =====================================================
+package "6 · Informes, paquetes y operaciones masivas" #FFFDF0 {
 
-+ bool validarFormatoYTamano()
-+ File descargar()
+  Class Informe <<B6>> {
+  - int idInforme
+  - Date fechaDesde
+  - Date fechaHasta
+  - EstadoFactura filtroEstado
+  - TipoFactura filtroTipo
+  - String filtroPais
+  - String filtroMoneda
+  - FormatoArchivo formatoExportacion
+  - EstadoInforme estado
+  - DateTime fechaGeneracion
+
+  + DocumentoAdjunto generar()
+  + void notificarListo()
+  }
+
+  Class PaqueteGestoria <<B6>> {
+  - int idPaquete
+  - DateTime fechaGeneracion
+  - int totalFacturasIncluidas
+
+  + DocumentoAdjunto compilarPaquete()
+  + File descargarZip()
+  }
+
+  Class AccionMasiva <<B6>> {
+  - int idAccionMasiva
+  - TipoAccionMasiva tipoAccion
+  - bool confirmada
+  - DateTime fechaEjecucion
+  - int totalProcesados
+  - int totalExitosos
+  - int totalFallidos
+  - Map<String, bool> resultadosPorElemento
+  - Map<String, String> erroresDetalle
+
+  + int previsualizarAfectados(List<Object> elementos)
+  + bool esSensible()
+  + void confirmar()
+  + void ejecutar(List<Object> elementos)
+  + String obtenerInformeResultados()
+  }
 }
 
-' ---------- Bloque 2: Configuración, auditoría y datos ----------
-Class ConfiguracionSistema {
-- int plazoPagoDefecto
-- List<int> diasRecordatorio
-- double impuestoDefecto
-- String monedaBase
-- double umbralAprobacionInferior
-- double umbralAprobacionSuperior
-- int periodicidadCopias
-- String datosEmisor
-- String datosSoporte
+' =====================================================
+'  ENUMERACIONES (listas de valores posibles)
+'  Cada atributo de una clase indica cuál usa. Ejemplo: "EstadoFactura estado"
+' =====================================================
+package "Enumeraciones · valores posibles" #F7F7F7 {
 
-+ bool actualizarParametros()
-+ bool validarUmbrales()
-+ TarifaRango obtenerRangoPara(double facturacionAnual)
+  ' --- Bloque 1: usuarios y trabajo diario ---
+  enum RolUsuario <<EN>> {
+  USUARIO
+  ADMIN
+  SUPERADMIN
+  }
+
+  enum EstadoNotificacion <<EN>> {
+  NO_LEIDA
+  LEIDA
+  ATENDIDA
+  }
+
+  enum CanalNotificacion <<EN>> {
+  INTERNO
+  EMAIL
+  WHATSAPP
+  }
+
+  enum FormatoArchivo <<EN>> {
+  PDF
+  CSV
+  PNG
+  JPG
+  ZIP
+  }
+
+  ' --- Bloque 2: configuración, auditoría y datos ---
+  enum ProveedorPasarela <<EN>> {
+  STRIPE
+  REVOLUT
+  }
+
+  enum EntornoPasarela <<EN>> {
+  SANDBOX
+  PRODUCCION
+  }
+
+  enum TipoEvento <<EN>> {
+  EMISION_FACTURA
+  RECORDATORIO_IMPAGO
+  ENVIO_PRESUPUESTO
+  INVITACION_USUARIO
+  RECUPERACION_PASSWORD
+  NOTIFICACION_GENERAL
+  }
+
+  enum TipoSerie <<EN>> {
+  ORDINARIA
+  RECTIFICATIVA
+  }
+
+  enum TipoPeriodo <<EN>> {
+  MENSUAL
+  TRIMESTRAL
+  }
+
+  enum TipoProceso <<EN>> {
+  GENERACION_MENSUAL
+  RECORDATORIOS_IMPAGO
+  CONSULTA_COBROS
+  REVISION_ANUAL
+  COPIA_SEGURIDAD
+  ACCIONES_PROGRAMADAS
+  }
+
+  ' --- Bloque 3: clientes y suscripciones ---
+  enum EstadoCliente <<EN>> {
+  ACTIVO
+  BAJA
+  }
+
+  enum EstadoSuscripcion <<EN>> {
+  PROGRAMADA
+  ACTIVA
+  PAUSADA
+  CANCELADA
+  }
+
+  enum TipoExcepcion <<EN>> {
+  DESCUENTO
+  MES_GRATIS
+  PRECIO_PACTADO
+  NO_PRORRATEAR
+  }
+
+  ' --- Bloque 4: facturación, presupuestos y aprobaciones ---
+  enum EstadoPresupuesto <<EN>> {
+  PENDIENTE
+  ENVIADO
+  ACEPTADO
+  RECHAZADO
+  }
+
+  enum TipoFactura <<EN>> {
+  PUNTUAL
+  RECURRENTE
+  RECTIFICATIVA
+  }
+
+  enum EstadoFactura <<EN>> {
+  BORRADOR
+  PENDIENTE_APROBACION
+  EMITIDA
+  PAGADA
+  VENCIDA
+  RECTIFICADA
+  ANULADA
+  INCOBRABLE
+  }
+
+  enum TipoAprobacion <<EN>> {
+  IMPORTE_MANUAL
+  DESCUENTO_FACTURA
+  EXCEPCION_COMERCIAL
+  VENCIMIENTO_ESPECIAL
+  FACTURA_IMPORTE_ALTO
+  CAMBIO_RANGO
+  RECTIFICATIVA
+  INCOBRABLE
+  }
+
+  enum EstadoAprobacion <<EN>> {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+  }
+
+  ' --- Bloque 5: cobros, impagos e incidencias ---
+  enum OrigenCobro <<EN>> {
+  STRIPE
+  REVOLUT
+  MANUAL
+  }
+
+  enum Prioridad <<EN>> {
+  BAJA
+  MEDIA
+  ALTA
+  }
+
+  ' --- Bloque 6: informes, paquetes y operaciones masivas ---
+  enum EstadoInforme <<EN>> {
+  EN_PROCESO
+  LISTO
+  ERROR
+  }
+
+  enum TipoAccionMasiva <<EN>> {
+  REASIGNAR_CLIENTES
+  EXPORTAR_SELECCION
+  CAMBIAR_SECTOR
+  GENERAR_INFORMES
+  }
 }
 
-Class ConexionPasarelaCobro {
-- int idConexion
-- ProveedorPasarela proveedor
-- String apiKeyCifrada
-- String webhookSecretCifrado
-- bool activa
-- EntornoPasarela entorno
+' =====================================================
+'  RELACIONES (cada color = bloque del que sale la línea)
+' =====================================================
 
-+ bool guardarCredencialesCifradas(String apiKey, String secret)
-+ bool probarConexion()
-+ Object obtenerClienteAPI()
-}
-
-Class PlantillaMensaje {
-- int idPlantilla
-- String nombre
-- TipoEvento tipoEvento
-- String idioma
-- CanalNotificacion canal
-- String asunto
-- String cuerpo
-- List<String> variablesDisponibles
-
-+ String previsualizar(Map<String, String> datosPrueba)
-+ bool enviarPrueba(String destinatarioTest)
-+ String renderizar(Map<String, String> datos)
-}
-
-Class CalendarioLaboral {
-- int anio
-- String region
-
-+ bool esLaborable(Date fecha)
-+ Date obtenerSiguienteDiaLaborable(Date fecha)
-+ void agregarFestivo(DiaFestivo festivo)
-}
-
-Class DiaFestivo {
-- Date fecha
-- String descripcion
-- bool esNacional
-}
-
-Class TarifaRango {
-- int idTarifaRango
-- String nombreRango
-- double facturacionMinima
-- double facturacionMaxima
-- double cuotaBaseAsociada
-
-+ bool contiene(double facturacionAnual)
-}
-
-Class SerieFacturacion {
-- String codigoSerie
-- TipoSerie tipoSerie
-- int anio
-- int ultimoNumeroAsignado
-
-+ String siguienteNumeroCorrelativo()
-}
-
-Class RegistroAuditoria {
-- int idRegistro
-- DateTime fechaHora
-- String tipoOperacion
-- String entidadAfectada
-- String valorAnterior
-- String valorNuevo
-
-{static} + RegistroAuditoria registrarEvento(Usuario u, String tipoOperacion, String entidad, String valorAnterior, String valorNuevo)
-{static} + List<RegistroAuditoria> consultar(Usuario usuario, String tipoOperacion, String entidad, Date desde, Date hasta)
-}
-
-Class PeriodoContable {
-- String idPeriodo
-- TipoPeriodo tipo
-- Date fechaInicio
-- Date fechaFin
-- bool cerrado
-- DateTime fechaCierre
-- String motivoReapertura
-
-+ List<String> obtenerAvisosPendientes()
-+ bool cerrarPeriodo(Usuario admin)
-+ bool reabrirPeriodo(Usuario superadmin, String motivo)
-+ bool contieneFecha(Date fecha)
-}
-
-Class EjecucionProceso {
-- int idEjecucion
-- TipoProceso tipoProceso
-- DateTime fechaHoraInicio
-- DateTime fechaHoraFin
-- String estadoSalud
-- int totalGeneradas
-- int totalOmitidas
-- int totalErrores
-- List<String> detalleErrores
-
-+ void registrarResultado()
-}
-
-Class CopiaSeguridad {
-- int idCopia
-- DateTime fechaCreacion
-- String rutaArchivo
-- long tamanoBytes
-- bool verificadaCompleta
-
-+ bool generarCopia()
-+ bool verificarIntegridad()
-+ File descargar()
-+ bool restaurar(Usuario superadmin)
-}
-
-' ---------- Bloque 3: Clientes y suscripciones ----------
-Class Cliente {
-- int idCliente
-- String razonSocial
-- String nif
-- String direccionFiscal
-- String pais
-- String sector
-- List<String> etiquetas
-- EstadoCliente estado
-- Date fechaBaja
-- bool eliminadoLogico
-
-+ bool darDeAlta()
-+ void reactivar()
-+ void modificarDatosFiscales()
-+ void asignarResponsable(Usuario u)
-+ void desasignarResponsable()
-+ RevisionRango iniciarRevisionRango(double importe, String fuente, Date fecha)
-+ List<Factura> obtenerFacturasPendientes()
-+ double calcularDeudaTotal()
-+ void darDeBaja(Date fechaEfectiva)
-+ void borradoLogico(String motivo)
-}
-
-Class RevisionRango {
-- int idRevision
-- Date fechaRevision
-- double facturacionAnualRegistrada
-- String fuenteDato
-- Date fechaEfecto
-- String motivoCorreccion
-
-+ SolicitudAprobacion solicitarAprobacionCambio()
-+ void aplicarCambioRango()
-}
-
-Class ContactoCliente {
-- int idContacto
-- String nombre
-- String email
-- String telefono
-- String funcion
-- String idioma
-- bool consienteWhatsApp
-
-+ CanalNotificacion obtenerCanalEnvio()
-+ void anonimizarDatos()
-+ void eliminarDatos()
-}
-
-Class ImportacionClientes {
-- int idImportacion
-- String nombreArchivo
-- DateTime fechaEjecucion
-- Map<String, String> mapeoColumnas
-- int totalFilas
-- int filasExitosas
-- int filasConError
-- int filasDuplicadas
-- List<String> erroresDetalle
-
-+ bool cargarArchivo(File archivo)
-+ void definirMapeo(Map<String, String> mapeo)
-+ bool validarFilas()
-+ List<Cliente> procesarImportacion()
-+ String obtenerResumen()
-}
-
-Class Suscripcion {
-- int idSuscripcion
-- String plan
-- double cuotaMensual
-- int diaVencimientoPactado
-- Date fechaInicio
-- Date fechaFin
-- EstadoSuscripcion estado
-- String motivoPausa
-- Date fechaInicioPausa
-- Date fechaReactivacionPrevista
-
-+ void activar()
-+ double calcularProrrateo(Date fechaAlta)
-+ void pausar(Date fechaInicio, Date fechaReactivacion, String motivo)
-+ void reactivar()
-+ void cancelar(Date fechaEfectiva)
-+ void actualizarTarifa(TarifaRango nuevoRango, Date fechaEfecto)
-+ void agregarExcepcion(ExcepcionComercial e)
-+ List<ExcepcionComercial> obtenerExcepcionesVigentes(Date mes)
-+ double calcularImporteMensual(Date mes)
-+ Factura generarFacturaMensual(Date mes)
-}
-
-Class ExcepcionComercial {
-- int idExcepcion
-- TipoExcepcion tipo
-- double valor
-- String motivo
-- Date fechaInicio
-- Date fechaFin
-- bool vigente
-
-+ SolicitudAprobacion solicitarAprobacion()
-+ double aplicarEnCuota(double importeBase)
-}
-
-' ---------- Bloque 4: Facturación, presupuestos y aprobaciones ----------
-Class ProductoCatalogo {
-- int idProducto
-- String codigoSKU
-- String nombre
-- String descripcion
-- double precioUnitarioBase
-- double porcentajeImpuestoDefecto
-- bool activo
-
-+ void actualizarPrecio(double nuevoPrecio)
-}
-
-Class Presupuesto {
-- String idPresupuesto
-- Date fechaCreacion
-- EstadoPresupuesto estado
-
-+ double calcularTotal()
-+ bool enviar()
-+ void aceptar(DocumentoAdjunto evidencia)
-+ void rechazar(DocumentoAdjunto evidencia)
-+ Factura convertirEnFactura()
-}
-
-Class Factura {
-- int idFactura
-- String numeroFactura
-- TipoFactura tipo
-- Date fechaEmision
-- Date fechaVencimiento
-- String mesFacturado
-- String moneda
-- String centroCoste
-- double baseImponible
-- double totalImpuestos
-- double importeTotal
-- double saldoPendiente
-- EstadoFactura estado
-- bool enDisputa
-
-+ void calcularTotales()
-+ void agregarLineaDesdeCatalogo(ProductoCatalogo p, int cantidad, double dto)
-+ bool modificarBorrador()
-+ bool eliminarBorrador()
-+ bool emitir()
-+ DocumentoAdjunto generarPdf()
-+ DocumentoAdjunto obtenerPdf()
-+ bool enviarAlCliente()
-+ void marcarComoPagada(Cobro c)
-+ int calcularDiasRetraso()
-+ bool requiereRecordatorio(Date fecha)
-+ Factura crearRectificativa(String motivo)
-+ bool anular(String motivo)
-+ void declararIncobrable(String motivo)
-}
-
-Class LineaFactura {
-- int numeroLinea
-- String concepto
-- int cantidad
-- double precioUnitario
-- double porcentajeDescuento
-- double porcentajeImpuesto
-
-+ double calcularSubtotal()
-}
-
-Class EnvioFactura {
-- int idEnvio
-- DateTime fechaHoraEnvio
-- CanalNotificacion canalUtilizado
-- String destinatario
-- bool exitoso
-- String detalleErrorRebote
-
-+ bool enviar()
-+ bool reintentarEnvio()
-}
-
-Class SolicitudAprobacion {
-- int idSolicitud
-- TipoAprobacion tipoOperacion
-- double importeAfectado
-- String motivoSolicitud
-- String comentarioResolucion
-- DateTime fechaSolicitud
-- DateTime fechaResolucion
-- EstadoAprobacion estado
-
-+ bool requiereSuperadmin()
-+ bool aprobar(Usuario aprobador, String comentario)
-+ void rechazar(Usuario aprobador, String comentario)
-+ void reasignar(Usuario suplente)
-}
-
-' ---------- Bloque 5: Cobros, impagos e incidencias ----------
-Class Cobro {
-- int idCobro
-- String referenciaExterna
-- Date fechaCobro
-- double importe
-- OrigenCobro origen
-- bool conciliado
-
-+ bool procesarCobroAutomatico()
-+ bool conciliarManualmente(Factura f, DocumentoAdjunto justificante)
-+ void deshacerConciliacion(String motivo)
-}
-
-Class RecordatorioImpago {
-- int idRecordatorio
-- DateTime fechaEnvio
-- int numeroIntento
-- CanalNotificacion canal
-- bool enviadoConExito
-
-+ bool enviarRecordatorio()
-}
-
-Class Incidencia {
-- int idIncidencia
-- String descripcion
-- Prioridad prioridad
-- DateTime fechaApertura
-- bool esDisputaFactura
-- Date fechaRevision
-- String resolucion
-- bool resuelta
-
-+ void abrirIncidencia()
-+ void pausarSeguimientoImpago(String motivo, Date fechaRevision)
-+ void reanudarSeguimientoImpago()
-+ void resolverYCerrar(String resolucion)
-}
-
-' ---------- Bloque 6: Informes, paquetes y operaciones masivas ----------
-Class Informe {
-- int idInforme
-- Date fechaDesde
-- Date fechaHasta
-- EstadoFactura filtroEstado
-- TipoFactura filtroTipo
-- String filtroPais
-- String filtroMoneda
-- FormatoArchivo formatoExportacion
-- EstadoInforme estado
-- DateTime fechaGeneracion
-
-+ DocumentoAdjunto generar()
-+ void notificarListo()
-}
-
-Class PaqueteGestoria {
-- int idPaquete
-- DateTime fechaGeneracion
-- int totalFacturasIncluidas
-
-+ DocumentoAdjunto compilarPaquete()
-+ File descargarZip()
-}
-
-Class AccionMasiva {
-- int idAccionMasiva
-- TipoAccionMasiva tipoAccion
-- bool confirmada
-- DateTime fechaEjecucion
-- int totalProcesados
-- int totalExitosos
-- int totalFallidos
-- Map<String, bool> resultadosPorElemento
-- Map<String, String> erroresDetalle
-
-+ int previsualizarAfectados(List<Object> elementos)
-+ bool esSensible()
-+ void confirmar()
-+ void ejecutar(List<Object> elementos)
-+ String obtenerInformeResultados()
-}
-
-' ---------- Composiciones ----------
-Usuario "1" *-- "0..*" Sesion : -sesionesActivas
-CalendarioLaboral "1" *-- "0..*" DiaFestivo : -festivos
-Factura "0..1" *-- "1..*" LineaFactura
-Presupuesto "0..1" *-- "1..*" LineaFactura
-Cliente "1" *-- "1..*" ContactoCliente
+' ---------- "Es parte de": si desaparece el todo, desaparecen sus partes ----------
+Usuario "1" *-[#2F6DB5]- "0..*" Sesion : -sesionesActivas
+CalendarioLaboral "1" *-[#6A4FB0]- "0..*" DiaFestivo : -festivos
+Factura "0..1" *-[#D9822B]- "1..*" LineaFactura
+Presupuesto "0..1" *-[#D9822B]- "1..*" LineaFactura
+Cliente "1" *-[#2E8B57]- "1..*" ContactoCliente
 
 note right of LineaFactura : {xor} cada línea pertenece\na una Factura o a un Presupuesto
 
-' ---------- Asociaciones ----------
-ConfiguracionSistema "1" --> "0..*" ConexionPasarelaCobro : -pasarelasConfiguradas
-ConfiguracionSistema "1" --> "0..*" PlantillaMensaje : -plantillasNotificacion
-ConfiguracionSistema "1" --> "1..*" CalendarioLaboral : -calendarios
-ConfiguracionSistema "1" --> "1..*" TarifaRango : -tablaTarifas
-ConfiguracionSistema "1" --> "1..*" SerieFacturacion : -seriesConfiguradas
+' ---------- Bloque 1 (azul): usuarios y trabajo diario ----------
+' Un usuario gestiona varios clientes (un cliente puede quedarse sin responsable)
+Usuario "0..1" -[#2F6DB5]-> "0..*" Cliente : -clientesAsignados
+Usuario "0..*" -[#2F6DB5]-> "0..*" Cliente : -favoritos
+Usuario "1" -[#2F6DB5]-> "0..*" Notificacion : -notificaciones
 
-AlertaCorporativa "0..*" --> "0..*" Usuario : -destinatarios
-Usuario "0..1" --> "0..*" Cliente : -clientesAsignados
-Usuario "0..*" --> "0..*" Cliente : -favoritos
-Usuario "1" --> "0..*" Notificacion : -notificaciones
-DelegacionTemporal "0..*" --> "1" Usuario : -titular
-DelegacionTemporal "0..*" --> "1" Usuario : -sustituto
-DelegacionTemporal "0..*" --> "0..*" Cliente : -clientesDelegados
+' Una delegación pasa los clientes de un usuario a otro durante una ausencia
+DelegacionTemporal "0..*" -[#2F6DB5]-> "1" Usuario : -titular
+DelegacionTemporal "0..*" -[#2F6DB5]-> "1" Usuario : -sustituto
+DelegacionTemporal "0..*" -[#2F6DB5]-> "0..*" Cliente : -clientesDelegados
 
-Comentario "0..*" --> "1" Usuario : -autor
-Comentario "0..*" --> "0..*" Usuario : -mencionados
-Comentario "0..*" --> "0..1" Cliente
-Comentario "0..*" --> "0..1" Factura
-Comentario "0..*" --> "0..1" Incidencia
+AlertaCorporativa "0..*" -[#2F6DB5]-> "0..*" Usuario : -destinatarios
+
+' Un comentario lo escribe un usuario y va sobre UN cliente, UNA factura o UNA incidencia
+Comentario "0..*" -[#2F6DB5]-> "1" Usuario : -autor
+Comentario "0..*" -[#2F6DB5]-> "0..*" Usuario : -mencionados
+Comentario "0..*" -[#2F6DB5]-> "0..1" Cliente
+Comentario "0..*" -[#2F6DB5]-> "0..1" Factura
+Comentario "0..*" -[#2F6DB5]-> "0..1" Incidencia
 note bottom of Comentario : {xor} sobre un cliente,\nuna factura o una incidencia
 
-DocumentoAdjunto "0..*" --> "1" Usuario : -subidoPor
-DocumentoAdjunto "0..*" <-- "0..1" Cliente
-DocumentoAdjunto "0..*" <-- "0..1" Factura
-DocumentoAdjunto "0..*" <-- "0..1" Incidencia
+' Un documento adjunto lo sube un usuario y pertenece a UN solo elemento
+DocumentoAdjunto "0..*" -[#2F6DB5]-> "1" Usuario : -subidoPor
+DocumentoAdjunto "0..*" <-[#2E8B57]- "0..1" Cliente
+DocumentoAdjunto "0..*" <-[#D9822B]- "0..1" Factura
+DocumentoAdjunto "0..*" <-[#C0392B]- "0..1" Incidencia
 note bottom of DocumentoAdjunto : {xor} cada documento pertenece\na un único elemento
 
-RegistroAuditoria "0..*" --> "0..1" Usuario : -autor
-CopiaSeguridad "0..*" --> "0..1" EjecucionProceso : -ejecucionOrigen
-CopiaSeguridad "0..*" --> "0..1" Usuario : -restauradaPor
+' ---------- Bloque 2 (morado): configuración, auditoría y datos ----------
+ConfiguracionSistema "1" -[#6A4FB0]-> "0..*" ConexionPasarelaCobro : -pasarelasConfiguradas
+ConfiguracionSistema "1" -[#6A4FB0]-> "0..*" PlantillaMensaje : -plantillasNotificacion
+ConfiguracionSistema "1" -[#6A4FB0]-> "1..*" CalendarioLaboral : -calendarios
+ConfiguracionSistema "1" -[#6A4FB0]-> "1..*" TarifaRango : -tablaTarifas
+ConfiguracionSistema "1" -[#6A4FB0]-> "1..*" SerieFacturacion : -seriesConfiguradas
 
-Cliente "0..*" --> "1" TarifaRango : -rangoActual
-Cliente "1" --> "0..*" RevisionRango : -historialRevisiones
-RevisionRango "0..*" --> "1" TarifaRango : -rangoAnterior
-RevisionRango "0..*" --> "1" TarifaRango : -rangoNuevo
-ImportacionClientes "0..*" --> "1" Usuario : -ejecutadoPor
+' Cada registro de auditoría dice qué usuario lo hizo (los procesos automáticos no tienen usuario)
+RegistroAuditoria "0..*" -[#6A4FB0]-> "0..1" Usuario : -autor
+CopiaSeguridad "0..*" -[#6A4FB0]-> "0..1" EjecucionProceso : -ejecucionOrigen
+CopiaSeguridad "0..*" -[#6A4FB0]-> "0..1" Usuario : -restauradaPor
 
-Cliente "1" --> "0..*" Suscripcion : -suscripciones
-Suscripcion "1" --> "0..*" ExcepcionComercial : -excepciones
-Cliente "1" --> "0..*" Factura : -facturas
-Cliente "1" --> "0..*" Presupuesto : -presupuestos
-Suscripcion "0..1" --> "0..*" Factura : -facturasGeneradas
-Presupuesto "0..1" --> "0..1" DocumentoAdjunto : -evidencia
-Presupuesto "0..1" --> "0..1" Factura : -facturaGenerada
+' ---------- Bloque 3 (verde): clientes y suscripciones ----------
+Cliente "0..*" -[#2E8B57]-> "1" TarifaRango : -rangoActual
+Cliente "1" -[#2E8B57]-> "0..*" RevisionRango : -historialRevisiones
+RevisionRango "0..*" -[#2E8B57]-> "1" TarifaRango : -rangoAnterior
+RevisionRango "0..*" -[#2E8B57]-> "1" TarifaRango : -rangoNuevo
+ImportacionClientes "0..*" -[#2E8B57]-> "1" Usuario : -ejecutadoPor
 
-LineaFactura "0..*" --> "0..1" ProductoCatalogo : -productoOrigen
-Factura "0..*" --> "0..1" SerieFacturacion : -serie
-Factura "0..1" --> "0..1" DocumentoAdjunto : -pdfEmitido
-Factura "0..1" <-- "0..*" Factura : -facturaOriginal
-Factura "1" --> "0..*" EnvioFactura : -historialEnvios
-EnvioFactura "0..*" --> "1" PlantillaMensaje : -plantillaUsada
+Cliente "1" -[#2E8B57]-> "0..*" Suscripcion : -suscripciones
+Suscripcion "1" -[#2E8B57]-> "0..*" ExcepcionComercial : -excepciones
+Cliente "1" -[#2E8B57]-> "0..*" Factura : -facturas
+Cliente "1" -[#2E8B57]-> "0..*" Presupuesto : -presupuestos
+Suscripcion "0..1" -[#2E8B57]-> "0..*" Factura : -facturasGeneradas
 
-SolicitudAprobacion "0..*" --> "1" Usuario : -solicitante
-SolicitudAprobacion "0..*" --> "0..1" Usuario : -aprobador
-SolicitudAprobacion "0..*" --> "0..1" Usuario : -asignadoA
-SolicitudAprobacion "0..1" <-- "0..1" RevisionRango
-SolicitudAprobacion "0..1" <-- "0..1" ExcepcionComercial
-SolicitudAprobacion "0..*" <-- "0..1" Factura
-SolicitudAprobacion "0..*" <-- "0..1" Suscripcion
+' ---------- Bloque 4 (naranja): facturación, presupuestos y aprobaciones ----------
+Presupuesto "0..1" -[#D9822B]-> "0..1" DocumentoAdjunto : -evidencia
+Presupuesto "0..1" -[#D9822B]-> "0..1" Factura : -facturaGenerada
+LineaFactura "0..*" -[#D9822B]-> "0..1" ProductoCatalogo : -productoOrigen
+Factura "0..*" -[#D9822B]-> "0..1" SerieFacturacion : -serie
+Factura "0..1" -[#D9822B]-> "0..1" DocumentoAdjunto : -pdfEmitido
+
+' Una factura original puede tener varias rectificativas
+Factura "0..1" <-[#D9822B]- "0..*" Factura : -facturaOriginal
+Factura "1" -[#D9822B]-> "0..*" EnvioFactura : -historialEnvios
+EnvioFactura "0..*" -[#D9822B]-> "1" PlantillaMensaje : -plantillaUsada
+
+' Una solicitud de aprobación la pide un usuario y la resuelve otro
+SolicitudAprobacion "0..*" -[#D9822B]-> "1" Usuario : -solicitante
+SolicitudAprobacion "0..*" -[#D9822B]-> "0..1" Usuario : -aprobador
+SolicitudAprobacion "0..*" -[#D9822B]-> "0..1" Usuario : -asignadoA
+SolicitudAprobacion "0..1" <-[#2E8B57]- "0..1" RevisionRango
+SolicitudAprobacion "0..1" <-[#2E8B57]- "0..1" ExcepcionComercial
+SolicitudAprobacion "0..*" <-[#D9822B]- "0..1" Factura
+SolicitudAprobacion "0..*" <-[#2E8B57]- "0..1" Suscripcion
 note bottom of SolicitudAprobacion : {xor} cada solicitud se refiere\na un único elemento
 
-Factura "0..1" --> "0..*" Cobro : -cobros
-Cobro "0..1" --> "0..1" DocumentoAdjunto : -justificante
-Factura "1" --> "0..*" RecordatorioImpago : -recordatorios
-RecordatorioImpago "0..*" --> "1" PlantillaMensaje : -plantillaUsada
+' ---------- Bloque 5 (rojo): cobros, impagos e incidencias ----------
+Factura "0..1" -[#D9822B]-> "0..*" Cobro : -cobros
+Cobro "0..1" -[#C0392B]-> "0..1" DocumentoAdjunto : -justificante
+Factura "1" -[#D9822B]-> "0..*" RecordatorioImpago : -recordatorios
+RecordatorioImpago "0..*" -[#C0392B]-> "1" PlantillaMensaje : -plantillaUsada
 
-Incidencia "0..*" --> "0..1" Cliente
-Incidencia "0..*" --> "0..1" Factura
-Incidencia "0..*" --> "1" Usuario : -responsable
+Incidencia "0..*" -[#C0392B]-> "0..1" Cliente
+Incidencia "0..*" -[#C0392B]-> "0..1" Factura
+Incidencia "0..*" -[#C0392B]-> "1" Usuario : -responsable
 note bottom of Incidencia : {xor} sobre un cliente\no sobre una factura
 
-Informe "0..*" --> "1" Usuario : -generadoPor
-Informe "0..*" --> "0..1" Cliente : -filtroCliente
-Informe "0..*" --> "0..1" Usuario : -filtroResponsable
-Informe "0..1" --> "0..1" DocumentoAdjunto : -archivoGenerado
-PaqueteGestoria "0..*" --> "1" PeriodoContable : -periodoAsociado
-PaqueteGestoria "0..1" --> "0..1" DocumentoAdjunto : -archivoZip
-PaqueteGestoria "0..*" --> "1" Usuario : -generadoPor
-AccionMasiva "0..*" --> "1" Usuario : -ejecutadoPor
-AccionMasiva "0..1" --> "0..*" Informe : -informesGenerados
+' ---------- Bloque 6 (dorado): informes, paquetes y operaciones masivas ----------
+Informe "0..*" -[#B8960C]-> "1" Usuario : -generadoPor
+Informe "0..*" -[#B8960C]-> "0..1" Cliente : -filtroCliente
+Informe "0..*" -[#B8960C]-> "0..1" Usuario : -filtroResponsable
+Informe "0..1" -[#B8960C]-> "0..1" DocumentoAdjunto : -archivoGenerado
+PaqueteGestoria "0..*" -[#B8960C]-> "1" PeriodoContable : -periodoAsociado
+PaqueteGestoria "0..1" -[#B8960C]-> "0..1" DocumentoAdjunto : -archivoZip
+PaqueteGestoria "0..*" -[#B8960C]-> "1" Usuario : -generadoPor
+AccionMasiva "0..*" -[#B8960C]-> "1" Usuario : -ejecutadoPor
+AccionMasiva "0..1" -[#B8960C]-> "0..*" Informe : -informesGenerados
 
-' ---------- Dependencias ----------
-Factura ..> PeriodoContable : <<uses>>
-Factura ..> ConfiguracionSistema : <<uses>>
-RecordatorioImpago ..> CalendarioLaboral : <<uses>>
-SolicitudAprobacion ..> ConfiguracionSistema : <<uses>>
-RevisionRango ..> ConfiguracionSistema : <<uses>>
-
-
-
-enum RolUsuario {
-USUARIO
-ADMIN
-SUPERADMIN
-}
-
-enum EstadoNotificacion {
-NO_LEIDA
-LEIDA
-ATENDIDA
-}
-
-enum CanalNotificacion {
-INTERNO
-EMAIL
-WHATSAPP
-}
-
-enum FormatoArchivo {
-PDF
-CSV
-PNG
-JPG
-ZIP
-}
-
-enum ProveedorPasarela {
-STRIPE
-REVOLUT
-}
-
-enum EntornoPasarela {
-SANDBOX
-PRODUCCION
-}
-
-enum TipoEvento {
-EMISION_FACTURA
-RECORDATORIO_IMPAGO
-ENVIO_PRESUPUESTO
-INVITACION_USUARIO
-RECUPERACION_PASSWORD
-NOTIFICACION_GENERAL
-}
-
-enum TipoSerie {
-ORDINARIA
-RECTIFICATIVA
-}
-
-enum TipoPeriodo {
-MENSUAL
-TRIMESTRAL
-}
-
-enum TipoProceso {
-GENERACION_MENSUAL
-RECORDATORIOS_IMPAGO
-CONSULTA_COBROS
-REVISION_ANUAL
-COPIA_SEGURIDAD
-ACCIONES_PROGRAMADAS
-}
-
-enum EstadoCliente {
-ACTIVO
-BAJA
-}
-
-enum EstadoSuscripcion {
-PROGRAMADA
-ACTIVA
-PAUSADA
-CANCELADA
-}
-
-enum TipoExcepcion {
-DESCUENTO
-MES_GRATIS
-PRECIO_PACTADO
-NO_PRORRATEAR
-}
-
-enum EstadoPresupuesto {
-PENDIENTE
-ENVIADO
-ACEPTADO
-RECHAZADO
-}
-
-enum TipoFactura {
-PUNTUAL
-RECURRENTE
-RECTIFICATIVA
-}
-
-enum EstadoFactura {
-BORRADOR
-PENDIENTE_APROBACION
-EMITIDA
-PAGADA
-VENCIDA
-RECTIFICADA
-ANULADA
-INCOBRABLE
-}
-
-enum TipoAprobacion {
-IMPORTE_MANUAL
-DESCUENTO_FACTURA
-EXCEPCION_COMERCIAL
-VENCIMIENTO_ESPECIAL
-FACTURA_IMPORTE_ALTO
-CAMBIO_RANGO
-RECTIFICATIVA
-INCOBRABLE
-}
-
-enum EstadoAprobacion {
-PENDIENTE
-APROBADA
-RECHAZADA
-}
-
-enum OrigenCobro {
-STRIPE
-REVOLUT
-MANUAL
-}
-
-enum Prioridad {
-BAJA
-MEDIA
-ALTA
-}
-
-enum EstadoInforme {
-EN_PROCESO
-LISTO
-ERROR
-}
-
-enum TipoAccionMasiva {
-REASIGNAR_CLIENTES
-EXPORTAR_SELECCION
-CAMBIAR_SECTOR
-GENERAR_INFORMES
-}
+' ---------- "Usa a": una clase consulta a otra para funcionar ----------
+Factura .[#D9822B].> PeriodoContable : <<uses>>
+Factura .[#D9822B].> ConfiguracionSistema : <<uses>>
+RecordatorioImpago .[#C0392B].> CalendarioLaboral : <<uses>>
+SolicitudAprobacion .[#D9822B].> ConfiguracionSistema : <<uses>>
+RevisionRango .[#2E8B57].> ConfiguracionSistema : <<uses>>
 
 @enduml
