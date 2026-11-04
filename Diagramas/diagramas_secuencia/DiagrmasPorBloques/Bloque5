@@ -1,0 +1,34 @@
+@startuml
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+skinparam MaxMessageWidth 250
+
+title Bloque 5: Informes y Paquetes de Gestoría (Turbine)
+
+actor "Usuario" as UsuarioActor
+
+participant ":Controlador / Interfaz" as UI
+participant ":Informe" as Informe
+participant ":PaqueteGestoria" as Paquete
+participant ":DocumentoAdjunto" as Documento
+
+UsuarioActor -> UI: consultaCobrosMetricasEInformes(filtros, formato) (CU-09)
+activate UI
+create Informe
+UI -> Informe: create(filtros, formato)
+UI -> Informe: generar()
+create Documento
+Informe -> Documento: create(archivoGenerado)
+UI -> Informe: notificarListo()
+UI --> UsuarioActor: Entrega de informe generado
+
+UsuarioActor -> UI: solicitarPaqueteGestoria(idPeriodo) (CU-09 1b)
+create Paquete
+UI -> Paquete: create(idPeriodo)
+UI -> Paquete: compilarPaquete()
+create Documento
+Paquete -> Documento: create(archivoZip)
+UI -> Paquete: descargarZip()
+UI --> UsuarioActor: Descarga de archivo comprimido
+deactivate UI
+@enduml
