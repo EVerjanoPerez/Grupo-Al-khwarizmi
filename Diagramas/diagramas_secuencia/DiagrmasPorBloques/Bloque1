@@ -1,0 +1,122 @@
+@startuml
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+skinparam MaxMessageWidth 250
+
+title Bloque 1: Accesos, Seguridad y Configuración (Turbine)
+
+actor "Usuario" as UsuarioActor
+actor "Administrador" as AdminActor
+actor "Superadministrador" as SuperAdminActor
+actor "Planificador (Tiempo)" as Cron
+actor "Servicio Mensajería" as Mensajeria
+
+participant ":Controlador / Interfaz" as UI
+participant ":Usuario" as Usuario
+participant ":Sesion" as Sesion
+participant ":DelegacionTemporal" as Delegacion
+participant ":Notificacion" as Notificacion
+participant ":AlertaCorporativa" as Alerta
+participant ":Comentario" as Comentario
+participant ":DocumentoAdjunto" as Documento
+participant ":RegistroAuditoria" as Auditoria
+participant ":CopiaSeguridad" as Copia
+participant ":EjecucionProceso" as Proceso
+participant ":ConfiguracionSistema" as Config
+participant ":CalendarioLaboral" as Calendario
+participant ":ConexionPasarela" as PasarelaConf
+participant ":PlantillaMensaje" as Plantilla
+
+UsuarioActor -> UI: login(correo, password) (CU-01)
+activate UI
+UI -> Usuario: iniciarSesion(correo, pass)
+activate Usuario
+alt Credenciales válidas
+    create Sesion
+    Usuario -> Sesion: create()
+    Usuario -> Mensajeria: enviarCodigo2FA()
+    Usuario --> UI: sesionIniciada
+else Varios intentos fallidos
+    Usuario -> Usuario: bloquearCuentaTemporante()
+    Usuario --> UI: errorCuentaBloqueada
+end
+deactivate Usuario
+
+UsuarioActor -> UI: recuperarPassword() (CU-01)
+UI -> Usuario: recuperarPassword()
+UI -> Mensajeria: enviarEmailRecuperacion()
+
+UsuarioActor -> UI: cerrarSesion() (CU-01)
+UI -> Usuario: cerrarSesion()
+
+AdminActor -> UI: registrarUsuarioInterno(datos) (CU-02)
+create Usuario
+UI -> Usuario: create(datos)
+UI -> Usuario: enviarInvitacion()
+Usuario -> Mensajeria: enviarInvitacion()
+
+AdminActor -> UI: reactivarCuenta(idUsuario) (CU-02)
+UI -> Usuario: reactivarCuenta()
+
+AdminActor -> UI: delegarClientesTemporales(sustituto, fechaini, fechaFin) (CU-07)
+create Delegacion
+UI -> Delegacion: create(titular, sustituto, rangoFechas)
+UI -> Delegacion: activarDelegacion()
+UI -> Delegacion: estaVigente(hoy)
+AdminActor -> UI: cancelarDelegacion() (CU-07)
+UI -> Delegacion: cancelarDelegacion()
+
+AdminActor -> UI: desactivarCuenta(idUsuario, motivo) (CU-13)
+UI -> Usuario: desactivarCuenta(motivo)
+UI -> Usuario: invalidarSesionesActivas()
+Usuario -> Sesion: invalidar()
+
+SuperAdminActor -> UI: configurarParametrosGlobales(config) (CU-03)
+UI -> Config: actualizarParametros()
+UI -> Config: validarUmbrales()
+UI -> Plantilla: actualizarPlantillas()
+UI -> Plantilla: previsualizar(datosPrueba)
+UI -> Plantilla: enviarPrueba(destinatarioTest)
+UI -> Calendario: agregarFestivo(DiaFestivo)
+create Auditoria
+UI -> Auditoria: registrarEvento(Usuario, "CONFIGURACION_MODIFICADA")
+
+SuperAdminActor -> UI: administrarCuentaRecepcionPagos(credenciales) (CU-04)
+UI -> PasarelaConf: guardarCredencialesCifradas(apiKey, secret)
+UI -> PasarelaConf: probarConexion()
+
+Cron -> UI: ejecutarCopiaSeguridadAutomática() (CU-24)
+create Copia
+UI -> Copia: generarCopia()
+UI -> Copia: verificarIntegridad()
+create Proceso
+UI -> Proceso: registrarResultado()
+
+SuperAdminActor -> UI: consultarAuditoriaYRestaurarCopia(idCopia) (CU-20)
+UI -> Auditoria: consultar(filtros)
+UI -> Copia: descargar()
+UI -> Copia: restaurar(SuperAdminActor)
+
+UsuarioActor -> UI: trabajoDiario_PublicarYAlertas() (CU-32)
+UI -> Sesion: esValida()
+UI -> Usuario: configurarCanales(canales)
+UI -> Notificacion: marcarComoLeida()
+UI -> Notificacion: marcarComoAtendida()
+create Comentario
+UI -> Comentario: create(texto, autor)
+UI -> Comentario: publicar()
+UI -> Comentario: notificarMencionados()
+create Notificacion
+Comentario -> Notificacion: create(destinatario, mensaje)
+Notificacion -> Notificacion: enviar()
+UI -> Documento: validarFormatoYTamano()
+UI -> Alerta: evaluarCondicion(contexto)
+alt Condición Cumplida
+    Alerta -> Alerta: dispararAlerta()
+end
+
+AdminActor -> UI: gestionarDatosPersonales/Anonimizar(idContacto) (CU-35)
+UI -> Contacto: anonimizarDatos()
+UI -> Contacto: eliminarDatos()
+deactivate UI
+@enduml
