@@ -1,0 +1,31 @@
+@startuml
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+skinparam MaxMessageWidth 250
+
+title Bloque 6: Acciones Masivas (Turbine)
+
+actor "Administrador" as AdminActor
+
+participant ":Controlador / Interfaz" as UI
+participant ":AccionMasiva" as Masiva
+participant ":Informe" as Informe
+participant ":Cliente" as Cliente
+
+AdminActor -> UI: ejecutarAccionesMasivas(seleccion, tipoAccion) (CU-33)
+activate UI
+create Masiva
+UI -> Masiva: create(tipoAccion)
+UI -> Masiva: previsualizarAfectados(seleccion)
+UI -> Masiva: esSensible()
+AdminActor -> UI: confirmar()
+UI -> Masiva: ejecutar(seleccion)
+alt Tipo de Acción = GENERAR_INFORMES
+    Masiva -> Informe: generar()
+else Otros tipos (Reasignar, Cambiar Sector)
+    Masiva -> Cliente: actualizarEnBloque()
+end
+UI -> Masiva: obtenerInformeResultados()
+UI --> AdminActor: Resumen de resultados emitido
+deactivate UI
+@enduml
