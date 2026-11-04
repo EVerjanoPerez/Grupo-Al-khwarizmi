@@ -1,0 +1,96 @@
+@startuml
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+skinparam MaxMessageWidth 250
+
+title Bloque 2: Clientes y Suscripciones (Turbine)
+
+actor "Usuario" as UsuarioActor
+actor "Administrador" as AdminActor
+actor "Planificador (Tiempo)" as Cron
+
+participant ":Controlador / Interfaz" as UI
+participant ":ConfiguracionSistema" as Config
+participant ":TarifaRango" as Tarifa
+participant ":Cliente" as Cliente
+participant ":ContactoCliente" as Contacto
+participant ":ImportacionClientes" as Importacion
+participant ":Suscripcion" as Suscripcion
+participant ":ExcepcionComercial" as Excepcion
+participant ":RevisionRango" as Revision
+participant ":SolicitudAprobacion" as Solicitud
+
+AdminActor -> UI: darDeAltaCliente(datosCliente) (CU-36)
+activate UI
+create Cliente
+UI -> Cliente: darDeAlta()
+create Contacto
+UI -> Contacto: create(datosContacto)
+AdminActor -> UI: reactivarClienteAnterior() (CU-36)
+UI -> Cliente: reactivar()
+
+AdminActor -> UI: importacionMasivaClientes(archivoCSV) (CU-18)
+create Importacion
+UI -> Importacion: create()
+UI -> Importacion: cargarArchivo(archivoCSV)
+UI -> Importacion: definirMapeo(columnas)
+UI -> Importacion: validarFilas()
+UI -> Importacion: procesarImportacion()
+create Cliente
+Importacion -> Cliente: createMultiple()
+UI -> Importacion: obtenerResumen()
+
+UsuarioActor -> UI: buscarYConsultarClientes(etiquetas, favoritos) (CU-22)
+UI -> Cliente: obtenerListadoFiltrado()
+
+AdminActor -> UI: asignarClientesAUsuario(idUsuario, listaClientes) (CU-08)
+UI -> Cliente: asignarResponsable(Usuario)
+AdminActor -> UI: desasignarResponsable(idCliente) (CU-08)
+UI -> Cliente: desasignarResponsable()
+
+UsuarioActor -> UI: edicionYBajaCliente(idCliente) (CU-17)
+UI -> Cliente: modificarDatosFiscales()
+UI -> Cliente: darDeBaja(fechaEfectiva)
+UI -> Suscripcion: cancelar(fechaEfectiva)
+
+AdminActor -> UI: borradoLogicoClienteOFactura(idEntidad) (CU-14)
+UI -> Cliente: borradoLogico(motivo)
+
+UsuarioActor -> UI: activarFacturacionRecurrente(idCliente, plan) (CU-06)
+create Suscripcion
+UI -> Suscripcion: create(plan, cuota)
+UI -> Suscripcion: calcularProrrateo(fechaAlta)
+UI -> Suscripcion: activar()
+
+UsuarioActor -> UI: pausarOReactivarSuscripcion(idSuscripcion, opcion) (CU-25)
+alt Pausar
+    UI -> Suscripcion: pausar(fechas, motivo)
+else Reactivar
+    UI -> Suscripcion: reactivar()
+end
+
+UsuarioActor -> UI: solicitarExcepcionComercial(idSuscripcion, tipo, valor) (CU-26)
+create Excepcion
+UI -> Excepcion: create(tipo, valor)
+UI -> Suscripcion: agregarExcepcion(ExcepcionComercial)
+UI -> Excepcion: solicitarAprobacion()
+create Solicitud
+Excepcion -> Solicitud: create(tipo=EXCEPCION_COMERCIAL)
+
+Cron -> UI: revisionAnualRangoFacturacion() (CU-05)
+UI -> Cliente: obtenerFacturacionAnual()
+UI -> Cliente: iniciarRevisionRango(importe, fuente, fecha)
+create Revision
+Cliente -> Revision: create(rangoAnterior, rangoNuevo)
+Revision -> Config: obtenerRangoPara(facturacionAnual)
+Config -> Tarifa: contiene(facturacionAnual)
+alt Cambio de rango requiere aprobacion
+    UI -> Revision: solicitarAprobacionCambio()
+    create Solicitud
+    Revision -> Solicitud: create(tipo=CAMBIO_RANGO)
+else Aplicacion directa
+    UI -> Revision: aplicarCambioRango()
+    UI -> Suscripcion: actualizarTarifa(nuevoRango, fechaEfecto)
+end
+deactivate UI
+@enduml
