@@ -24,16 +24,16 @@ Cronograma de las tareas del proyecto, sincronizado con el tablero de Trello. La
 | 7 | Requisitos de usuario | Francis, Álvaro y Juan | 10/10/2026 | 16/10/2026 | Revisado |
 | 8 | Requisitos de negocio | Marcondes y Esperanza | 10/10/2026 | 16/10/2026 | Revisado |
 | 9 | Redefinición según plantilla de casos de uso | Francis, Álvaro, Juan, Marcondes y Esperanza | 12/10/2026 | 17/10/2026 | Revisado |
-| 10 | Definición de clases | Francis, Marcondes y Esperanza | 21/10/2026 | 28/10/2026 | Asignado |
-| 11 | Diagrama UML de clases | Álvaro y Juan | 21/10/2026 | 01/11/2026 | Asignado |
-| 12 | ER físico | Por asignar | 28/10/2026 | 01/11/2026 (no vinculante) | Asignado |
-| 13 | Diagrama de secuencia | Por asignar | 02/11/2026 | 08/11/2026 | Asignado |
-| 14 | Componentes | Por asignar | 09/11/2026 | 15/11/2026 | Asignado |
+| 10 | Definición de clases | Francis, Marcondes y Esperanza | 21/10/2026 | 28/10/2026 | Revisado |
+| 11 | Diagrama UML de clases | Álvaro y Juan | 21/10/2026 | 08/11/2026 | Asignado |
+| 12 | ER físico | Francis y Marcondes | 28/10/2026 | 08/11/2026 | Asignado |
+| 13 | Diagrama de secuencia | Alvaro, Juan y Esperanza | 02/11/2026 | 11/11/2026 | Asignado |
+| 14 | Componentes | Por asignar | 12/11/2026 | Por definir (pendiente de feedback del stakeholder) | Asignado |
 | 15 | Cierre de la segunda entrega | Francis, Álvaro, Juan, Marcondes y Esperanza | 16/11/2026 | 16/11/2026 | Asignado |
 
 > Los requisitos y casos de uso quedan abiertos a posibles cambios por modificaciones o requisitos adicionales.
 >
-> Fechas acordadas en la reunión del 28/10/2026 ([acta_28_10_2026.md](../Actas/acta_28_10_2026.md)). La semana del 16/11 al 22/11 el equipo la tiene comprometida, por lo que la segunda entrega se deja cerrada el 16/11/2026. La evaluación de la segunda entrega será la semana del 23/11/2026.
+> Fechas acordadas en la reunión del 28/10/2026 ([acta_28_10_2026.md](../Actas/acta_28_10_2026.md)) y actualizadas en la reunión del 04/11/2026 ([acta_04_11_2026.md](../Actas/acta_04_11_2026.md)): la revisión del diagrama de clases y del ER físico se pospone al 08/11/2026, la entrega del diagrama de secuencia al 11/11/2026 y el diagrama de componentes se retrasa a la espera del feedback del stakeholder. La semana del 16/11 al 22/11 el equipo la tiene comprometida, por lo que la segunda entrega se deja cerrada el 16/11/2026. La evaluación de la segunda entrega será la semana del 23/11/2026.
 
 ## Cronograma
 
@@ -49,10 +49,10 @@ Cronograma de las tareas del proyecto, sincronizado con el tablero de Trello. La
 | 8 | Requisitos de negocio | | 🟩🟩🟩 | 🟩🟩🟩 | | | | |
 | 9 | Redefinición según plantilla de casos de uso | | 🟩🟩🟩 | 🟩🟩🟩 | | | | |
 | 10 | Definición de clases | | | | 🟦🟦🟦 | | | |
-| 11 | Diagrama UML de clases | | | | 🟦🟦🟦 | 🟦 | | |
-| 12 | ER físico | | | | | 🟦 | | |
-| 13 | Diagrama de secuencia | | | | | 🟦 | 🟦🟦 | |
-| 14 | Componentes | | | | | | 🟦 | 🟦🟦 |
+| 11 | Diagrama UML de clases | | | | 🟦🟦🟦 | 🟦🟦🟦 | 🟦 | |
+| 12 | ER físico | | | | | 🟦🟦🟦 | 🟦 | |
+| 13 | Diagrama de secuencia | | | | | 🟦 | 🟦🟦🟦 | |
+| 14 | Componentes | | | | | | | 🟦🟦 |
 | 15 | Cierre de la segunda entrega | | | | | | | 🟦 |
 
 🟩 Revisado · 🟪 Hecho · 🟨 En progreso · 🟦 Asignado
@@ -75,10 +75,10 @@ gantt
     section Diagramas
     Diagrama UML                     :done, uml, 2026-09-30, 2026-10-17
     Definición de clases             :dcl, 2026-10-21, 2026-10-28
-    Diagrama UML de clases           :uc, 2026-10-21, 2026-11-01
-    ER físico                        :er, 2026-10-28, 2026-11-01
-    Diagrama de secuencia            :ds, 2026-11-02, 2026-11-08
-    Componentes                      :co, 2026-11-09, 2026-11-15
+    Diagrama UML de clases           :uc, 2026-10-21, 2026-11-08
+    ER físico                        :er, 2026-10-28, 2026-11-08
+    Diagrama de secuencia            :ds, 2026-11-02, 2026-11-11
+    Componentes (provisional)        :co, 2026-11-12, 2026-11-15
     section Entregas
     Cierre segunda entrega           :milestone, e2, 2026-11-16, 0d
     Evaluación segunda entrega       :milestone, ev2, 2026-11-23, 0d
