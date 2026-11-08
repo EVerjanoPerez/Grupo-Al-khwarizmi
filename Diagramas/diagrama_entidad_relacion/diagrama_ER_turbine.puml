@@ -1,5 +1,5 @@
 @startuml diagrama_ER_turbine
-' Diagrama físico Entidad-Relación de Turbine (notación IE, patas de gallo)
+' Diagrama físico Entidad-Relación de Turbine 
 ' Derivado de Diagramas/diagramas_clases/borrador_clases.md
 ' Qué clase va en qué tabla, los valores de los ENUM y las restricciones están en documentacion_er.md
 
@@ -22,7 +22,11 @@ entity USUARIO {
   * activo : BOOLEAN
   * intentos_fallidos : INT
   bloqueado_hasta : DATETIME
-  * canal_preferido : ENUM
+}
+
+entity USUARIO_CANAL {
+  * id_usuario : INT <<PK>> <<FK>>
+  * canal : ENUM <<PK>>
 }
 
 entity DELEGACION_TEMPORAL {
@@ -34,14 +38,37 @@ entity DELEGACION_TEMPORAL {
   * fecha_fin : DATE
 }
 
+entity DELEGACION_CLIENTE {
+  * id_delegacion : INT <<PK>> <<FK>>
+  * id_cliente : INT <<PK>> <<FK>>
+}
+
 entity NOTIFICACION {
   * id_notificacion : INT <<PK>>
   --
   * id_usuario : INT <<FK>>
   * mensaje : VARCHAR
   * canal : ENUM
+  * prioridad : ENUM
   * estado : ENUM
+  tipo_elemento : ENUM
+  id_elemento : INT
   * fecha_creacion : DATETIME
+}
+
+entity ALERTA_CORPORATIVA {
+  * id_alerta : INT <<PK>>
+  --
+  * nombre : VARCHAR
+  * condicion : ENUM
+  * valor_umbral : DECIMAL
+  * canal : ENUM
+  * activa : BOOLEAN
+}
+
+entity ALERTA_DESTINATARIO {
+  * id_alerta : INT <<PK>> <<FK>>
+  * id_usuario : INT <<PK>> <<FK>>
 }
 
 entity COMENTARIO {
@@ -59,11 +86,14 @@ entity COMENTARIO {
 entity DOCUMENTO_ADJUNTO {
   * id_documento : INT <<PK>>
   --
+  * id_usuario : INT <<FK>>
   id_cliente : INT <<FK>>
   id_factura : INT <<FK>>
   id_incidencia : INT <<FK>>
   * nombre_archivo : VARCHAR
   * ruta_archivo : VARCHAR
+  * formato : ENUM
+  * tamano_bytes : BIGINT
   * fecha_subida : DATETIME
 }
 
@@ -118,6 +148,7 @@ entity PERIODO_CONTABLE {
   * fecha_inicio : DATE
   * fecha_fin : DATE
   * cerrado : BOOLEAN
+  fecha_cierre : DATETIME
   motivo_reapertura : VARCHAR
 }
 
@@ -130,6 +161,41 @@ entity REGISTRO_AUDITORIA {
   * entidad_afectada : VARCHAR
   valor_anterior : TEXT
   valor_nuevo : TEXT
+}
+
+entity CONEXION_PASARELA {
+  * id_conexion : INT <<PK>>
+  --
+  * proveedor : ENUM
+  * entorno : ENUM
+  * api_key_cifrada : VARCHAR
+  * webhook_secret_cifrado : VARCHAR
+  * activa : BOOLEAN
+}
+
+entity EJECUCION_PROCESO {
+  * id_ejecucion : INT <<PK>>
+  --
+  * tipo_proceso : ENUM
+  * estado : ENUM
+  * fecha_inicio : DATETIME
+  fecha_fin : DATETIME
+  * total_generadas : INT
+  * total_omitidas : INT
+  * total_errores : INT
+  detalle_errores : TEXT
+}
+
+entity COPIA_SEGURIDAD {
+  * id_copia : INT <<PK>>
+  --
+  id_ejecucion : INT <<FK>> <<UK>>
+  id_usuario_restaura : INT <<FK>>
+  * fecha_creacion : DATETIME
+  * ruta_archivo : VARCHAR
+  * tamano_bytes : BIGINT
+  * verificada : BOOLEAN
+  fecha_restauracion : DATETIME
 }
 
 ' ---------- Clientes y suscripciones ----------
@@ -222,7 +288,7 @@ entity PRESUPUESTO {
   * id_presupuesto : INT <<PK>>
   --
   * id_cliente : INT <<FK>>
-  id_factura : INT <<FK>>
+  id_factura : INT <<FK>> <<UK>>
   * fecha_creacion : DATE
   * estado : ENUM
   ruta_evidencia : VARCHAR
@@ -266,6 +332,8 @@ entity ENVIO {
   * id_envio : INT <<PK>>
   --
   * id_factura : INT <<FK>>
+  * id_plantilla : INT <<FK>>
+  id_envio_original : INT <<FK>>
   * tipo : ENUM
   * canal : ENUM
   * destinatario : VARCHAR
@@ -279,10 +347,11 @@ entity SOLICITUD_APROBACION {
   --
   * id_usuario_solicitante : INT <<FK>>
   id_usuario_aprobador : INT <<FK>>
+  id_usuario_asignado : INT <<FK>>
   id_factura : INT <<FK>>
   id_suscripcion : INT <<FK>>
-  id_excepcion : INT <<FK>>
-  id_revision : INT <<FK>>
+  id_excepcion : INT <<FK>> <<UK>>
+  id_revision : INT <<FK>> <<UK>>
   * tipo : ENUM
   importe : DECIMAL
   * motivo : VARCHAR
@@ -326,15 +395,23 @@ entity INFORME {
   id_periodo : VARCHAR <<FK>>
   * tipo : ENUM
   * formato : ENUM
+  * estado : ENUM
   filtros : JSON
-  * ruta_archivo : VARCHAR
+  ruta_archivo : VARCHAR
+  version : INT
   * fecha_generacion : DATETIME
 }
 
 ' ---------- Relaciones (izquierda = tabla referenciada, derecha = tabla con la FK) ----------
 USUARIO ||--o{ DELEGACION_TEMPORAL : titular
 USUARIO ||--o{ DELEGACION_TEMPORAL : sustituto
+USUARIO ||--o{ USUARIO_CANAL
+DELEGACION_TEMPORAL ||--|{ DELEGACION_CLIENTE
+CLIENTE ||--o{ DELEGACION_CLIENTE
 USUARIO ||--o{ NOTIFICACION
+ALERTA_CORPORATIVA ||--|{ ALERTA_DESTINATARIO
+USUARIO ||--o{ ALERTA_DESTINATARIO
+USUARIO ||--o{ DOCUMENTO_ADJUNTO : sube
 USUARIO ||--o{ COMENTARIO
 CLIENTE |o--o{ COMENTARIO
 FACTURA |o--o{ COMENTARIO
@@ -343,6 +420,8 @@ CLIENTE |o--o{ DOCUMENTO_ADJUNTO
 FACTURA |o--o{ DOCUMENTO_ADJUNTO
 INCIDENCIA |o--o{ DOCUMENTO_ADJUNTO
 USUARIO |o--o{ REGISTRO_AUDITORIA
+EJECUCION_PROCESO |o--o| COPIA_SEGURIDAD
+USUARIO |o--o{ COPIA_SEGURIDAD : restaura
 
 USUARIO |o--o{ CLIENTE
 TARIFA_RANGO ||--o{ CLIENTE
@@ -364,8 +443,11 @@ FACTURA |o--|{ LINEA_FACTURA
 PRESUPUESTO |o--|{ LINEA_FACTURA
 PRODUCTO_CATALOGO |o--o{ LINEA_FACTURA
 FACTURA ||--o{ ENVIO
+PLANTILLA_MENSAJE ||--o{ ENVIO
+ENVIO |o--o{ ENVIO : reintenta
 USUARIO ||--o{ SOLICITUD_APROBACION : solicita
 USUARIO |o--o{ SOLICITUD_APROBACION : aprueba
+USUARIO |o--o{ SOLICITUD_APROBACION : asignada
 FACTURA |o--o{ SOLICITUD_APROBACION
 SUSCRIPCION |o--o{ SOLICITUD_APROBACION
 EXCEPCION_COMERCIAL |o--o| SOLICITUD_APROBACION
