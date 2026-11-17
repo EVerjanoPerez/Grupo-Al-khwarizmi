@@ -40,8 +40,12 @@ Sin embargo, se pueden exponer varios puntos para rebajar el descuento:
 3. Una parte importante de los NFR es verificable por inspección o prueba aunque no lo diga en un campo aparte. Prueba de ello podemos mencionar esta pequeña lista: NFR1, NFR8, NFR10, NFR13, NFR16, NFR17 y NFR18.
 4. NFR2 tiene una referencia comparativa concreta (Holded), que es la forma en que el cliente expresó la necesidad.
 
-** Citar aquí las frases de la entrevista que corresponden con estos requisitos no funcionales**
+Citas textuales de la transcripción de la entrevista con el cliente (Alejandro Ruiz) que respaldan estos NFR:
+- **Sobre NFR1 y NFR2 (simplicidad frente a Holded):** *"Hacer un chequeo que no nos lleve más de un minuto. Minimizar el número de clics al máximo. Que la experiencia de usuario no requiera un aprendizaje de un software como Holded, por ejemplo. Si no, contrataríamos uno ya existente. Pero queremos algo lo más simple posible..."* (Apartado *Criterios de éxito del sistema*).
+- **Sobre NFR12 ("miles de clientes"):** *"A nivel de datos debe ser totalmente escalable. O sea, nuestro objetivo es tener miles de clientes."* (Apartado *Turno de preguntas y aclaraciones*).
+- **Sobre NFR13 y la ausencia de métricas técnicas previas:** *"¿Hay alguna preferencia en cuanto a las tecnologías usadas tanto para desarrollar la app como para la base de datos? Es solo funcional, o sea, que sea lo más rápido posible, multidispositivo, entonces técnicamente no."* (Apartado *Turno de preguntas y aclaraciones*).
 
+  
 ### A5. Organización, identificadores y dependencias
 
 En este punto se expone que no se ha reflejado la independencia respecto a Brain, en nuestro repositorio encontramos las siguientes citas:
