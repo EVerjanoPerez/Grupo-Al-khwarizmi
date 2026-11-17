@@ -75,6 +75,8 @@ En este caso se expone que hay una separación y por tanto una incoherencia entr
 2. CU-20 responde a un único objetivo del superadministrador: supervisar la salud y trazabilidad del sistema, tal como lo formula UR3.
 3. La dependencia CU-20 -> CU-24 está justificada: CU-20 lista y restaura las copias que produce CU-24.
 
+En resumen, la separación entre CU-20 y CU-24 responde a una clara separación de responsabilidades entre la supervisión activa humana y la automatización desatendida del planificador.
+
 Si se considera necesario, que por nuestra parte no lo es, se puede separar el aspecto de restauración de copias.
 
 ### B3. Semántica de relaciones UML
