@@ -58,6 +58,7 @@ Por tanto, podemos definir los siguientes contraargumentos:
 1. BR5 -> FR37 está justificada: BR5 tiene dos componentes y FR37 materializa el primero (aplicación solo interna, sin acceso de clientes).
 2. NFR5 -> FR42 está justificada por la segunda frase de NFR5 (bajo acoplamiento): FR42 es el requisito funcional donde ese encapsulamiento se aplica.
 3. La independencia de Brain es una restricción que, por naturaleza, no tiene un FR que la “implemente”; se refleja en NFR5.
+Por tanto, la supuesta falta de reflejo de la independencia de Brain no es un error de diseño, sino una separación deliberada: BR5 establece la restricción de negocio macro, mientras que FR37 y NFR5/FR42 operacionalizan dicho aislamiento a nivel de componentes internos y pasarelas.
 
 ---
 
