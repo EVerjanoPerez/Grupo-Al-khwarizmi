@@ -28,23 +28,21 @@ En este punto se ha hecho hincapié en desglosar los requisitos funcionales 35 y
 
 Aunque reconocemos que en el caso de FR1 se podría desglosar, por tanto para lo siguiente entrega estará desglosado.
 
-### A4. Requisitos no funcionales verificables.
+### A4. Requisitos no funcionales verificables
 
-Hacemos hincapié en los siguientes puntos: ningún NFR indica método de verificación. NFR12 (“miles de clientes”) y NFR13 (“prácticamente inmediata”) no están cuantificados; NFR2 (“minimalista”) es subjetivo. Reconoce NFR1 (1 minuto) y NFR10 (idempotencia).
+En este apartado se señala que ningún NFR indica un método de verificación explícito, que NFR12 (“miles de clientes”) y NFR13 (“prácticamente inmediata”) carecen de métricas cuantificadas, y que NFR2 (“minimalista”) resulta subjetivo, reconociendo únicamente NFR1 (1 minuto) y NFR10 (idempotencia).
 
-Aquí hay varios puntos a tratar, primero reconocer que NFR12 y NFR13 sí podrían cuantificarse aunque fuera de forma orientativa, NFR2 es subjetivo.
+Aceptamos la observación metodológica: aunque la redacción actual recoge las palabras del cliente durante la toma de requisitos, como equipo debimos traducir esas expresiones ambiguas a umbrales cuantitativos y criterios de aceptación verificables desde esta primera entrega, algo que ya hemos planificado corregir para la siguiente.
 
-Sin embargo, se pueden exponer varios puntos para rebajar el descuento: 
-1. La plantilla no exigía método de verificación; se penaliza un campo que no se pidió.
-2. Estamos en fase sin arquitectura ni tecnología elegidas. Fijar percentiles o concurrencias ahora sería inventar cifras que el cliente no dio.
-3. Una parte importante de los NFR es verificable por inspección o prueba aunque no lo diga en un campo aparte. Prueba de ello podemos mencionar esta pequeña lista: NFR1, NFR8, NFR10, NFR13, NFR16, NFR17 y NFR18.
-4. NFR2 tiene una referencia comparativa concreta (Holded), que es la forma en que el cliente expresó la necesidad.
+No obstante, queremos aportar el contexto de la entrevista con el cliente (Alejandro Ruiz) para justificar el origen de dicha redacción y solicitar que se valore la trazabilidad con el negocio:
+1. En esta fase inicial aún no se ha definido la arquitectura ni el stack tecnológico, por lo que el cliente evitó fijar métricas técnicas concretas, al igual que nosotros, dado que no podíamos asegurar tiempos concretos sin haber avanzado más el proyecto.
+2. Varios requisitos como NFR1, NFR8, NFR10, NFR16, NFR17 y NFR18 ya describen comportamientos comprobables directamente mediante prueba o inspección.
+3. NFR2 toma como referencia comparativa directa una herramienta existente (Holded), que fue la forma exacta en que el cliente acotó el nivel de sencillez esperado.
 
-Citas textuales de la transcripción de la entrevista con el cliente (Alejandro Ruiz) que respaldan estos NFR:
+Citas textuales de la transcripción de la entrevista con el cliente que respaldan estos NFR:
 - **Sobre NFR1 y NFR2 (simplicidad frente a Holded):** *"Hacer un chequeo que no nos lleve más de un minuto. Minimizar el número de clics al máximo. Que la experiencia de usuario no requiera un aprendizaje de un software como Holded, por ejemplo. Si no, contrataríamos uno ya existente. Pero queremos algo lo más simple posible..."* (Apartado *Criterios de éxito del sistema*).
 - **Sobre NFR12 ("miles de clientes"):** *"A nivel de datos debe ser totalmente escalable. O sea, nuestro objetivo es tener miles de clientes."* (Apartado *Turno de preguntas y aclaraciones*).
 - **Sobre NFR13 y la ausencia de métricas técnicas previas:** *"¿Hay alguna preferencia en cuanto a las tecnologías usadas tanto para desarrollar la app como para la base de datos? Es solo funcional, o sea, que sea lo más rápido posible, multidispositivo, entonces técnicamente no."* (Apartado *Turno de preguntas y aclaraciones*).
-
   
 ### A5. Organización, identificadores y dependencias
 
@@ -81,7 +79,7 @@ Si se considera necesario, que por nuestra parte no lo es, se puede separar el a
 
 ### B3. Semántica de relaciones UML
 
-Vamos a desmembrar punto por punto estos relaciones:
+Vamos a desmembrar punto por punto estas relaciones:
 
 - B3.1. CU-08 «extend» CU-13:
 
@@ -138,8 +136,12 @@ Por tanto, sí existía una tabla de tareas con estado y un cronograma dentro de
 
 ### D4. Revisiones y retrospectivas
 
-Aceptamos el error, faltó planes de acción en torno a los errores cometidos y una mejor evidencia del trabajo que se realizó.
+Aceptamos el error, faltaron planes de acción en torno a los errores cometidos y una mejor evidencia del trabajo que se realizó.
 
 ## E. Presentación
 
-Es una penalización muy pequeña, pero los autores de este documento no entienden exactamente por qué, si el argumento del punto no declara errores, se reste 0.05 en el punto, es una simple aclaración.
+Es una penalización muy pequeña, pero los autores de este documento no entendemos exactamente por qué, si el argumento del punto no declara errores, se reste 0.05 en el punto, es una simple aclaración con la intención de mejorar.
+
+## Conclusión y solicitud de revisión
+
+En resumen, aceptamos las observaciones relativas al desglose de FR1, la cuantificación de los NFR (A4) y la mejora en el registro de acciones de retrospectiva (D4), errores cuyas correcciones ya estamos aplicando de cara a la siguiente entrega. Sin embargo, dado que hemos acreditado con citas y rutas exactas del repositorio la validez de las dependencias (A5), la semántica de los casos de uso y sus relaciones (B2 y B3), la existencia de la documentación Scrum en el entregable (D2 y D3) y la contradicción en la calificación de la exposición (E), solicitamos amablemente la revisión de la puntuación en dichos apartados.
