@@ -140,7 +140,7 @@ Aceptamos el error, faltaron planes de acción en torno a los errores cometidos 
 
 ## E. Presentación
 
-Es una penalización muy pequeña, pero los autores de este documento no entendemos exactamente por qué, si el argumento del punto no declara errores, se reste 0.05 en el punto, es una simple aclaración con la intención de mejorar.
+Es una penalización muy pequeña, pero los autores de este documento no entendemos exactamente por qué, si el argumento del punto no declara errores, se reste 0.05 puntos, es una simple aclaración con la intención de mejorar.
 
 ## Conclusión y solicitud de revisión
 
