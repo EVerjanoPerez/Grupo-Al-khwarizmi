@@ -1,0 +1,167 @@
+@startuml
+
+title Diagrama de componentes
+top to bottom direction
+skinparam componentStyle uml2
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam titleFontSize 20
+skinparam linetype ortho
+skinparam padding 8
+skinparam nodesep 55
+skinparam ranksep 110
+skinparam ArrowColor #333333
+skinparam ArrowThickness 1
+skinparam component {
+  BackgroundColor #F1F1F1
+  BorderColor #666666
+}
+skinparam interface {
+  BackgroundColor white
+  BorderColor #666666
+}
+skinparam package {
+  BackgroundColor white
+  BorderColor #333333
+  FontStyle bold
+}
+skinparam database {
+  BackgroundColor #F1F1F1
+  BorderColor #666666
+}
+skinparam cloud {
+  BackgroundColor white
+  BorderColor #333333
+}
+
+package "Presentación" {
+  [Interfaz web] as Web
+}
+
+package "Backend" as Backend {
+  [API REST] as API
+  () "IAPI" as IAPI
+  ' Coordinador del Planificador: EjecucionProceso sigue en Configuración.
+  [Tareas programadas\ny en segundo plano] as Tareas
+
+  ' Clases: Usuario, Sesion, DelegacionTemporal, Notificacion, AlertaCorporativa, Comentario, DocumentoAdjunto
+  together {
+    [Usuarios, accesos\ny trabajo diario] as Usuarios
+    () "IUsuarios" as IUsuarios
+  }
+
+  ' Clases: Cliente, RevisionRango, ContactoCliente, ImportacionClientes, Suscripcion, ExcepcionComercial
+  together {
+    [Clientes y\nsuscripciones] as Clientes
+    () "IClientes" as IClientes
+  }
+
+  ' Clases: ProductoCatalogo, Presupuesto, Factura, LineaFactura, EnvioFactura, SolicitudAprobacion
+  together {
+    [Facturación, presupuestos\ny aprobaciones] as Facturacion
+    () "IFacturacion" as IFacturacion
+  }
+
+  ' Clases: Cobro, RecordatorioImpago, Incidencia
+  together {
+    [Cobros, impagos\ne incidencias] as Cobros
+    () "ICobros" as ICobros
+  }
+
+  ' Clases: Informe, PaqueteGestoria, AccionMasiva
+  together {
+    [Informes, paquetes\ny operaciones masivas] as Informes
+    () "IInformes" as IInformes
+  }
+
+  ' Clases: ConfiguracionSistema, ConexionPasarelaCobro, PlantillaMensaje, CalendarioLaboral, DiaFestivo, TarifaRango, SerieFacturacion, RegistroAuditoria, PeriodoContable, EjecucionProceso, CopiaSeguridad
+  together {
+    [Configuración,\nauditoría y datos] as Configuracion
+    () "IConfiguracion" as IConfiguracion
+  }
+}
+
+package "Persistencia" {
+  database "Base de datos" as BD
+  database "Almacén de PDF\ny documentos" as Documentos
+}
+
+cloud "Sistemas externos" {
+  [Email / WhatsApp\n(proveedores simulables)] as Mensajeria
+  [Stripe (simulado)\nRevolut (opcional)] as Pasarela
+}
+
+' Interfaces proporcionadas: línea continua entre componente y contrato.
+IAPI -down- API
+IUsuarios -right- Usuarios
+IClientes -right- Clientes
+IFacturacion -right- Facturacion
+ICobros -right- Cobros
+IInformes -right- Informes
+IConfiguracion -right- Configuracion
+
+' Presentación y punto de entrada al servidor.
+Web -[dashed,norank]-> IAPI
+API -[dashed,norank]-> IUsuarios
+API -[dashed,norank]-> IClientes
+API -[dashed,norank]-> IFacturacion
+API -[dashed,norank]-> ICobros
+API -[dashed,norank]-> IInformes
+API -[dashed,norank]-> IConfiguracion
+
+' Coordinación automática: no requiere que el navegador esté abierto.
+Tareas -[dashed,norank]-> IUsuarios
+Tareas -[dashed,norank]-> IClientes
+Tareas -[dashed,norank]-> ICobros
+Tareas -[dashed,norank]-> IInformes
+Tareas -[dashed,norank]-> IConfiguracion
+
+' Dependencias de negocio principales.
+Clientes -[dashed,norank]-> IFacturacion
+Cobros -[dashed,norank]-> IFacturacion
+Informes -[dashed,norank]-> IClientes
+Informes -[dashed,norank]-> IFacturacion
+Informes -[dashed,norank]-> ICobros
+Clientes -[dashed,norank]-> IConfiguracion
+Facturacion -[dashed,norank]-> IConfiguracion
+Cobros -[dashed,norank]-> IConfiguracion
+
+' Dependencias comunes resumidas a nivel de Backend.
+Backend -[dashed,norank]-> BD
+Backend -[dashed,norank]-> Documentos
+
+' Dependencias externas resumidas a nivel de Backend.
+' Usuarios: invitaciones, recuperación y avisos.
+' Facturación y Cobros: envíos de facturas y recordatorios.
+' Configuración: pruebas de plantillas y configuración de pasarelas.
+' Las integraciones se encapsulan dentro de sus módulos (NFR6).
+Backend -[dashed,norank]-> Mensajeria
+Backend -[dashed,norank]-> Pasarela
+Pasarela -[dashed,norank]-> IAPI
+
+' Solo distribución visual, sin dependencias adicionales.
+Web -[hidden]down- IAPI
+API -[hidden]right- Tareas
+API -[hidden]down- IUsuarios
+Tareas -[hidden]down- IInformes
+Usuarios -[hidden]right- Clientes
+IUsuarios -[hidden]right- IClientes
+Clientes -[hidden]right- Informes
+IClientes -[hidden]right- IInformes
+Usuarios -[hidden]down- IConfiguracion
+Clientes -[hidden]down- IFacturacion
+Informes -[hidden]down- ICobros
+Configuracion -[hidden]right- Facturacion
+IConfiguracion -[hidden]right- IFacturacion
+Facturacion -[hidden]right- Cobros
+IFacturacion -[hidden]right- ICobros
+Tareas -[hidden]right- BD
+Informes -[hidden]right- Mensajeria
+BD -[hidden]right- Documentos
+Mensajeria -[hidden]right- Pasarela
+BD -[hidden]down- Mensajeria
+Documentos -[hidden]down- Pasarela
+@enduml
