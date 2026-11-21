@@ -9,21 +9,36 @@ actor "Administrador" as AdminActor
 
 participant ":Controlador / Interfaz" as UI
 participant ":AccionMasiva" as Masiva
-participant ":Informe" as Informe
+participant "generado:Informe" as InformeMasivo
 participant ":Cliente" as Cliente
 
+' --- MENSAJES ---
 AdminActor -> UI: ejecutarAccionesMasivas(seleccion, tipoAccion) (CU-33)
 activate UI
 create Masiva
 UI -> Masiva: create(tipoAccion)
 UI -> Masiva: previsualizarAfectados(seleccion)
 UI -> Masiva: esSensible()
+opt Acción sensible (4a)
+    UI --> AdminActor: pide una confirmación explícita adicional
+end
 AdminActor -> UI: confirmar()
+UI -> Masiva: confirmar()
 UI -> Masiva: ejecutar(seleccion)
-alt Tipo de Acción = GENERAR_INFORMES
-    Masiva -> Informe: generar()
-else Otros tipos (Reasignar, Cambiar Sector)
-    Masiva -> Cliente: actualizarEnBloque()
+alt GENERAR_INFORMES o EXPORTAR_SELECCION
+    loop Para cada informe pedido
+        create InformeMasivo
+        Masiva -> InformeMasivo: create(filtros, formato)
+        Masiva -> InformeMasivo: generar()
+    end
+else REASIGNAR_CLIENTES
+    loop Para cada cliente seleccionado
+        Masiva -> Cliente: asignarResponsable(usuario)
+    end
+else CAMBIAR_SECTOR
+    loop Para cada cliente seleccionado
+        Masiva -> Cliente: setSector(sector)
+    end
 end
 UI -> Masiva: obtenerInformeResultados()
 UI --> AdminActor: Resumen de resultados emitido

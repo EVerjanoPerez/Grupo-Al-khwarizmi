@@ -6,29 +6,32 @@ skinparam MaxMessageWidth 250
 title Bloque 5: Informes y Paquetes de Gestoría (Turbine)
 
 actor "Usuario" as UsuarioActor
+actor "Administrador" as AdminActor
 
 participant ":Controlador / Interfaz" as UI
 participant ":Informe" as Informe
 participant ":PaqueteGestoria" as Paquete
-participant ":DocumentoAdjunto" as Documento
+participant "archivo:DocumentoAdjunto" as Archivo
+participant "zip:DocumentoAdjunto" as Zip
 
+' --- MENSAJES ---
 UsuarioActor -> UI: consultaCobrosMetricasEInformes(filtros, formato) (CU-09)
 activate UI
 create Informe
 UI -> Informe: create(filtros, formato)
 UI -> Informe: generar()
-create Documento
-Informe -> Documento: create(archivoGenerado)
+create Archivo
+Informe -> Archivo: create(archivoGenerado)
 UI -> Informe: notificarListo()
 UI --> UsuarioActor: Entrega de informe generado
 
-UsuarioActor -> UI: solicitarPaqueteGestoria(idPeriodo) (CU-09 1b)
+AdminActor -> UI: solicitarPaqueteGestoria(idPeriodo) (CU-09 1b)
 create Paquete
-UI -> Paquete: create(idPeriodo)
+UI -> Paquete: create(periodo)
 UI -> Paquete: compilarPaquete()
-create Documento
-Paquete -> Documento: create(archivoZip)
+create Zip
+Paquete -> Zip: create(archivoZip)
 UI -> Paquete: descargarZip()
-UI --> UsuarioActor: Descarga de archivo comprimido
+UI --> AdminActor: Descarga de archivo comprimido
 deactivate UI
 @enduml

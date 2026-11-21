@@ -11,78 +11,110 @@ actor "Pasarela de Cobros\n(Stripe/Revolut)" as Pasarela
 actor "Servicio Mensajería\n(Email/WhatsApp)" as Mensajeria
 
 participant ":Controlador / Interfaz" as UI
+participant "RegistroAuditoria" as Auditoria
+participant "impagos:EjecucionProceso" as ProcesoImpagos
 participant ":ConfiguracionSistema" as Config
 participant ":CalendarioLaboral" as Calendario
-participant ":ConexionPasarela" as PasarelaConf
+participant ":ConexionPasarelaCobro" as PasarelaConf
 participant ":PlantillaMensaje" as Plantilla
 participant ":Factura" as Factura
 participant ":Cobro" as Cobro
+participant "manual:Cobro" as CobroManual
+participant "justificante:DocumentoAdjunto" as Justificante
 participant ":RecordatorioImpago" as Recordatorio
 participant ":Incidencia" as Incidencia
-participant ":EnvioFactura" as Envio
-participant ":DocumentoAdjunto" as Documento
-participant ":Comentario" as Comentario
+participant "nota:Comentario" as ComentarioIncidencia
 
-alt Cobro Automático Notificado por Pasarela (CU-11)
-    Pasarela -> UI: webhookNotificaciónPago(referencia, importe)
-    activate UI
-    UI -> PasarelaConf: obtenerClienteAPI()
+' --- MENSAJES ---
+Pasarela -> UI: webhookNotificacionPago(referencia, importe) (CU-11)
+activate UI
+UI -> PasarelaConf: obtenerClienteAPI()
+alt El evento ya se había procesado (2a)
+    UI -> Auditoria: registrarEvento(null, "COBRO_DUPLICADO", "Cobro", null, referencia)
+else Evento nuevo
     create Cobro
     UI -> Cobro: create(referenciaExterna, origen=STRIPE/REVOLUT, importe)
     UI -> Cobro: procesarCobroAutomatico()
-    Cobro -> Factura: marcarComoPagada(Cobro)
-    UI --> Pasarela: HTTP 200 OK
-    deactivate UI
-
-else Registro Manual de Pago (CU-12)
-    UsuarioActor -> UI: registrarPagoManual(idFactura, importe, justificanteDoc)
-    activate UI
-    create Documento
-    UI -> Documento: create(justificante)
-    create Cobro
-    UI -> Cobro: create(origen=MANUAL, importe, justificante)
-    UI -> Cobro: conciliarManualmente(Factura, Documento)
-    Cobro -> Factura: marcarComoPagada(Cobro)
-    
-    UsuarioActor -> UI: deshacerConciliacion(idCobro) (CU-12)
-    UI -> Cobro: deshacerConciliacion(motivo)
-    deactivate UI
-end
-
-Cron -> UI: ejecucionProcesoGestionImpagos() (CU-19)
-activate UI
-UI -> Factura: obtenerFacturasVencidas()
-loop Para cada factura vencida
-    UI -> Factura: requiereRecordatorio(hoy)
-    alt Requiere y NO tiene Disputa
-        UI -> Config: obtenerDiasRecordatorio()
-        create Recordatorio
-        UI -> Recordatorio: create()
-        Recordatorio -> Calendario: esLaborable(hoy)
-        alt No es hábil
-            Calendario -> Calendario: obtenerSiguienteDiaLaborable(hoy)
-        else Es hábil
-            UI -> Plantilla: renderizar(datos)
-            UI -> Recordatorio: enviarRecordatorio()
-            create Envio
-            Recordatorio -> Envio: create(tipo=RECORDATORIO)
-            Envio -> Mensajeria: enviarRecordatorioImpago()
-        end
-    else Con disputa o incidencia abierta (CU-31)
-        UI -> Incidencia: pausarSeguimientoImpago(motivo, fechaRevision)
+    alt Hay una factura que coincide (referencia, cliente e importe)
+        Cobro -> Factura: marcarComoPagada(cobro)
+        note right of Factura: Se detienen sus recordatorios
+        UI --> UsuarioActor: aviso al usuario asignado (CU-32)
+    else No hay una coincidencia clara (3a)
+        UI --> UsuarioActor: cobro pendiente de revisión manual (CU-12)
     end
 end
-deactivate UI
+UI --> Pasarela: HTTP 200 OK
 
-UsuarioActor -> UI: gestionIncidenciasYDisputas(idFactura, descripcion) (CU-31)
-activate UI
+Cron -> UI: consultarCobrosRecientes() (CU-11 1a)
+UI -> PasarelaConf: obtenerClienteAPI()
+UI -> Pasarela: pedirCobrosRecientes()
+note right of UI: Con cada cobro recibido se sigue\nel mismo flujo que con el webhook
+
+alt Registro de un pago nuevo (CU-12)
+    UsuarioActor -> UI: registrarPagoManual(idFactura, fecha, importe, justificante)
+    create Justificante
+    UI -> Justificante: create(justificante)
+    UI -> Justificante: validarFormatoYTamano()
+    create CobroManual
+    UI -> CobroManual: create(origen=MANUAL, fecha, importe)
+    UI -> CobroManual: conciliarManualmente(factura, justificante)
+    CobroManual -> Factura: marcarComoPagada(cobro)
+    UI -> Auditoria: registrarEvento(usuario, "PAGO_MANUAL", "Cobro", anterior, nuevo)
+    opt Se descubre un error (CU-12)
+        UsuarioActor -> UI: deshacerConciliacion(idCobro, motivo)
+        UI -> CobroManual: deshacerConciliacion(motivo)
+        UI -> Auditoria: registrarEvento(usuario, "CONCILIACION_DESHECHA", "Cobro", anterior, nuevo)
+    end
+else Conciliar un cobro pendiente de revisión (CU-12 1a)
+    UsuarioActor -> UI: conciliarCobro(idCobro, idFactura)
+    UI -> Cobro: conciliarManualmente(factura, null)
+    note right of Cobro: Sigue en el paso 4: el cobro ya\nviene de la pasarela, no se adjunta\njustificante
+    Cobro -> Factura: marcarComoPagada(cobro)
+    UI -> Auditoria: registrarEvento(usuario, "COBRO_CONCILIADO", "Cobro", anterior, nuevo)
+end
+
+Cron -> UI: ejecucionProcesoGestionImpagos(hoy) (CU-19)
+create ProcesoImpagos
+UI -> ProcesoImpagos: create(RECORDATORIOS_IMPAGO)
+UI -> Config: getDiasRecordatorio()
+loop Para cada factura pendiente (emitida o vencida)
+    UI -> Factura: requiereRecordatorio(hoy)
+    alt Le toca recordatorio y no está en disputa ni con el seguimiento pausado
+        create Recordatorio
+        UI -> Recordatorio: create(factura, numeroIntento)
+        Recordatorio -> Calendario: esLaborable(hoy)
+        alt Hoy no es laborable (2b)
+            Recordatorio -> Calendario: obtenerSiguienteDiaLaborable(hoy)
+            note right of Recordatorio: El envío pasa al\nsiguiente día laborable
+        else Hoy es laborable
+            Recordatorio -> Plantilla: renderizar(datos)
+            UI -> Recordatorio: enviarRecordatorio()
+            Recordatorio -> Mensajeria: enviarRecordatorioImpago(pdf, datosSoporte)
+            UI --> UsuarioActor: aviso al usuario asignado (CU-32)
+            opt Falla el envío (3a)
+                note right of Recordatorio: Se registra el fallo, se avisa\nal responsable y se sigue con el resto
+            end
+        end
+    else En disputa o con el seguimiento pausado (2a)
+        note right of Factura: Se omite
+    end
+end
+UI -> ProcesoImpagos: registrarResultado()
+
+UsuarioActor -> UI: gestionIncidenciasYDisputas(idFactura, descripcion, responsable, prioridad) (CU-31)
 create Incidencia
 UI -> Incidencia: abrirIncidencia()
-create Comentario
-UI -> Comentario: create(texto="Disputa abierta")
-UI -> Comentario: publicar()
+UI --> UsuarioActor: aviso al responsable (CU-32)
+opt Disputa o pausa del seguimiento (1a)
+    UI -> Incidencia: pausarSeguimientoImpago(motivo, fechaRevision)
+end
+create ComentarioIncidencia
+UI -> ComentarioIncidencia: create(texto, autor)
+UI -> ComentarioIncidencia: publicar()
 UsuarioActor -> UI: resolverIncidencia(idIncidencia, resolucion)
 UI -> Incidencia: resolverYCerrar(resolucion)
-UI -> Incidencia: reanudarSeguimientoImpago()
+opt La factura sigue pendiente (5a)
+    UI -> Incidencia: reanudarSeguimientoImpago()
+end
 deactivate UI
 @enduml

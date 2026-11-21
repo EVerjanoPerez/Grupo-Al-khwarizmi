@@ -10,23 +10,27 @@ actor "Administrador" as AdminActor
 actor "Planificador (Tiempo)" as Cron
 
 participant ":Controlador / Interfaz" as UI
+participant "RegistroAuditoria" as Auditoria
 participant ":ConfiguracionSistema" as Config
 participant ":TarifaRango" as Tarifa
 participant ":Cliente" as Cliente
+participant "importado:Cliente" as ClienteImportado
 participant ":ContactoCliente" as Contacto
 participant ":ImportacionClientes" as Importacion
 participant ":Suscripcion" as Suscripcion
 participant ":ExcepcionComercial" as Excepcion
 participant ":RevisionRango" as Revision
-participant ":SolicitudAprobacion" as Solicitud
+participant "solicitudExcepcion:SolicitudAprobacion" as SolicitudExcepcion
+participant "solicitudRango:SolicitudAprobacion" as SolicitudRango
 
-AdminActor -> UI: darDeAltaCliente(datosCliente) (CU-36)
+' --- MENSAJES ---
+AdminActor -> UI: darDeAltaCliente(datosCliente, datosContacto) (CU-36)
 activate UI
 create Cliente
 UI -> Cliente: darDeAlta()
 create Contacto
-UI -> Contacto: create(datosContacto)
-AdminActor -> UI: reactivarClienteAnterior() (CU-36)
+Cliente -> Contacto: create(datosContacto)
+AdminActor -> UI: reactivarClienteAnterior(idCliente) (CU-36)
 UI -> Cliente: reactivar()
 
 AdminActor -> UI: importacionMasivaClientes(archivoCSV) (CU-18)
@@ -36,61 +40,92 @@ UI -> Importacion: cargarArchivo(archivoCSV)
 UI -> Importacion: definirMapeo(columnas)
 UI -> Importacion: validarFilas()
 UI -> Importacion: procesarImportacion()
-create Cliente
-Importacion -> Cliente: createMultiple()
+loop Para cada fila válida y sin NIF duplicado
+    create ClienteImportado
+    Importacion -> ClienteImportado: darDeAlta()
+end
 UI -> Importacion: obtenerResumen()
 
 UsuarioActor -> UI: buscarYConsultarClientes(etiquetas, favoritos) (CU-22)
-UI -> Cliente: obtenerListadoFiltrado()
+note right of UI: Filtra los clientes visibles para el usuario\npor sus etiquetas y por la asociación favoritos
+UI --> UsuarioActor: listado de clientes
 
 AdminActor -> UI: asignarClientesAUsuario(idUsuario, listaClientes) (CU-08)
-UI -> Cliente: asignarResponsable(Usuario)
+UI -> Cliente: asignarResponsable(usuario)
 AdminActor -> UI: desasignarResponsable(idCliente) (CU-08)
 UI -> Cliente: desasignarResponsable()
-
-UsuarioActor -> UI: edicionYBajaCliente(idCliente) (CU-17)
-UI -> Cliente: modificarDatosFiscales()
-UI -> Cliente: darDeBaja(fechaEfectiva)
-UI -> Suscripcion: cancelar(fechaEfectiva)
-
-AdminActor -> UI: borradoLogicoClienteOFactura(idEntidad) (CU-14)
-UI -> Cliente: borradoLogico(motivo)
 
 UsuarioActor -> UI: activarFacturacionRecurrente(idCliente, plan) (CU-06)
 create Suscripcion
 UI -> Suscripcion: create(plan, cuota)
 UI -> Suscripcion: calcularProrrateo(fechaAlta)
 UI -> Suscripcion: activar()
+note right of Suscripcion: La primera factura se emite y se envía\ncon el flujo de CU-28 / CU-10 (Bloque 3)
 
 UsuarioActor -> UI: pausarOReactivarSuscripcion(idSuscripcion, opcion) (CU-25)
 alt Pausar
-    UI -> Suscripcion: pausar(fechas, motivo)
+    UI -> Suscripcion: pausar(fechaInicio, fechaReactivacion, motivo)
 else Reactivar
     UI -> Suscripcion: reactivar()
 end
 
 UsuarioActor -> UI: solicitarExcepcionComercial(idSuscripcion, tipo, valor) (CU-26)
 create Excepcion
-UI -> Excepcion: create(tipo, valor)
-UI -> Suscripcion: agregarExcepcion(ExcepcionComercial)
+UI -> Excepcion: create(tipo, valor, motivo, fechaInicio, fechaFin)
+UI -> Suscripcion: agregarExcepcion(excepcion)
 UI -> Excepcion: solicitarAprobacion()
-create Solicitud
-Excepcion -> Solicitud: create(tipo=EXCEPCION_COMERCIAL)
+create SolicitudExcepcion
+Excepcion -> SolicitudExcepcion: create(tipo=EXCEPCION_COMERCIAL)
+note right of SolicitudExcepcion: Se resuelve en la bandeja de\naprobaciones (CU-27). La excepción\nno se aplica hasta que se aprueba
 
-Cron -> UI: revisionAnualRangoFacturacion() (CU-05)
-UI -> Cliente: obtenerFacturacionAnual()
+Cron -> UI: lanzarRevisionAnual() (CU-05)
+UI --> AdminActor: aviso de clientes pendientes de revisión (CU-32)
+AdminActor -> UI: revisarRangoCliente(idCliente, importe, fuente, fecha) (CU-05)
 UI -> Cliente: iniciarRevisionRango(importe, fuente, fecha)
 create Revision
-Cliente -> Revision: create(rangoAnterior, rangoNuevo)
+Cliente -> Revision: create(importe, fuente, fecha)
 Revision -> Config: obtenerRangoPara(facturacionAnual)
 Config -> Tarifa: contiene(facturacionAnual)
-alt Cambio de rango requiere aprobacion
+Config --> Revision: rangoNuevo
+alt El rango cambia
+    AdminActor -> UI: confirmarCambio(fechaEfecto)
     UI -> Revision: solicitarAprobacionCambio()
-    create Solicitud
-    Revision -> Solicitud: create(tipo=CAMBIO_RANGO)
-else Aplicacion directa
-    UI -> Revision: aplicarCambioRango()
-    UI -> Suscripcion: actualizarTarifa(nuevoRango, fechaEfecto)
+    create SolicitudRango
+    Revision -> SolicitudRango: create(tipo=CAMBIO_RANGO)
+    AdminActor -> UI: gestionarAprobacion(idSolicitud, accion) (CU-27)
+    note right of UI: La resuelve otro administrador:\nel aprobador no puede ser\nel solicitante (CU-27 3a)
+    alt Aprobada
+        UI -> SolicitudRango: aprobar(aprobador, comentario)
+        UI -> Revision: aplicarCambioRango()
+        UI -> Suscripcion: actualizarTarifa(nuevoRango, fechaEfecto)
+    else Rechazada (7a)
+        UI -> SolicitudRango: rechazar(aprobador, comentario)
+        UI --> AdminActor: aviso de rechazo con el comentario
+    end
+else El rango no cambia (5a)
+    note right of Revision: Se registra la revisión\ncomo hecha y termina
+end
+
+UsuarioActor -> UI: edicionYBajaCliente(idCliente) (CU-17)
+UI -> Cliente: modificarDatosFiscales()
+UI -> Cliente: darDeBaja(fechaEfectiva)
+UI -> Suscripcion: cancelar(fechaEfectiva)
+
+AdminActor -> UI: borradoLogicoCliente(idCliente, motivo) (CU-14)
+UI -> Suscripcion: getEstado()
+alt No tiene una suscripción activa
+    AdminActor -> UI: confirmarBorrado()
+    UI -> Cliente: borradoLogico(motivo)
+    UI -> Auditoria: registrarEvento(admin, "BORRADO_LOGICO", "Cliente", anterior, nuevo)
+else Tiene una suscripción activa (3a)
+    UI --> AdminActor: hay que tramitar antes la baja (CU-17)
+end
+
+AdminActor -> UI: gestionarDatosPersonales(idContacto, opcion) (CU-35)
+alt Anonimizar
+    UI -> Contacto: anonimizarDatos()
+else Eliminar
+    UI -> Contacto: eliminarDatos()
 end
 deactivate UI
 @enduml

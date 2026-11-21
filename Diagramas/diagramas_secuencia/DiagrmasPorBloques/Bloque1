@@ -13,110 +13,123 @@ actor "Servicio Mensajería" as Mensajeria
 
 participant ":Controlador / Interfaz" as UI
 participant ":Usuario" as Usuario
+participant "nuevo:Usuario" as NuevoUsuario
 participant ":Sesion" as Sesion
 participant ":DelegacionTemporal" as Delegacion
 participant ":Notificacion" as Notificacion
 participant ":AlertaCorporativa" as Alerta
 participant ":Comentario" as Comentario
 participant ":DocumentoAdjunto" as Documento
-participant ":RegistroAuditoria" as Auditoria
+participant "RegistroAuditoria" as Auditoria
 participant ":CopiaSeguridad" as Copia
 participant ":EjecucionProceso" as Proceso
 participant ":ConfiguracionSistema" as Config
 participant ":CalendarioLaboral" as Calendario
-participant ":ConexionPasarela" as PasarelaConf
+participant ":ConexionPasarelaCobro" as PasarelaConf
 participant ":PlantillaMensaje" as Plantilla
+
+' --- MENSAJES ---
+' RegistroAuditoria se usa como clase: registrarEvento() y consultar() son estáticos.
 
 UsuarioActor -> UI: login(correo, password) (CU-01)
 activate UI
 UI -> Usuario: iniciarSesion(correo, pass)
 activate Usuario
-alt Credenciales válidas
+alt Credenciales válidas y cuenta activa
     create Sesion
     Usuario -> Sesion: create()
-    Usuario -> Mensajeria: enviarCodigo2FA()
-    Usuario --> UI: sesionIniciada
-else Varios intentos fallidos
-    Usuario -> Usuario: bloquearCuentaTemporante()
-    Usuario --> UI: errorCuentaBloqueada
+    Usuario --> UI: sesion
+else Credenciales incorrectas (3a)
+    Usuario --> UI: errorCredenciales
+    note right of Usuario: Suma intentosFallidos. Tras varios\nfallos rellena bloqueadoHasta\n(bloqueo temporal de la cuenta)
+else Cuenta desactivada (3b)
+    Usuario --> UI: accesoDenegado
 end
 deactivate Usuario
 
-UsuarioActor -> UI: recuperarPassword() (CU-01)
+UsuarioActor -> UI: recuperarPassword(correo) (CU-01 3c)
 UI -> Usuario: recuperarPassword()
-UI -> Mensajeria: enviarEmailRecuperacion()
+Usuario -> Mensajeria: enviarEnlaceRecuperacion()
 
 UsuarioActor -> UI: cerrarSesion() (CU-01)
 UI -> Usuario: cerrarSesion()
+Usuario -> Sesion: invalidar()
 
 AdminActor -> UI: registrarUsuarioInterno(datos) (CU-02)
-create Usuario
-UI -> Usuario: create(datos)
-UI -> Usuario: enviarInvitacion()
-Usuario -> Mensajeria: enviarInvitacion()
+create NuevoUsuario
+UI -> NuevoUsuario: create(datos)
+UI -> NuevoUsuario: enviarInvitacion()
+NuevoUsuario -> Mensajeria: enviarInvitacion()
 
-AdminActor -> UI: reactivarCuenta(idUsuario) (CU-02)
-UI -> Usuario: reactivarCuenta()
-
-AdminActor -> UI: delegarClientesTemporales(sustituto, fechaini, fechaFin) (CU-07)
+AdminActor -> UI: delegarClientesTemporales(titular, sustituto, fechaInicio, fechaFin, clientes) (CU-07)
 create Delegacion
-UI -> Delegacion: create(titular, sustituto, rangoFechas)
+UI -> Delegacion: create(titular, sustituto, fechaInicio, fechaFin, clientes)
 UI -> Delegacion: activarDelegacion()
 UI -> Delegacion: estaVigente(hoy)
-AdminActor -> UI: cancelarDelegacion() (CU-07)
+AdminActor -> UI: cancelarDelegacion(idDelegacion) (CU-07)
 UI -> Delegacion: cancelarDelegacion()
 
 AdminActor -> UI: desactivarCuenta(idUsuario, motivo) (CU-13)
 UI -> Usuario: desactivarCuenta(motivo)
 UI -> Usuario: invalidarSesionesActivas()
 Usuario -> Sesion: invalidar()
+UI -> Auditoria: registrarEvento(admin, "CUENTA_DESACTIVADA", "Usuario", anterior, nuevo)
+
+AdminActor -> UI: reactivarCuenta(idUsuario) (CU-02)
+UI -> Usuario: reactivarCuenta()
 
 SuperAdminActor -> UI: configurarParametrosGlobales(config) (CU-03)
-UI -> Config: actualizarParametros()
 UI -> Config: validarUmbrales()
-UI -> Plantilla: actualizarPlantillas()
+UI -> Config: actualizarParametros()
 UI -> Plantilla: previsualizar(datosPrueba)
 UI -> Plantilla: enviarPrueba(destinatarioTest)
-UI -> Calendario: agregarFestivo(DiaFestivo)
-create Auditoria
-UI -> Auditoria: registrarEvento(Usuario, "CONFIGURACION_MODIFICADA")
+Plantilla -> Mensajeria: enviarMensajePrueba()
+UI -> Calendario: agregarFestivo(festivo)
+UI -> Auditoria: registrarEvento(superadmin, "CONFIGURACION_MODIFICADA", "ConfiguracionSistema", anterior, nuevo)
 
 SuperAdminActor -> UI: administrarCuentaRecepcionPagos(credenciales) (CU-04)
 UI -> PasarelaConf: guardarCredencialesCifradas(apiKey, secret)
 UI -> PasarelaConf: probarConexion()
 
-Cron -> UI: ejecutarCopiaSeguridadAutomática() (CU-24)
+Cron -> UI: ejecutarCopiaSeguridadAutomatica() (CU-24)
+create Proceso
+UI -> Proceso: create(COPIA_SEGURIDAD)
 create Copia
 UI -> Copia: generarCopia()
 UI -> Copia: verificarIntegridad()
-create Proceso
 UI -> Proceso: registrarResultado()
 
-SuperAdminActor -> UI: consultarAuditoriaYRestaurarCopia(idCopia) (CU-20)
-UI -> Auditoria: consultar(filtros)
+SuperAdminActor -> UI: consultarAuditoria(filtros) (CU-20)
+UI -> Auditoria: consultar(usuario, tipoOperacion, entidad, desde, hasta)
+SuperAdminActor -> UI: descargarORestaurarCopia(idCopia) (CU-20 1b)
 UI -> Copia: descargar()
-UI -> Copia: restaurar(SuperAdminActor)
+UI -> Copia: restaurar(superadmin)
 
-UsuarioActor -> UI: trabajoDiario_PublicarYAlertas() (CU-32)
+UsuarioActor -> UI: abrirTrabajoDiario() (CU-32)
 UI -> Sesion: esValida()
+UsuarioActor -> UI: configurarCanales(canales) (CU-32)
 UI -> Usuario: configurarCanales(canales)
-UI -> Notificacion: marcarComoLeida()
-UI -> Notificacion: marcarComoAtendida()
+UsuarioActor -> UI: publicarComentario(texto, mencionados) (CU-32)
 create Comentario
-UI -> Comentario: create(texto, autor)
+UI -> Comentario: create(texto, autor, mencionados)
 UI -> Comentario: publicar()
 UI -> Comentario: notificarMencionados()
-create Notificacion
-Comentario -> Notificacion: create(destinatario, mensaje)
-Notificacion -> Notificacion: enviar()
+loop Para cada usuario mencionado
+    create Notificacion
+    Comentario -> Notificacion: create(destinatario, mensaje)
+    Comentario -> Notificacion: enviar()
+end
+UsuarioActor -> UI: atenderNotificacion(idNotificacion) (CU-32)
+UI -> Notificacion: marcarComoLeida()
+UI -> Notificacion: marcarComoAtendida()
+UsuarioActor -> UI: adjuntarDocumento(archivo) (CU-32)
+create Documento
+UI -> Documento: create(archivo, subidoPor)
 UI -> Documento: validarFormatoYTamano()
 UI -> Alerta: evaluarCondicion(contexto)
-alt Condición Cumplida
+opt Condición cumplida (CU-32 2b)
     Alerta -> Alerta: dispararAlerta()
+    note right of Alerta: Avisa a cada uno de sus destinatarios
 end
-
-AdminActor -> UI: gestionarDatosPersonales/Anonimizar(idContacto) (CU-35)
-UI -> Contacto: anonimizarDatos()
-UI -> Contacto: eliminarDatos()
 deactivate UI
 @enduml
