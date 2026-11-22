@@ -9,7 +9,7 @@ Código [PlantUML](https://plantuml.com/es/) de los diagramas UML del proyecto, 
 | Carpeta | Diagrama | Ficheros principales |
 |---|---|---|
 | `diagrama_CU` | Casos de uso: el diagrama completo y 5 subdiagramas por bloques | `Diagrama_completo_sistema.puml`, `imagenes/` |
-| `diagramas_clases` | Clases, organizado en 6 bloques | `diagrama_clases`, `borrador_clases.md` (explicación de cada clase) |
+| `diagramas_clases` | Clases, organizado en 6 bloques | `diagrama_clases` (completo), `bloques/` (un diagrama por bloque y otro de enumeraciones, para verlos mejor), `borrador_clases.md` (explicación de cada clase) |
 | `diagrama_entidad_relacion` | Entidad-relación físico de la base de datos | `diagrama_ER_turbine.puml`, `documentacion_er.md` (notación y decisiones de diseño) |
 | `diagramas_secuencia` | Secuencia: un diagrama maestro y 6 bloques | `DiagramaCompletoBorrador`, `DiagrmasPorBloques/` |
 | `diagrama_de_componentes` | Componentes del sistema (versión simplificada) | `diagrama_componentes.puml`, `diagrama_de_componentes.svg` |

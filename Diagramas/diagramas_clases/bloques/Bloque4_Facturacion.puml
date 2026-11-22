@@ -1,0 +1,217 @@
+@startuml
+' =====================================================
+'  DIAGRAMA DE CLASES · Sistema de facturación y cobros de Turbine
+'  Cada bloque tiene su color. El color de cada línea indica
+'  el bloque del que sale. Los comentarios explican las relaciones.
+' =====================================================
+
+
+' ---------- Aspecto (colores y espacios) ----------
+skinparam shadowing false
+skinparam roundCorner 10
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam packageBorderColor #BBBBBB
+skinparam packageFontSize 15
+skinparam packageFontStyle bold
+skinparam noteBackgroundColor #FFFBE6
+skinparam noteBorderColor #C9B458
+skinparam legendBackgroundColor #FFFFFF
+skinparam legendBorderColor #BBBBBB
+hide circle
+hide stereotype
+
+' ---------- Líneas más ordenadas ----------
+' Las líneas van en ángulo recto y con más espacio entre cajas.
+' Si algún texto de una línea se ve mal, cambia "ortho" por "polyline".
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 90
+skinparam ArrowThickness 1.2
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #333333
+
+skinparam class {
+  BorderThickness 1.3
+  BackgroundColor<<B1>> #DCEBFA
+  BorderColor<<B1>>     #2F6DB5
+  BackgroundColor<<B2>> #E9E4F5
+  BorderColor<<B2>>     #6A4FB0
+  BackgroundColor<<B3>> #DFF2E1
+  BorderColor<<B3>>     #2E8B57
+  BackgroundColor<<B4>> #FDE9D3
+  BorderColor<<B4>>     #D9822B
+  BackgroundColor<<B5>> #FBE0E0
+  BorderColor<<B5>>     #C0392B
+  BackgroundColor<<B6>> #FFF4C9
+  BorderColor<<B6>>     #B8960C
+  BackgroundColor<<EN>> #ECECEC
+  BorderColor<<EN>>     #7F7F7F
+}
+
+legend left
+  |= Color |= Bloque (y color de sus líneas) |
+  |<#DCEBFA>     | 1 · Usuarios, accesos y trabajo diario |
+  |<#E9E4F5>     | 2 · Configuración, auditoría y datos |
+  |<#DFF2E1>     | 3 · Clientes y suscripciones |
+  |<#FDE9D3>     | 4 · Facturación, presupuestos y aprobaciones |
+  |<#FBE0E0>     | 5 · Cobros, impagos e incidencias |
+  |<#FFF4C9>     | 6 · Informes, paquetes y operaciones masivas |
+  |<#ECECEC>     | Enumeraciones (listas de valores posibles) |
+endlegend
+
+title Sistema de facturación y cobros de Turbine · 4 · Facturación, presupuestos y aprobaciones
+hide empty members
+
+package "4 · Facturación, presupuestos y aprobaciones" #FFF8F0 {
+  Class ProductoCatalogo <<B4>> {
+  - int idProducto
+  - String codigoSKU
+  - String nombre
+  - String descripcion
+  - double precioUnitarioBase
+  - double porcentajeImpuestoDefecto
+  - bool activo
+
+  + void actualizarPrecio(double nuevoPrecio)
+  }
+
+  Class Presupuesto <<B4>> {
+  - String idPresupuesto
+  - Date fechaCreacion
+  - EstadoPresupuesto estado
+
+  + double calcularTotal()
+  + bool enviar()
+  + void aceptar(DocumentoAdjunto evidencia)
+  + void rechazar(DocumentoAdjunto evidencia)
+  + Factura convertirEnFactura()
+  }
+
+  Class Factura <<B4>> {
+  - int idFactura
+  - String numeroFactura
+  - TipoFactura tipo
+  - Date fechaEmision
+  - Date fechaVencimiento
+  - String mesFacturado
+  - String moneda
+  - String centroCoste
+  - double baseImponible
+  - double totalImpuestos
+  - double importeTotal
+  - double saldoPendiente
+  - EstadoFactura estado
+  - bool enDisputa
+
+  + void calcularTotales()
+  + void agregarLineaDesdeCatalogo(ProductoCatalogo p, int cantidad, double dto)
+  + bool modificarBorrador()
+  + bool eliminarBorrador()
+  + bool emitir()
+  + DocumentoAdjunto generarPdf()
+  + DocumentoAdjunto obtenerPdf()
+  + bool enviarAlCliente()
+  + void marcarComoPagada(Cobro c)
+  + int calcularDiasRetraso()
+  + bool requiereRecordatorio(Date fecha)
+  + Factura crearRectificativa(String motivo)
+  + bool anular(String motivo)
+  + void declararIncobrable(String motivo)
+  }
+
+  Class LineaFactura <<B4>> {
+  - int numeroLinea
+  - String concepto
+  - int cantidad
+  - double precioUnitario
+  - double porcentajeDescuento
+  - double porcentajeImpuesto
+
+  + double calcularSubtotal()
+  }
+
+  Class EnvioFactura <<B4>> {
+  - int idEnvio
+  - DateTime fechaHoraEnvio
+  - CanalNotificacion canalUtilizado
+  - String destinatario
+  - bool exitoso
+  - String detalleErrorRebote
+
+  + bool enviar()
+  + bool reintentarEnvio()
+  }
+
+  Class SolicitudAprobacion <<B4>> {
+  - int idSolicitud
+  - TipoAprobacion tipoOperacion
+  - double importeAfectado
+  - String motivoSolicitud
+  - String comentarioResolucion
+  - DateTime fechaSolicitud
+  - DateTime fechaResolucion
+  - EstadoAprobacion estado
+
+  + bool requiereSuperadmin()
+  + bool aprobar(Usuario aprobador, String comentario)
+  + void rechazar(Usuario aprobador, String comentario)
+  + void reasignar(Usuario suplente)
+  }
+
+}
+
+' Clases de otros bloques: solo el nombre (el detalle está en su bloque)
+package "Clases de otros bloques" #FFFFFF {
+  Class Comentario <<B1>>
+  Class DocumentoAdjunto <<B1>>
+  Class Usuario <<B1>>
+  Class ConfiguracionSistema <<B2>>
+  Class PeriodoContable <<B2>>
+  Class PlantillaMensaje <<B2>>
+  Class SerieFacturacion <<B2>>
+  Class Cliente <<B3>>
+  Class ExcepcionComercial <<B3>>
+  Class RevisionRango <<B3>>
+  Class Suscripcion <<B3>>
+  Class Cobro <<B5>>
+  Class Incidencia <<B5>>
+  Class RecordatorioImpago <<B5>>
+}
+
+' Relaciones en las que participa alguna clase de este bloque
+Factura "0..1" *-[#D9822B]- "1..*" LineaFactura
+Presupuesto "0..1" *-[#D9822B]- "1..*" LineaFactura
+Comentario "0..*" -[#2F6DB5]-> "0..1" Factura
+DocumentoAdjunto "0..*" <-[#D9822B]- "0..1" Factura
+Cliente "1" -[#2E8B57]-> "0..*" Factura : -facturas
+Cliente "1" -[#2E8B57]-> "0..*" Presupuesto : -presupuestos
+Suscripcion "0..1" -[#2E8B57]-> "0..*" Factura : -facturasGeneradas
+Presupuesto "0..1" -[#D9822B]-> "0..1" DocumentoAdjunto : -evidencia
+Presupuesto "0..1" -[#D9822B]-> "0..1" Factura : -facturaGenerada
+LineaFactura "0..*" -[#D9822B]-> "0..1" ProductoCatalogo : -productoOrigen
+Factura "0..*" -[#D9822B]-> "0..1" SerieFacturacion : -serie
+Factura "0..1" -[#D9822B]-> "0..1" DocumentoAdjunto : -pdfEmitido
+Factura "0..1" <-[#D9822B]- "0..*" Factura : -facturaOriginal
+Factura "1" -[#D9822B]-> "0..*" EnvioFactura : -historialEnvios
+EnvioFactura "0..*" -[#D9822B]-> "1" PlantillaMensaje : -plantillaUsada
+SolicitudAprobacion "0..*" -[#D9822B]-> "1" Usuario : -solicitante
+SolicitudAprobacion "0..*" -[#D9822B]-> "0..1" Usuario : -aprobador
+SolicitudAprobacion "0..*" -[#D9822B]-> "0..1" Usuario : -asignadoA
+SolicitudAprobacion "0..1" <-[#2E8B57]- "0..1" RevisionRango
+SolicitudAprobacion "0..1" <-[#2E8B57]- "0..1" ExcepcionComercial
+SolicitudAprobacion "0..*" <-[#D9822B]- "0..1" Factura
+SolicitudAprobacion "0..*" <-[#2E8B57]- "0..1" Suscripcion
+Factura "0..1" -[#D9822B]-> "0..*" Cobro : -cobros
+Factura "1" -[#D9822B]-> "0..*" RecordatorioImpago : -recordatorios
+Incidencia "0..*" -[#C0392B]-> "0..1" Factura
+Factura .[#D9822B].> PeriodoContable : <<uses>>
+Factura .[#D9822B].> ConfiguracionSistema : <<uses>>
+SolicitudAprobacion .[#D9822B].> ConfiguracionSistema : <<uses>>
+
+note right of LineaFactura : {xor} cada línea pertenece\na una Factura o a un Presupuesto
+note bottom of SolicitudAprobacion : {xor} cada solicitud se refiere\na un único elemento
+
+@enduml

@@ -1,0 +1,204 @@
+@startuml
+' =====================================================
+'  DIAGRAMA DE CLASES · Sistema de facturación y cobros de Turbine
+'  Cada bloque tiene su color. El color de cada línea indica
+'  el bloque del que sale. Los comentarios explican las relaciones.
+' =====================================================
+
+
+' ---------- Aspecto (colores y espacios) ----------
+skinparam shadowing false
+skinparam roundCorner 10
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam packageBorderColor #BBBBBB
+skinparam packageFontSize 15
+skinparam packageFontStyle bold
+skinparam noteBackgroundColor #FFFBE6
+skinparam noteBorderColor #C9B458
+skinparam legendBackgroundColor #FFFFFF
+skinparam legendBorderColor #BBBBBB
+hide circle
+hide stereotype
+
+' ---------- Líneas más ordenadas ----------
+' Las líneas van en ángulo recto y con más espacio entre cajas.
+' Si algún texto de una línea se ve mal, cambia "ortho" por "polyline".
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 90
+skinparam ArrowThickness 1.2
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #333333
+
+skinparam class {
+  BorderThickness 1.3
+  BackgroundColor<<B1>> #DCEBFA
+  BorderColor<<B1>>     #2F6DB5
+  BackgroundColor<<B2>> #E9E4F5
+  BorderColor<<B2>>     #6A4FB0
+  BackgroundColor<<B3>> #DFF2E1
+  BorderColor<<B3>>     #2E8B57
+  BackgroundColor<<B4>> #FDE9D3
+  BorderColor<<B4>>     #D9822B
+  BackgroundColor<<B5>> #FBE0E0
+  BorderColor<<B5>>     #C0392B
+  BackgroundColor<<B6>> #FFF4C9
+  BorderColor<<B6>>     #B8960C
+  BackgroundColor<<EN>> #ECECEC
+  BorderColor<<EN>>     #7F7F7F
+}
+
+legend left
+  |= Color |= Bloque (y color de sus líneas) |
+  |<#DCEBFA>     | 1 · Usuarios, accesos y trabajo diario |
+  |<#E9E4F5>     | 2 · Configuración, auditoría y datos |
+  |<#DFF2E1>     | 3 · Clientes y suscripciones |
+  |<#FDE9D3>     | 4 · Facturación, presupuestos y aprobaciones |
+  |<#FBE0E0>     | 5 · Cobros, impagos e incidencias |
+  |<#FFF4C9>     | 6 · Informes, paquetes y operaciones masivas |
+  |<#ECECEC>     | Enumeraciones (listas de valores posibles) |
+endlegend
+
+title Sistema de facturación y cobros de Turbine · Enumeraciones
+hide empty members
+
+package "Enumeraciones · valores posibles" #F7F7F7 {
+  ' --- Bloque 1: usuarios y trabajo diario ---
+  enum RolUsuario <<EN>> {
+  USUARIO
+  ADMIN
+  SUPERADMIN
+  }
+  enum EstadoNotificacion <<EN>> {
+  NO_LEIDA
+  LEIDA
+  ATENDIDA
+  }
+  enum CanalNotificacion <<EN>> {
+  INTERNO
+  EMAIL
+  WHATSAPP
+  }
+  enum FormatoArchivo <<EN>> {
+  PDF
+  CSV
+  PNG
+  JPG
+  ZIP
+  }
+  ' --- Bloque 2: configuración, auditoría y datos ---
+  enum ProveedorPasarela <<EN>> {
+  STRIPE
+  REVOLUT
+  }
+  enum EntornoPasarela <<EN>> {
+  SANDBOX
+  PRODUCCION
+  }
+  enum TipoEvento <<EN>> {
+  EMISION_FACTURA
+  RECORDATORIO_IMPAGO
+  ENVIO_PRESUPUESTO
+  INVITACION_USUARIO
+  RECUPERACION_PASSWORD
+  NOTIFICACION_GENERAL
+  }
+  enum TipoSerie <<EN>> {
+  ORDINARIA
+  RECTIFICATIVA
+  }
+  enum TipoPeriodo <<EN>> {
+  MENSUAL
+  TRIMESTRAL
+  }
+  enum TipoProceso <<EN>> {
+  GENERACION_MENSUAL
+  RECORDATORIOS_IMPAGO
+  CONSULTA_COBROS
+  REVISION_ANUAL
+  COPIA_SEGURIDAD
+  ACCIONES_PROGRAMADAS
+  }
+  ' --- Bloque 3: clientes y suscripciones ---
+  enum EstadoCliente <<EN>> {
+  ACTIVO
+  BAJA
+  }
+  enum EstadoSuscripcion <<EN>> {
+  PROGRAMADA
+  ACTIVA
+  PAUSADA
+  CANCELADA
+  }
+  enum TipoExcepcion <<EN>> {
+  DESCUENTO
+  MES_GRATIS
+  PRECIO_PACTADO
+  NO_PRORRATEAR
+  }
+  ' --- Bloque 4: facturación, presupuestos y aprobaciones ---
+  enum EstadoPresupuesto <<EN>> {
+  PENDIENTE
+  ENVIADO
+  ACEPTADO
+  RECHAZADO
+  }
+  enum TipoFactura <<EN>> {
+  PUNTUAL
+  RECURRENTE
+  RECTIFICATIVA
+  }
+  enum EstadoFactura <<EN>> {
+  BORRADOR
+  PENDIENTE_APROBACION
+  EMITIDA
+  PAGADA
+  VENCIDA
+  RECTIFICADA
+  ANULADA
+  INCOBRABLE
+  }
+  enum TipoAprobacion <<EN>> {
+  IMPORTE_MANUAL
+  DESCUENTO_FACTURA
+  EXCEPCION_COMERCIAL
+  VENCIMIENTO_ESPECIAL
+  FACTURA_IMPORTE_ALTO
+  CAMBIO_RANGO
+  RECTIFICATIVA
+  INCOBRABLE
+  }
+  enum EstadoAprobacion <<EN>> {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+  }
+  ' --- Bloque 5: cobros, impagos e incidencias ---
+  enum OrigenCobro <<EN>> {
+  STRIPE
+  REVOLUT
+  MANUAL
+  }
+  enum Prioridad <<EN>> {
+  BAJA
+  MEDIA
+  ALTA
+  }
+  ' --- Bloque 6: informes, paquetes y operaciones masivas ---
+  enum EstadoInforme <<EN>> {
+  EN_PROCESO
+  LISTO
+  ERROR
+  }
+  enum TipoAccionMasiva <<EN>> {
+  REASIGNAR_CLIENTES
+  EXPORTAR_SELECCION
+  CAMBIAR_SECTOR
+  GENERAR_INFORMES
+  }
+}
+
+@enduml

@@ -1,0 +1,134 @@
+@startuml
+' =====================================================
+'  DIAGRAMA DE CLASES · Sistema de facturación y cobros de Turbine
+'  Cada bloque tiene su color. El color de cada línea indica
+'  el bloque del que sale. Los comentarios explican las relaciones.
+' =====================================================
+
+
+' ---------- Aspecto (colores y espacios) ----------
+skinparam shadowing false
+skinparam roundCorner 10
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam packageBorderColor #BBBBBB
+skinparam packageFontSize 15
+skinparam packageFontStyle bold
+skinparam noteBackgroundColor #FFFBE6
+skinparam noteBorderColor #C9B458
+skinparam legendBackgroundColor #FFFFFF
+skinparam legendBorderColor #BBBBBB
+hide circle
+hide stereotype
+
+' ---------- Líneas más ordenadas ----------
+' Las líneas van en ángulo recto y con más espacio entre cajas.
+' Si algún texto de una línea se ve mal, cambia "ortho" por "polyline".
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 90
+skinparam ArrowThickness 1.2
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #333333
+
+skinparam class {
+  BorderThickness 1.3
+  BackgroundColor<<B1>> #DCEBFA
+  BorderColor<<B1>>     #2F6DB5
+  BackgroundColor<<B2>> #E9E4F5
+  BorderColor<<B2>>     #6A4FB0
+  BackgroundColor<<B3>> #DFF2E1
+  BorderColor<<B3>>     #2E8B57
+  BackgroundColor<<B4>> #FDE9D3
+  BorderColor<<B4>>     #D9822B
+  BackgroundColor<<B5>> #FBE0E0
+  BorderColor<<B5>>     #C0392B
+  BackgroundColor<<B6>> #FFF4C9
+  BorderColor<<B6>>     #B8960C
+  BackgroundColor<<EN>> #ECECEC
+  BorderColor<<EN>>     #7F7F7F
+}
+
+legend left
+  |= Color |= Bloque (y color de sus líneas) |
+  |<#DCEBFA>     | 1 · Usuarios, accesos y trabajo diario |
+  |<#E9E4F5>     | 2 · Configuración, auditoría y datos |
+  |<#DFF2E1>     | 3 · Clientes y suscripciones |
+  |<#FDE9D3>     | 4 · Facturación, presupuestos y aprobaciones |
+  |<#FBE0E0>     | 5 · Cobros, impagos e incidencias |
+  |<#FFF4C9>     | 6 · Informes, paquetes y operaciones masivas |
+  |<#ECECEC>     | Enumeraciones (listas de valores posibles) |
+endlegend
+
+title Sistema de facturación y cobros de Turbine · 6 · Informes, paquetes y operaciones masivas
+hide empty members
+
+package "6 · Informes, paquetes y operaciones masivas" #FFFDF0 {
+  Class Informe <<B6>> {
+  - int idInforme
+  - Date fechaDesde
+  - Date fechaHasta
+  - EstadoFactura filtroEstado
+  - TipoFactura filtroTipo
+  - String filtroPais
+  - String filtroMoneda
+  - FormatoArchivo formatoExportacion
+  - EstadoInforme estado
+  - DateTime fechaGeneracion
+
+  + DocumentoAdjunto generar()
+  + void notificarListo()
+  }
+
+  Class PaqueteGestoria <<B6>> {
+  - int idPaquete
+  - DateTime fechaGeneracion
+  - int totalFacturasIncluidas
+
+  + DocumentoAdjunto compilarPaquete()
+  + File descargarZip()
+  }
+
+  Class AccionMasiva <<B6>> {
+  - int idAccionMasiva
+  - TipoAccionMasiva tipoAccion
+  - bool confirmada
+  - DateTime fechaEjecucion
+  - int totalProcesados
+  - int totalExitosos
+  - int totalFallidos
+  - Map<String, bool> resultadosPorElemento
+  - Map<String, String> erroresDetalle
+
+  + int previsualizarAfectados(List<Object> elementos)
+  + bool esSensible()
+  + void confirmar()
+  + void ejecutar(List<Object> elementos)
+  + String obtenerInformeResultados()
+  }
+
+}
+
+' Clases de otros bloques: solo el nombre (el detalle está en su bloque)
+package "Clases de otros bloques" #FFFFFF {
+  Class DocumentoAdjunto <<B1>>
+  Class Usuario <<B1>>
+  Class PeriodoContable <<B2>>
+  Class Cliente <<B3>>
+}
+
+' Relaciones en las que participa alguna clase de este bloque
+Informe "0..*" -[#B8960C]-> "1" Usuario : -generadoPor
+Informe "0..*" -[#B8960C]-> "0..1" Cliente : -filtroCliente
+Informe "0..*" -[#B8960C]-> "0..1" Usuario : -filtroResponsable
+Informe "0..1" -[#B8960C]-> "0..1" DocumentoAdjunto : -archivoGenerado
+PaqueteGestoria "0..*" -[#B8960C]-> "1" PeriodoContable : -periodoAsociado
+PaqueteGestoria "0..1" -[#B8960C]-> "0..1" DocumentoAdjunto : -archivoZip
+PaqueteGestoria "0..*" -[#B8960C]-> "1" Usuario : -generadoPor
+AccionMasiva "0..*" -[#B8960C]-> "1" Usuario : -ejecutadoPor
+AccionMasiva "0..1" -[#B8960C]-> "0..*" Informe : -informesGenerados
+
+
+@enduml

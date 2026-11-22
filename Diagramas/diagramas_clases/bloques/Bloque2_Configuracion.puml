@@ -1,0 +1,239 @@
+@startuml
+' =====================================================
+'  DIAGRAMA DE CLASES · Sistema de facturación y cobros de Turbine
+'  Cada bloque tiene su color. El color de cada línea indica
+'  el bloque del que sale. Los comentarios explican las relaciones.
+' =====================================================
+
+
+' ---------- Aspecto (colores y espacios) ----------
+skinparam shadowing false
+skinparam roundCorner 10
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam packageBorderColor #BBBBBB
+skinparam packageFontSize 15
+skinparam packageFontStyle bold
+skinparam noteBackgroundColor #FFFBE6
+skinparam noteBorderColor #C9B458
+skinparam legendBackgroundColor #FFFFFF
+skinparam legendBorderColor #BBBBBB
+hide circle
+hide stereotype
+
+' ---------- Líneas más ordenadas ----------
+' Las líneas van en ángulo recto y con más espacio entre cajas.
+' Si algún texto de una línea se ve mal, cambia "ortho" por "polyline".
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 90
+skinparam ArrowThickness 1.2
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #333333
+
+skinparam class {
+  BorderThickness 1.3
+  BackgroundColor<<B1>> #DCEBFA
+  BorderColor<<B1>>     #2F6DB5
+  BackgroundColor<<B2>> #E9E4F5
+  BorderColor<<B2>>     #6A4FB0
+  BackgroundColor<<B3>> #DFF2E1
+  BorderColor<<B3>>     #2E8B57
+  BackgroundColor<<B4>> #FDE9D3
+  BorderColor<<B4>>     #D9822B
+  BackgroundColor<<B5>> #FBE0E0
+  BorderColor<<B5>>     #C0392B
+  BackgroundColor<<B6>> #FFF4C9
+  BorderColor<<B6>>     #B8960C
+  BackgroundColor<<EN>> #ECECEC
+  BorderColor<<EN>>     #7F7F7F
+}
+
+legend left
+  |= Color |= Bloque (y color de sus líneas) |
+  |<#DCEBFA>     | 1 · Usuarios, accesos y trabajo diario |
+  |<#E9E4F5>     | 2 · Configuración, auditoría y datos |
+  |<#DFF2E1>     | 3 · Clientes y suscripciones |
+  |<#FDE9D3>     | 4 · Facturación, presupuestos y aprobaciones |
+  |<#FBE0E0>     | 5 · Cobros, impagos e incidencias |
+  |<#FFF4C9>     | 6 · Informes, paquetes y operaciones masivas |
+  |<#ECECEC>     | Enumeraciones (listas de valores posibles) |
+endlegend
+
+title Sistema de facturación y cobros de Turbine · 2 · Configuración, auditoría y datos
+hide empty members
+
+package "2 · Configuración, auditoría y datos" #F7F4FC {
+  Class ConfiguracionSistema <<B2>> {
+  - int plazoPagoDefecto
+  - List<int> diasRecordatorio
+  - double impuestoDefecto
+  - String monedaBase
+  - double umbralAprobacionInferior
+  - double umbralAprobacionSuperior
+  - int periodicidadCopias
+  - String datosEmisor
+  - String datosSoporte
+
+  + bool actualizarParametros()
+  + bool validarUmbrales()
+  + TarifaRango obtenerRangoPara(double facturacionAnual)
+  }
+
+  Class ConexionPasarelaCobro <<B2>> {
+  - int idConexion
+  - ProveedorPasarela proveedor
+  - String apiKeyCifrada
+  - String webhookSecretCifrado
+  - bool activa
+  - EntornoPasarela entorno
+
+  + bool guardarCredencialesCifradas(String apiKey, String secret)
+  + bool probarConexion()
+  + Object obtenerClienteAPI()
+  }
+
+  Class PlantillaMensaje <<B2>> {
+  - int idPlantilla
+  - String nombre
+  - TipoEvento tipoEvento
+  - String idioma
+  - CanalNotificacion canal
+  - String asunto
+  - String cuerpo
+  - List<String> variablesDisponibles
+
+  + String previsualizar(Map<String, String> datosPrueba)
+  + bool enviarPrueba(String destinatarioTest)
+  + String renderizar(Map<String, String> datos)
+  }
+
+  Class CalendarioLaboral <<B2>> {
+  - int anio
+  - String region
+
+  + bool esLaborable(Date fecha)
+  + Date obtenerSiguienteDiaLaborable(Date fecha)
+  + void agregarFestivo(DiaFestivo festivo)
+  }
+
+  Class DiaFestivo <<B2>> {
+  - Date fecha
+  - String descripcion
+  - bool esNacional
+  }
+
+  Class TarifaRango <<B2>> {
+  - int idTarifaRango
+  - String nombreRango
+  - double facturacionMinima
+  - double facturacionMaxima
+  - double cuotaBaseAsociada
+
+  + bool contiene(double facturacionAnual)
+  }
+
+  Class SerieFacturacion <<B2>> {
+  - String codigoSerie
+  - TipoSerie tipoSerie
+  - int anio
+  - int ultimoNumeroAsignado
+
+  + String siguienteNumeroCorrelativo()
+  }
+
+  Class RegistroAuditoria <<B2>> {
+  - int idRegistro
+  - DateTime fechaHora
+  - String tipoOperacion
+  - String entidadAfectada
+  - String valorAnterior
+  - String valorNuevo
+
+  {static} + RegistroAuditoria registrarEvento(Usuario u, String tipoOperacion, String entidad, String valorAnterior, String valorNuevo)
+  {static} + List<RegistroAuditoria> consultar(Usuario usuario, String tipoOperacion, String entidad, Date desde, Date hasta)
+  }
+
+  Class PeriodoContable <<B2>> {
+  - String idPeriodo
+  - TipoPeriodo tipo
+  - Date fechaInicio
+  - Date fechaFin
+  - bool cerrado
+  - DateTime fechaCierre
+  - String motivoReapertura
+
+  + List<String> obtenerAvisosPendientes()
+  + bool cerrarPeriodo(Usuario admin)
+  + bool reabrirPeriodo(Usuario superadmin, String motivo)
+  + bool contieneFecha(Date fecha)
+  }
+
+  Class EjecucionProceso <<B2>> {
+  - int idEjecucion
+  - TipoProceso tipoProceso
+  - DateTime fechaHoraInicio
+  - DateTime fechaHoraFin
+  - String estadoSalud
+  - int totalGeneradas
+  - int totalOmitidas
+  - int totalErrores
+  - List<String> detalleErrores
+
+  + void registrarResultado()
+  }
+
+  Class CopiaSeguridad <<B2>> {
+  - int idCopia
+  - DateTime fechaCreacion
+  - String rutaArchivo
+  - long tamanoBytes
+  - bool verificadaCompleta
+
+  + bool generarCopia()
+  + bool verificarIntegridad()
+  + File descargar()
+  + bool restaurar(Usuario superadmin)
+  }
+
+}
+
+' Clases de otros bloques: solo el nombre (el detalle está en su bloque)
+package "Clases de otros bloques" #FFFFFF {
+  Class Usuario <<B1>>
+  Class Cliente <<B3>>
+  Class RevisionRango <<B3>>
+  Class EnvioFactura <<B4>>
+  Class Factura <<B4>>
+  Class SolicitudAprobacion <<B4>>
+  Class RecordatorioImpago <<B5>>
+  Class PaqueteGestoria <<B6>>
+}
+
+' Relaciones en las que participa alguna clase de este bloque
+CalendarioLaboral "1" *-[#6A4FB0]- "0..*" DiaFestivo : -festivos
+ConfiguracionSistema "1" -[#6A4FB0]-> "0..*" ConexionPasarelaCobro : -pasarelasConfiguradas
+ConfiguracionSistema "1" -[#6A4FB0]-> "0..*" PlantillaMensaje : -plantillasNotificacion
+ConfiguracionSistema "1" -[#6A4FB0]-> "1..*" CalendarioLaboral : -calendarios
+ConfiguracionSistema "1" -[#6A4FB0]-> "1..*" TarifaRango : -tablaTarifas
+ConfiguracionSistema "1" -[#6A4FB0]-> "1..*" SerieFacturacion : -seriesConfiguradas
+RegistroAuditoria "0..*" -[#6A4FB0]-> "0..1" Usuario : -autor
+CopiaSeguridad "0..*" -[#6A4FB0]-> "0..1" EjecucionProceso : -ejecucionOrigen
+CopiaSeguridad "0..*" -[#6A4FB0]-> "0..1" Usuario : -restauradaPor
+Cliente "0..*" -[#2E8B57]-> "1" TarifaRango : -rangoActual
+RevisionRango "0..*" -[#2E8B57]-> "1" TarifaRango : -rangoAnterior
+RevisionRango "0..*" -[#2E8B57]-> "1" TarifaRango : -rangoNuevo
+Factura "0..*" -[#D9822B]-> "0..1" SerieFacturacion : -serie
+EnvioFactura "0..*" -[#D9822B]-> "1" PlantillaMensaje : -plantillaUsada
+RecordatorioImpago "0..*" -[#C0392B]-> "1" PlantillaMensaje : -plantillaUsada
+PaqueteGestoria "0..*" -[#B8960C]-> "1" PeriodoContable : -periodoAsociado
+Factura .[#D9822B].> PeriodoContable : <<uses>>
+Factura .[#D9822B].> ConfiguracionSistema : <<uses>>
+RecordatorioImpago .[#C0392B].> CalendarioLaboral : <<uses>>
+SolicitudAprobacion .[#D9822B].> ConfiguracionSistema : <<uses>>
+RevisionRango .[#2E8B57].> ConfiguracionSistema : <<uses>>
+
+
+@enduml
