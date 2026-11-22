@@ -86,12 +86,14 @@ package "Backend" as Backend {
 
 package "Persistencia" {
   database "Base de datos" as BD
-  database "Almacén de PDF\ny documentos" as Documentos
+  database "Almacén de documentos\ny copias de seguridad" as Documentos
 }
 
 cloud "Sistemas externos" {
   [Email / WhatsApp\n(proveedores simulables)] as Mensajeria
+  () "IMensajeria" as IMensajeria
   [Stripe (simulado)\nRevolut (opcional)] as Pasarela
+  () "IPasarela" as IPasarela
 }
 
 ' Interfaces proporcionadas: línea continua entre componente y contrato.
@@ -102,6 +104,8 @@ IFacturacion -right- Facturacion
 ICobros -right- Cobros
 IInformes -right- Informes
 IConfiguracion -right- Configuracion
+IMensajeria -down- Mensajeria
+IPasarela -down- Pasarela
 
 ' Presentación y punto de entrada al servidor.
 Web -[dashed,norank]-> IAPI
@@ -115,6 +119,8 @@ API -[dashed,norank]-> IConfiguracion
 ' Coordinación automática: no requiere que el navegador esté abierto.
 Tareas -[dashed,norank]-> IUsuarios
 Tareas -[dashed,norank]-> IClientes
+' Generación mensual de facturas recurrentes y recordatorios (CU-29, CU-19)
+Tareas -[dashed,norank]-> IFacturacion
 Tareas -[dashed,norank]-> ICobros
 Tareas -[dashed,norank]-> IInformes
 Tareas -[dashed,norank]-> IConfiguracion
@@ -137,9 +143,10 @@ Backend -[dashed,norank]-> Documentos
 ' Usuarios: invitaciones, recuperación y avisos.
 ' Facturación y Cobros: envíos de facturas y recordatorios.
 ' Configuración: pruebas de plantillas y configuración de pasarelas.
-' Las integraciones se encapsulan dentro de sus módulos (NFR6).
-Backend -[dashed,norank]-> Mensajeria
-Backend -[dashed,norank]-> Pasarela
+' Los módulos usan los servicios externos solo a través de su interfaz,
+' así que cambiar un proveedor simulado por uno real no afecta al resto (NFR6).
+Backend -[dashed,norank]-> IMensajeria
+Backend -[dashed,norank]-> IPasarela
 Pasarela -[dashed,norank]-> IAPI
 
 ' Solo distribución visual, sin dependencias adicionales.
@@ -159,9 +166,18 @@ IConfiguracion -[hidden]right- IFacturacion
 Facturacion -[hidden]right- Cobros
 IFacturacion -[hidden]right- ICobros
 Tareas -[hidden]right- BD
-Informes -[hidden]right- Mensajeria
+Informes -[hidden]right- IMensajeria
 BD -[hidden]right- Documentos
 Mensajeria -[hidden]right- Pasarela
-BD -[hidden]down- Mensajeria
-Documentos -[hidden]down- Pasarela
+BD -[hidden]down- IMensajeria
+Documentos -[hidden]down- IPasarela
+IMensajeria -[hidden]right- IPasarela
+
+legend bottom left
+  <b>Versión simplificada:</b> solo se muestran las dependencias principales entre módulos.
+  Usuarios (identidad, documentos adjuntos, comentarios y notificaciones)
+  y Configuración (auditoría, plantillas, calendario y periodos) son
+  transversales: el resto de módulos también dependen de ellos.
+  En los diagramas de secuencia, ":Controlador / Interfaz" = Interfaz web + API REST.
+endlegend
 @enduml
