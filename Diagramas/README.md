@@ -1,72 +1,38 @@
 # Diagramas
 
-En esta carpeta se almacenará el código correspondiente a los diagramas UML de casos de uso y, posteriormente, a los diagramas de secuencia. Cualquier información adicional debe quedar reflejada en este readme.
+Código [PlantUML](https://plantuml.com/es/) de los diagramas UML del proyecto, junto con sus imágenes. Cualquier información adicional debe quedar reflejada en este readme.
 
 ---
 
-### 1. Diagramas de ejemplo
+## Contenido
 
-En este directorio se recopilan los diagramas que se han hecho en clase a lo largo de las prácticas de la asignatura.
+| Carpeta | Diagrama | Ficheros principales |
+|---|---|---|
+| `diagrama_CU` | Casos de uso: el diagrama completo y 5 subdiagramas por bloques | `Diagrama_completo_sistema.puml`, `imagenes/` |
+| `diagramas_clases` | Clases, organizado en 6 bloques | `diagrama_clases`, `borrador_clases.md` (explicación de cada clase) |
+| `diagrama_entidad_relacion` | Entidad-relación físico de la base de datos | `diagrama_ER_turbine.puml`, `documentacion_er.md` (notación y decisiones de diseño) |
+| `diagramas_secuencia` | Secuencia: un diagrama maestro y 6 bloques | `DiagramaCompletoBorrador`, `DiagrmasPorBloques/` |
+| `diagrama_de_componentes` | Componentes del sistema (versión simplificada) | `diagrama_componentes.puml`, `diagrama_de_componentes.svg` |
+| `diagramas_de_ejemplo` | Ejemplos hechos en clase durante las prácticas | — |
 
-### 2. Diagrama completo
+## Relación entre los diagramas
 
-En este directorio se recoplila el diagrama completo de los casos de uso, además de sus subdiagramas para una correcta visualización.
-
-### 3. Diagrama entidad-relación
-
-En el directorio `diagrama_entidad_relacion` está el diagrama físico Entidad-Relación de la base de datos, derivado del diagrama de clases. En `documentacion_er.md` se explican la notación y las decisiones de diseño.
+- **Clases → ER:** el diagrama ER sale del de clases. Lo que no se guarda en la base de datos y las tablas que se fusionan están explicados en `documentacion_er.md`.
+- **Clases → secuencia:** los diagramas de secuencia solo usan clases y métodos del diagrama de clases. Los atributos privados se leen con su getter (por ejemplo, `getMonedaBase()`).
+- **Clases → componentes:** cada bloque del diagrama de clases es un componente del backend.
+- **Secuencia → componentes:** el participante `:Controlador / Interfaz` de los diagramas de secuencia equivale a la Interfaz web más la API REST.
+- **Maestro de secuencia:** es la unión de los 6 bloques. Si se cambia un bloque, hay que cambiar también el maestro y volver a generar la imagen del bloque.
 
 ---
 
-## División del trabajo diagrama UML
+## Reparto del trabajo del diagrama de casos de uso
 
-#### Francis — Usuarios y acceso
+La numeración de los casos es la del primer borrador. La actual está en [Casos de Uso.md](../Documentacion/casosDeUso/Casos%20de%20Uso.md).
 
-1. Login — Acceso y autenticación de usuarios.
-2. Registro de usuarios internos — Gestión del alta de nuevos usuarios.
-7. Asignación de grupos de usuarios a administradores — Organización de usuarios por administradores.
-8. Asignación de clientes a lectores — Distribución de clientes entre lectores.
-15. Borrado de cuentas — Gestión de bajas de usuarios.
-
-Todo está relacionado con usuarios, roles, permisos y asignaciones.
-
-#### Marcondes — Administración y configuración
-
-3. Configuración global del sistema — Configuración de parámetros generales.
-4. Administración de la cuenta de recepción de pagos — Configuración de Stripe/Revolut.
-5. Revisión anual del rango de facturación — Gestión de rangos y condiciones de cobro.
-6. Activación de la facturación recurrente — Configuración de cuotas recurrentes.
-10. Visualización de métricas globales — Consulta de información global de la empresa.
-
-Casos centrados en la configuración y administración general del sistema.
-
-#### Esperanza — Pagos e impagos
-
-9. Visualización de pagos e impagos — Consulta del estado de los cobros.
-13. Control de pagos por notificación — Detección y actualización automática de pagos.
-14. Registro manual de un pago — Registro manual de pagos.
-17. Consulta de facturas pendientes — Comprobación de deudas pendientes.
-21. Gestión del flujo de impagos automatizado — Gestión de recordatorios de facturas vencidas.
-
-Todos forman parte del ciclo de pagos, impagos y seguimiento de deudas.
-
-#### Juan — Clientes y facturas
-
-18. Modificación de facturas y datos — Edición de facturas dentro del plazo permitido.
-19. Alta, baja y edición de clientes — Gestión completa de clientes.
-20. Importación masiva de clientes — Alta de clientes mediante CSV.
-23. Anulación de facturas — Anulación de facturas incorrectas.
-24. Búsqueda y consulta de clientes — Búsqueda y consulta de información de clientes.
-
-Se centra en la gestión operativa de clientes y facturas.
-
-#### Alvaro — Documentos, métricas y sistema
-
-11. Visualización de métricas por equipos — Consulta del rendimiento de equipos.
-12. Envío de la factura al cliente — Envío de facturas mediante email/WhatsApp.
-16. Borrado lógico de clientes y facturas — Eliminación lógica y conservación histórica.
-22. Auditoría y copias de seguridad — Consulta de auditoría y gestión de respaldos.
-25. Descarga de factura en PDF — Obtención del PDF de una factura.
-26. Generación de copias de seguridad — Creación automática de respaldos.
-
-Agrupa los casos relacionados con documentos, métricas específicas, auditoría y funciones internas del sistema.
+| Persona | Área | Casos de uso |
+|---|---|---|
+| Francis | Usuarios y acceso | Login, registro de usuarios internos, asignación de usuarios a administradores, asignación de clientes y borrado de cuentas |
+| Marcondes | Administración y configuración | Configuración global, cuenta de recepción de pagos (Stripe/Revolut), revisión anual del rango, facturación recurrente y métricas globales |
+| Esperanza | Pagos e impagos | Consulta de pagos e impagos, control de pagos por notificación, registro manual de pagos, facturas pendientes y flujo de impagos |
+| Juan | Clientes y facturas | Modificación de facturas, alta, baja y edición de clientes, importación masiva, anulación de facturas y búsqueda de clientes |
+| Álvaro | Documentos, métricas y sistema | Métricas por equipos, envío de facturas, borrado lógico, auditoría y copias de seguridad, y descarga del PDF |
