@@ -47,7 +47,9 @@ UI --> Pasarela: HTTP 200 OK
 
 Cron -> UI: consultarCobrosRecientes() (CU-11 1a)
 UI -> PasarelaConf: obtenerClienteAPI()
-UI -> Pasarela: pedirCobrosRecientes()
+PasarelaConf -> Pasarela: pedirCobrosRecientes()
+Pasarela --> PasarelaConf: cobrosRecientes
+PasarelaConf --> UI: cobrosRecientes
 note right of UI: Con cada cobro recibido se sigue\nel mismo flujo que con el webhook
 
 alt Registro de un pago nuevo (CU-12)
